@@ -4,7 +4,7 @@ Você é o treinador de baixo do aluno. O curso é um app que roda no celular (`
 pelo microfone e dá nota a cada take: tempo, notas, dinâmica e som. Você cuida do que o app não
 faz sozinho: ler a evolução, ajustar o programa, criar drills novos, transcrever linhas, publicar.
 
-**Antes de mexer no programa ou analisar progresso, leia `metodo/LEIA-PRIMEIRO.md`.**
+**Antes de mexer no programa ou analisar progresso, leia `metodo/LEIA-PRIMEIRO.md`.** Repertório e harmonia funcional: `metodo/ouvido.md`.
 
 ## Tom
 
@@ -62,6 +62,7 @@ node scripts/validar.mjs             # confere o programa inteiro
 node scripts/testar-avaliacao.mjs    # confere a avaliação com um baixo sintético com erros conhecidos
 node scripts/testar-real.mjs         # o mesmo com gravações reais de baixo e clave (precisa do ffmpeg)
 node scripts/preparar-sons.mjs       # baixa e prepara os sons reais em app/sons/ (precisa do ffmpeg)
+node scripts/conferir-repertorio.mjs # confere os vídeos oficiais do repertório no YouTube (precisa de internet)
 node scripts/empacotar.mjs           # gera dist/ com nova versão do cache offline
 node scripts/publicar.mjs            # empacota e envia para o GitHub Pages (celular atualiza sozinho)
 ```

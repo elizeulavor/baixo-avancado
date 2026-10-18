@@ -6,7 +6,8 @@ import * as A from './audio.js';
 import * as J from './jogo.js';
 import {avaliar, medirLatencia, refinarLatencia, alturaAoVivo} from './analise.js';
 import {renderTab} from './tab.js';
-import {parseProgressao, conjuntoEscala, freqMidi, nomeMidi, nomePc, CORDAS, AFINACOES, gerarWalking, NOMES, ESCALAS} from './musica.js';
+import * as Hm from './harmonia.js';
+import {parseProgressao, parseLinha, conjuntoEscala, freqMidi, nomeMidi, nomePc, CORDAS, AFINACOES, gerarWalking, NOMES, ESCALAS} from './musica.js';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -96,6 +97,8 @@ function comemorar(eventos, aprovado) {
 			atraso += 900;
 		} else if (e.tipo === 'dominado') setTimeout(() => toast('★', 'Drill dominado', e.drill.titulo), (atraso += 700));
 		else if (e.tipo === 'escudo') setTimeout(() => toast('🛡', 'Escudo ganho', 'Protege um dia perdido da sequência'), (atraso += 700));
+		else if (e.tipo === 'nivelJogo') setTimeout(() => toast('⬆', `Nível ${e.nivel} no ouvido harmônico`, 'Perguntas mais difíceis a partir da próxima rodada'), (atraso += 700));
+		else if (e.tipo === 'proxMusica') setTimeout(() => toast('🎧', e.nivelNovo ? `Nível ${e.musica.nivel} aberto` : 'Próxima música liberada', `Música da vez: ${e.musica.titulo}`), (atraso += 900));
 		else if (e.tipo === 'dia') setTimeout(() => toast('🔥', 'Treino do dia completo', `Sequência: ${E.sequencia()} dias · +100 XP`), (atraso += 700));
 	}
 	const nv = eventos.find((e) => e.tipo === 'nivel');
@@ -112,14 +115,14 @@ function comemorar(eventos, aprovado) {
 }
 
 // ---------- roteador ----------
-const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ferramentas: telaFerramentas, perfil: telaPerfil};
+const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, ferramentas: telaFerramentas, perfil: telaPerfil};
 function ir() {
 	limpar();
 	const [caminho, q = ''] = (location.hash.slice(1) || 'hoje').split('?');
 	const [nome, arg] = caminho.split('/');
 	const params = new URLSearchParams(q);
 	(rotas[nome] ?? telaHoje)(arg, params);
-	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje'}[nome] ?? nome;
+	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', musica: 'ouvido', harmonia: 'ouvido'}[nome] ?? nome;
 	$$('nav a').forEach((a) => a.classList.toggle('ativo', a.getAttribute('href') === `#${aba}`));
 	window.scrollTo(0, 0);
 }
@@ -148,6 +151,8 @@ function linkItem(i, sessao = true) {
 	const s = sessao ? 's' : '';
 	if (i.tipo === 'drill') return `#drill/${i.id}?${[s, i.revisao ? 'meta' : ''].filter(Boolean).join('&')}`;
 	if (i.tipo === 'prova') return `#prova/${i.modulo}?${s}`;
+	if (i.tipo === 'harmonia') return `#harmonia/${i.jogo}?${s}`;
+	if (i.tipo === 'musica') return `#musica/${i.musica}?${s}`;
 	return `#desafio?${s}`;
 }
 function seguirTreino() {
@@ -157,6 +162,8 @@ function seguirTreino() {
 function xpPrevisto(i) {
 	if (i.tipo === 'prova') return 500;
 	if (i.tipo === 'desafio') return 30;
+	if (i.tipo === 'harmonia') return 40;
+	if (i.tipo === 'musica') return 60 * (E.repertorio.musicas.find((m) => m.id === i.musica)?.nivel ?? 1);
 	const d = E.drillPorId(i.id);
 	return d ? Math.round(40 * (1 + E.fracao(d))) : 40;
 }
@@ -219,6 +226,14 @@ function cartaoMissao(i, plano, prox) {
 	if (i.tipo === 'escudo') return `<div class="missao feito entra"><div class="icone">🛡</div><div><div class="papel">Escudo usado</div><h3>Sequência protegida</h3></div><div></div></div>`;
 	if (i.tipo === 'desafio') {
 		return `<a class="missao entra ${feito ? 'feito' : ''}" href="#desafio"><div class="icone">⚑</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${esc(i.texto.slice(0, 70))}${i.texto.length > 70 ? '…' : ''}</h3></div><div class="lado"><span class="xp-tag">+30</span></div></a>`;
+	}
+	if (i.tipo === 'harmonia') {
+		const g = Hm.JOGOS[i.jogo];
+		return `<a class="missao trilhaB entra ${feito ? 'feito' : ''}" href="${linkItem(i, false)}"><div class="icone num" style="font-size:13px">${g.icone}</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${g.nome}</h3><div class="meta-linha">nível ${E.progressoHarmonia(i.jogo).nivel} · ${g.perguntas} perguntas</div></div><div class="lado"><span class="xp-tag">+${xpPrevisto(i)}</span></div></a>`;
+	}
+	if (i.tipo === 'musica') {
+		const mu = E.repertorio.musicas.find((x) => x.id === i.musica);
+		return `<a class="missao trilhaA entra ${feito ? 'feito' : ''}" href="${linkItem(i, false)}"><div class="icone">🎧</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${esc(mu?.titulo)}</h3><div class="meta-linha">${esc(mu?.artista)} · nível ${mu?.nivel}</div></div><div class="lado"><span class="xp-tag">+${xpPrevisto(i)}</span></div></a>`;
 	}
 	if (i.tipo === 'prova') {
 		const m = E.programa.modulos.find((x) => x.id === i.modulo);
@@ -736,6 +751,341 @@ function telaFim() {
 	<div class="botoes"><a class="botao" href="#ferramentas/braco">Jogo do braço</a><a class="botao principal" href="#mapa">Ver o mapa</a></div>`;
 	if (f.pct >= 1) setTimeout(() => confete(90), 300);
 	animar();
+}
+
+// ---------- Ouvido: repertório e harmonia funcional ----------
+function telaOuvido() {
+	const rep = E.repertorio;
+	const mv = E.musicaDaVez();
+	const tiradas = rep.musicas.filter((m) => E.musicaTirada(m.id)).length;
+	const niveis = rep.niveis.map((n) => {
+		const ms = rep.musicas.filter((m) => m.nivel === n.n);
+		const aberto = E.nivelAberto(n.n);
+		const feitas = ms.filter((m) => E.musicaTirada(m.id)).length;
+		return `<div class="cartao nivel-rep ${aberto ? '' : 'fechado'} entra">
+			<div class="topo-m"><div><span class="etiqueta">Nível ${n.n}</span><h3>${esc(n.titulo)}</h3></div><b class="num">${feitas}/5</b></div>
+			<p class="sub">${esc(n.meta)}</p>
+			${aberto ? ms.map((m) => {
+				const tirada = E.musicaTirada(m.id), aberta = E.musicaAberta(m);
+				const est = tirada ? '✓' : m === mv ? '●' : '○';
+				return tirada || aberta
+					? `<a class="drill-linha" href="#musica/${m.id}"><span class="est ${tirada ? 'dom' : m === mv ? 'and' : ''}">${est}</span><span>${esc(m.titulo)} <span class="peq">· ${esc(m.artista)}</span></span><span class="peq">${tirada ? 'tirada' : m === mv ? 'agora' : 'bônus'}</span></a>`
+					: `<div class="drill-linha bloq"><span class="est">🔒</span><span>${esc(m.titulo)} <span class="peq">· ${esc(m.artista)}</span></span><span class="peq">depois da anterior</span></div>`;
+			}).join('') : `<div class="drill-linha bloq"><span class="est">🔒</span><span>5 músicas surpresa</span><span class="peq">abre com 3 do nível ${n.n - 1}</span></div>`}
+		</div>`;
+	}).join('');
+	tela.innerHTML = `<div class="topo"><div><div class="saudacao">${tiradas} de ${rep.musicas.length} músicas tiradas</div><h1>Ouvido</h1></div></div>
+	${mv ? `<div class="heroi entra">
+		<p class="peq">MÚSICA DA VEZ · NÍVEL ${mv.nivel}</p>
+		<h3 style="font-size:24px">${esc(mv.titulo)}</h3>
+		<p class="sub">${esc(mv.artista)}${mv.baixista ? ` · baixo: ${esc(mv.baixista)}` : ''} · ${esc(mv.estilo)}</p>
+		<p class="sub">Foco: <b>${esc(mv.foco)}</b></p>
+		<a class="botao principal grande" href="#musica/${mv.id}">Tirar esta música · +${60 * mv.nivel} XP</a>
+	</div>` : '<div class="heroi"><h3>Repertório completo.</h3></div>'}
+	<h2>Harmonia funcional</h2>
+	<div class="ladrilhos">${Object.entries(Hm.JOGOS).map(([k, g]) => {
+		const h = E.progressoHarmonia(k);
+		return `<a class="ladrilho entra" href="#harmonia/${k}"><span class="ic num">${g.icone}</span><div><b>${g.nome}</b><small>nível ${h.nivel}${h.rodadas ? ` · melhor ${h.melhor}%` : ''}</small></div></a>`;
+	}).join('')}</div>
+	<h2>Repertório</h2>
+	<p class="peq">${esc(rep.regras.split('. Vídeos')[0])}.</p>
+	${niveis}`;
+}
+
+let ytPronto = null;
+function carregarYT() {
+	if (window.YT?.Player) return Promise.resolve(window.YT);
+	if (ytPronto) return ytPronto;
+	ytPronto = new Promise((ok, erro) => {
+		window.onYouTubeIframeAPIReady = () => ok(window.YT);
+		const s = document.createElement('script');
+		s.src = 'https://www.youtube.com/iframe_api';
+		s.onerror = () => {
+			ytPronto = null;
+			erro(new Error('sem internet'));
+		};
+		document.head.appendChild(s);
+	});
+	return ytPronto;
+}
+const TAREFAS = [
+	{id: 'ouvir', t: 'Ouvi o trecho 3 vezes sem tocar'},
+	{id: 'tom', t: 'Descobri o tom'},
+	{id: 'bpm', t: 'Medi o andamento (bata junto)'},
+	{id: 'tirar', t: 'Tirei o trecho em loop, devagar'},
+	{id: 'junto', t: 'Toquei junto a 100%, três vezes seguidas, sem errar'},
+];
+function telaMusica(id, q) {
+	const m = E.repertorio.musicas.find((x) => x.id === id);
+	if (!m || !(E.musicaAberta(m) || E.musicaTirada(m.id))) return (location.hash = '#ouvido');
+	const p = E.progressoMusica(m.id);
+	const sessao = q.has('s');
+	const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+	const todas = () => TAREFAS.every((t) => p.tarefas[t.id]);
+	tela.innerHTML = `${sessao ? `<div class="barra-sessao"><span>Treino</span><a href="#hoje">Sair</a></div>` : '<a class="voltar" href="#ouvido">‹ Ouvido</a>'}
+	<span class="etiqueta">Nível ${m.nivel} · ${esc(m.estilo)}</span>
+	<h1>${esc(m.titulo)}</h1>
+	<p class="sub">${esc(m.artista)}${m.baixista ? ` · baixo: <b>${esc(m.baixista)}</b>` : ''}</p>
+	<div class="info"><b>Trecho:</b> ${esc(m.trecho)}. <b>Foco:</b> ${esc(m.foco)}.</div>
+	<p class="objetivo">${esc(m.repare)}</p>
+	<div class="video"><div id="yt"></div></div>
+	<p class="peq" id="yt-status">Carregando o vídeo oficial (${esc(m.canal)})…</p>
+	<div class="topo" style="margin:6px 0 0"><span class="num" id="t-atual">0:00</span><span class="peq" id="t-loop">sem loop</span><span class="num" id="t-vel">100%</span></div>
+	<div class="botoes"><button id="tras">−5 s</button><button class="principal" id="play">▶</button><button id="frente">+5 s</button></div>
+	<div class="botoes velocidades" id="vels"></div>
+	<div class="botoes"><button id="ma">Marcar A</button><button id="mb">Marcar B</button><button id="limpa">Sem loop</button></div>
+	<h2>Tarefas</h2>
+	<div class="cartao tarefas">${TAREFAS.map((t) => `<label class="tarefa"><input type="checkbox" data-t="${t.id}" ${p.tarefas[t.id] ? 'checked' : ''}><span>${t.t}</span></label>
+		${t.id === 'tom' ? `<input type="text" id="tom" class="extra" placeholder="ex.: Mi menor" value="${esc(p.tom)}">` : ''}
+		${t.id === 'bpm' ? `<button id="tap" type="button" class="extra">Bata junto: <b id="bpm-m">${p.bpm ?? '–'}</b> BPM</button>` : ''}`).join('')}</div>
+	<h2>Sua transcrição (opcional)</h2>
+	<p class="peq">Escreva o trecho na notação do app (ex.: <code>E0:8 E0 G3 A5:4 r:8 A7:8</code>; <code>x</code> ghost, <code>s</code> slap, <code>h</code> hammer). Ouça a sua versão no baixo do app e compare com a gravação.</p>
+	<textarea id="linha" rows="3" spellcheck="false" placeholder="E0:8 E0 G3 A5:4 r:8 A7:8 | ...">${esc(p.linha)}</textarea>
+	<p class="peq erro" id="erro-linha"></p>
+	<div id="tab-musica" class="tab-caixa" hidden></div>
+	<div class="botoes"><button id="ouvir-linha">▶ Ouvir minha linha</button></div>
+	<button class="principal grande" id="tirei" ${todas() && !p.feito ? '' : 'disabled'}>${p.feito ? `✓ Tirada em ${p.feito}` : `Tirei esta música · +${60 * m.nivel} XP`}</button>
+	${sessao ? '<button class="grande" id="seguir" style="margin-top:10px">Próxima etapa ›</button>' : ''}`;
+	let player = null, a = null, b = null;
+	const mostraLoop = () => ($('#t-loop').textContent = a != null && b != null ? `loop ${mmss(a)}–${mmss(b)}` : a != null ? `A ${mmss(a)}` : 'sem loop');
+	carregarYT().then((YT) => {
+		if (!$('#yt')) return;
+		player = new YT.Player('yt', {
+			videoId: m.yt, width: '100%', height: '100%',
+			playerVars: {playsinline: 1, rel: 0, modestbranding: 1},
+			events: {
+				onReady: () => {
+					$('#yt-status').textContent = `Vídeo oficial · ${m.canal}. Use 50-75% para tirar, 100% para tocar junto.`;
+					const vs = player.getAvailablePlaybackRates().filter((v) => v <= 1);
+					$('#vels').innerHTML = vs.map((v) => `<button data-v="${v}" class="${v === 1 ? 'ativo-v' : ''}">${Math.round(v * 100)}%</button>`).join('');
+					$$('#vels [data-v]').forEach((bt) => (bt.onclick = () => {
+						player.setPlaybackRate(Number(bt.dataset.v));
+						$$('#vels [data-v]').forEach((x) => x.classList.toggle('ativo-v', x === bt));
+						$('#t-vel').textContent = bt.textContent;
+					}));
+				},
+				onStateChange: (e) => $('#play') && ($('#play').textContent = e.data === 1 ? '❚❚' : '▶'),
+				onError: () => ($('#yt-status').innerHTML = `O vídeo não abriu aqui. <a href="https://www.youtube.com/watch?v=${m.yt}" target="_blank" rel="noopener">Abrir no YouTube</a>.`),
+			},
+		});
+	}).catch(() => ($('#yt-status').textContent = 'Sem internet: o vídeo precisa de conexão.'));
+	const relogio = setInterval(() => {
+		if (!player?.getCurrentTime) return;
+		const t = player.getCurrentTime();
+		if (a != null && b != null && t >= b) player.seekTo(a, true);
+		const el = $('#t-atual');
+		if (el) el.textContent = mmss(t);
+	}, 80);
+	parar.push(() => {
+		clearInterval(relogio);
+		try {
+			player?.destroy();
+		} catch {}
+	});
+	$('#play').onclick = () => player?.getPlayerState && (player.getPlayerState() === 1 ? player.pauseVideo() : player.playVideo());
+	$('#tras').onclick = () => player?.seekTo && player.seekTo(Math.max(0, player.getCurrentTime() - 5), true);
+	$('#frente').onclick = () => player?.seekTo && player.seekTo(player.getCurrentTime() + 5, true);
+	$('#ma').onclick = () => {
+		if (!player?.getCurrentTime) return;
+		a = player.getCurrentTime();
+		if (b != null && b <= a) b = null;
+		mostraLoop();
+	};
+	$('#mb').onclick = () => {
+		if (!player?.getCurrentTime) return;
+		if (a == null) a = 0;
+		b = player.getCurrentTime() > a ? player.getCurrentTime() : null;
+		mostraLoop();
+		if (b != null) player.seekTo(a, true);
+	};
+	$('#limpa').onclick = () => {
+		a = b = null;
+		mostraLoop();
+	};
+	$$('[data-t]').forEach((cb) => (cb.onchange = () => {
+		const novo = cb.checked && !p.tarefas[cb.dataset.t];
+		p.tarefas[cb.dataset.t] = cb.checked;
+		E.salvar();
+		if (novo) comemorar(J.aposMusica(m, false), false);
+		if (!p.feito) $('#tirei').disabled = !todas();
+	}));
+	$('#tom').onchange = (e) => {
+		p.tom = e.target.value.trim();
+		E.salvar();
+	};
+	const taps = [];
+	$('#tap').onclick = () => {
+		taps.push(performance.now());
+		while (taps.length > 8) taps.shift();
+		if (taps.length >= 4) {
+			const difs = taps.slice(1).map((v, i) => v - taps[i]);
+			p.bpm = Math.round(60000 / (difs.reduce((x, y) => x + y) / difs.length));
+			$('#bpm-m').textContent = p.bpm;
+			E.salvar();
+		}
+	};
+	let eventosLinha = null;
+	const atualizarLinha = () => {
+		p.linha = $('#linha').value;
+		E.salvar();
+		const caixa = $('#tab-musica');
+		$('#erro-linha').textContent = '';
+		eventosLinha = null;
+		if (!p.linha.trim()) return (caixa.hidden = true);
+		try {
+			eventosLinha = parseLinha(p.linha).eventos;
+			if (!eventosLinha.some((e) => !e.pausa)) throw new Error('nenhuma nota');
+			caixa.hidden = false;
+			caixa.innerHTML = renderTab(eventosLinha, {afin: E.estado.config.afinacao, tempos: 4, largura: Math.min(700, tela.clientWidth - 12)}).svg;
+		} catch (e) {
+			caixa.hidden = true;
+			$('#erro-linha').textContent = e.message;
+		}
+	};
+	$('#linha').oninput = atualizarLinha;
+	atualizarLinha();
+	$('#ouvir-linha').onclick = async () => {
+		if (!eventosLinha) return;
+		await A.preparar(A.GRUPOS.modelo);
+		A.tocarEventos(eventosLinha, {bpm: p.bpm || 90, tempos: 4, comClick: true, voltas: 1});
+	};
+	$('#tirei').onclick = () => {
+		if (p.feito || !todas()) return;
+		p.feito = E.hoje();
+		E.salvar();
+		comemorar(J.aposMusica(m, true), true);
+		telaMusica(id, q);
+	};
+	$$('#seguir').forEach((bt) => (bt.onclick = seguirTreino));
+}
+
+function telaHarmonia(jogo, q) {
+	const J0 = Hm.JOGOS[jogo];
+	if (!J0) return (location.hash = '#ouvido');
+	const h = E.progressoHarmonia(jogo);
+	const sessao = q.has('s');
+	const total = J0.perguntas;
+	let i = 0, acertos = 0, p = null, resp = [], fimEscuta = null;
+	tela.innerHTML = `${sessao ? `<div class="barra-sessao"><span>Treino</span><a href="#hoje">Sair</a></div>` : '<a class="voltar" href="#ouvido">‹ Ouvido</a>'}
+	<span class="etiqueta B">Ouvido harmônico · nível ${h.nivel}</span><h1>${J0.nome}</h1><p class="sub">${J0.desc}</p>
+	<div class="carregando" id="carga" hidden><div></div></div>
+	<div class="pontos-rodada" id="pontos">${Array.from({length: total}, () => '<i></i>').join('')}</div>
+	<div id="perg"></div>`;
+	const ponto = (ok) => {
+		const el = $$('#pontos i')[i];
+		if (el) el.className = ok ? 'f' : 'e';
+	};
+	// enquanto a pergunta toca, o microfone é ignorado (senão ele ouve o próprio piano)
+	let surdoAte = 0;
+	const tocar = (so) => {
+		if (!p) return;
+		surdoAte = Hm.tocar(p, {nivel: h.nivel, so}) + 0.35;
+	};
+	const desenhar = () => {
+		resp = [];
+		p = Hm.pergunta(jogo, h.nivel);
+		const multi = jogo === 'graus' || jogo === 'baixo';
+		$('#perg').innerHTML = `<div class="cartao centro">
+			<p class="peq">Pergunta ${i + 1} de ${total} · ${jogo === 'funcao' && h.nivel < 3 ? 'primeiro o tom (I IV V I), depois o acorde' : 'primeiro o I, depois a pergunta'}</p>
+			<div class="botoes"><button class="principal" id="ouvir">▶ Ouvir</button><button id="so-alvo">↻ Só a pergunta</button></div>
+			${multi ? `<div class="slots">${p.alvo.map(() => '<div class="slot">?</div>').join('')}</div>` : ''}
+		</div>
+		${jogo === 'baixo' ? '<div class="botoes"><button class="principal grande" id="escutar">🎙 Tocar as raízes no baixo</button></div><p class="status-take" id="ouvindo"></p>'
+			: `<div class="opcoes">${p.opcoes.map((o) => `<button class="opcao" data-o="${o.id}">${esc(o.nome)}</button>`).join('')}</div>`}
+		<div id="retorno"></div>`;
+		$('#ouvir').onclick = () => tocar('tudo');
+		$('#so-alvo').onclick = () => tocar('alvo');
+		$$('[data-o]').forEach((bt) => (bt.onclick = () => responder(bt.dataset.o)));
+		if (jogo === 'baixo') $('#escutar').onclick = escutarRaizes;
+		setTimeout(() => tocar('tudo'), 250);
+	};
+	const responder = (id) => {
+		if (resp.length >= p.alvo.length || (jogo !== 'graus' && resp.length)) return;
+		if (jogo === 'graus') {
+			resp.push(id);
+			const s = $$('.slot')[resp.length - 1];
+			s.textContent = id;
+			s.classList.add('preenchido');
+			if (resp.length < p.alvo.length) return;
+		} else resp = [id];
+		avaliar();
+	};
+	const escutarRaizes = async () => {
+		const bt = $('#escutar');
+		bt.disabled = true;
+		let ultimo = null, estavel = 0, aceito = null;
+		try {
+			fimEscuta = await escutar((midi) => {
+				if (midi == null || resp.length >= p.alvo.length || A.agora() < surdoAte) return;
+				const r = Math.round(midi);
+				estavel = r === ultimo ? estavel + 1 : 0;
+				ultimo = r;
+				// a nota anterior ainda soando não conta: a próxima raiz tem de ser outra nota
+				if (estavel !== 3 || r === aceito) return;
+				aceito = r;
+				const k = resp.length;
+				const certo = ((r % 12) + 12) % 12 === p.alvo[k].baixo;
+				resp.push(certo ? p.certa[k] : `x${r}`);
+				const s = $$('.slot')[k];
+				s.textContent = certo ? p.alvo[k].nome : `${nomePc(r)}?`;
+				s.classList.add(certo ? 'certo' : 'errado');
+				A.somUI(certo ? 'xp' : 'tique');
+				estavel = -6;
+				if (resp.length >= p.alvo.length) {
+					fimEscuta?.();
+					fimEscuta = null;
+					avaliar();
+				}
+			});
+			$('#ouvindo').textContent = 'Ouvindo… toque a raiz de cada acorde, uma por vez, e deixe soar.';
+		} catch {
+			$('#ouvindo').textContent = 'Microfone negado.';
+			bt.disabled = false;
+		}
+	};
+	const avaliar = () => {
+		const certas = Array.isArray(p.certa) ? p.certa : [p.certa];
+		const ok = certas.every((c, k) => resp[k] === c);
+		if (ok) acertos++;
+		ponto(ok);
+		A.somUI(ok ? 'xp' : 'tique');
+		$$('[data-o]').forEach((bt) => {
+			bt.disabled = true;
+			if (!Array.isArray(p.certa) && bt.dataset.o === p.certa) bt.classList.add('certa');
+			else if (!ok && bt.dataset.o === resp[0] && jogo !== 'graus') bt.classList.add('errada');
+		});
+		if (jogo === 'graus') $$('.slot').forEach((s, k) => s.classList.add(resp[k] === certas[k] ? 'certo' : 'errado'));
+		const nomeCerto = jogo === 'cadencia' ? Hm.CADENCIAS[p.certa].nome : jogo === 'funcao' ? Hm.FUNCOES[p.certa] : certas.join(' → ');
+		$('#retorno').innerHTML = `<div class="metrica ${ok ? 'ok' : 'nok'}" style="margin-top:12px"><div class="topo-m"><span>${ok ? '✓ Certo' : `✗ Era ${esc(nomeCerto)}`}</span></div><small>${esc(p.explica)}</small></div>
+			<div class="botoes"><button id="de-novo">↻ Ouvir de novo</button><button class="principal" id="proxima">${i + 1 < total ? 'Próxima ›' : 'Ver resultado'}</button></div>`;
+		$('#de-novo').onclick = () => tocar('tudo');
+		$('#proxima').onclick = () => {
+			i++;
+			if (i < total) desenhar();
+			else terminar();
+		};
+	};
+	const terminar = () => {
+		const nivelAntes = h.nivel;
+		const ev = J.aposHarmonia(jogo, acertos, total);
+		const pct = Math.round((100 * acertos) / total);
+		$('#perg').innerHTML = `<div class="placar-take ${pct >= 80 ? 'aprovado' : 'reprovado'}">
+			<div class="anel">${anel(acertos / total, {tam: 120, esp: 10, cor: pct >= 80 ? 'url(#gVerde)' : '#ff6b6b'})}<b data-conta="${pct}">0</b></div>
+			<div><span class="carimbo">${acertos}/${total}</span><p style="margin-top:10px">${h.nivel > nivelAntes ? `Subiu para o nível ${h.nivel}.` : pct >= 90 ? 'Mais uma rodada assim e sobe de nível.' : 'Sobe de nível com 90% em duas rodadas seguidas.'}</p>
+			<div class="ganhos"><span>+${ev.filter((e) => e.tipo === 'xp').reduce((s, e) => s + e.xp, 0)} XP</span></div></div></div>
+			<div class="botoes"><button id="outra">Mais uma rodada</button>${sessao ? '<button class="principal" id="seguir">Próxima etapa ›</button>' : ''}</div>`;
+		$('#outra').onclick = () => telaHarmonia(jogo, q);
+		$$('#seguir').forEach((bt) => (bt.onclick = seguirTreino));
+		animar($('#perg'));
+		comemorar(ev, pct >= 80);
+	};
+	parar.push(() => fimEscuta?.());
+	const c = $('#carga');
+	c.hidden = false;
+	A.preparar(Hm.GRUPOS, (f, t) => c.firstElementChild && (c.firstElementChild.style.width = `${(100 * f) / t}%`)).then(() => {
+		c.hidden = true;
+		desenhar();
+	});
 }
 
 // ---------- Ferramentas ----------

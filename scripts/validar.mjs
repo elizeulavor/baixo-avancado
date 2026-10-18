@@ -82,7 +82,31 @@ for (const m of programa.modulos) {
 	}
 }
 
-console.log(`${programa.modulos.length} módulos, ${n} drills, ${grooves.grooves.length} grooves`);
+// repertório: ids únicos, 5 por nível, campos obrigatórios (os vídeos se conferem com conferir-repertorio.mjs)
+const rep = ler('app/programa/repertorio.json');
+const idsRep = new Set();
+for (const m of rep.musicas) {
+	if (idsRep.has(m.id)) erros.push(`repertório: id repetido ${m.id}`);
+	idsRep.add(m.id);
+	for (const c of ['titulo', 'artista', 'nivel', 'yt', 'canal', 'trecho', 'foco', 'repare']) if (m[c] == null || m[c] === '') erros.push(`repertório ${m.id}: falta ${c}`);
+	if (!/^[\w-]{11}$/.test(m.yt ?? '')) erros.push(`repertório ${m.id}: id de vídeo inválido`);
+}
+for (const nv of rep.niveis) if (rep.musicas.filter((m) => m.nivel === nv.n).length < 3) erros.push(`repertório: nível ${nv.n} com menos de 3 músicas (não abriria o seguinte)`);
+// harmonia: gera perguntas de todos os jogos e níveis sem erro
+const H = await import('../app/js/harmonia.js');
+for (const jogo of Object.keys(H.JOGOS)) for (const nv of [1, 2, 3]) {
+	try {
+		for (let k = 0; k < 200; k++) {
+			const p = H.pergunta(jogo, nv);
+			const certas = Array.isArray(p.certa) ? p.certa : [p.certa];
+			if (jogo !== 'baixo' && !certas.every((c) => p.opcoes.some((o) => o.id === c))) throw new Error(`resposta certa fora das opções (${certas})`);
+		}
+	} catch (e) {
+		erros.push(`harmonia ${jogo} nível ${nv}: ${e.message}`);
+	}
+}
+
+console.log(`${programa.modulos.length} módulos, ${n} drills, ${grooves.grooves.length} grooves, ${rep.musicas.length} músicas, ${Object.keys(H.JOGOS).length} jogos de harmonia`);
 for (const a of avisos) console.log(`aviso  ${a}`);
 for (const e of erros) console.log(`ERRO   ${e}`);
 console.log(erros.length ? `\n${erros.length} erro(s).` : '\nPrograma válido.');

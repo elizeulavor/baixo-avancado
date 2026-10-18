@@ -54,6 +54,12 @@ export const CONQUISTAS = [
 	{id: 'braco', nome: 'Mapa do braço', desc: '30 notas por minuto no jogo do braço', icone: '🗺', xp: 200, ok: () => (estadoJogo().recordes.braco ?? 0) >= 30},
 	{id: 'madrugador', nome: 'Madrugador', desc: 'Take antes das 7h', icone: '🌅', xp: 50, ok: (r) => !!r && new Date().getHours() < 7},
 	{id: 'maratona', nome: 'Maratona', desc: '90 minutos num dia', icone: '🏃', xp: 200, ok: () => (E.estado.sessoes[E.hoje()] ?? 0) >= 90},
+	{id: 'primeira-musica', nome: 'Primeira transcrição', desc: 'Tirar a primeira música de ouvido', icone: '🎧', xp: 100, ok: () => Object.values(E.estado.repertorio ?? {}).some((m) => m.feito)},
+	{id: 'repertorio10', nome: 'Repertório', desc: '10 músicas tiradas de ouvido', icone: '📀', xp: 500, ok: () => Object.values(E.estado.repertorio ?? {}).filter((m) => m.feito).length >= 10},
+	{id: 'repertorio30', nome: 'Ouvido de estúdio', desc: 'As 30 músicas do repertório', icone: '🏅', xp: 2500, ok: () => Object.values(E.estado.repertorio ?? {}).filter((m) => m.feito).length >= 30},
+	{id: 'rodada-perfeita', nome: 'Rodada perfeita', desc: 'Acertar tudo numa rodada de ouvido harmônico', icone: '💎', xp: 120, ok: () => Object.values(E.estado.harmonia ?? {}).some((h) => h.perfeitas > 0)},
+	{id: 'cadencias100', nome: 'Ouvido funcional', desc: '100 cadências reconhecidas', icone: '🔑', xp: 400, ok: () => (E.estado.harmonia?.cadencia?.acertos ?? 0) >= 100},
+	{id: 'raiz-certa', nome: 'Raiz certeira', desc: 'Nível 3 no jogo da raiz no baixo', icone: '🎯', xp: 300, ok: () => (E.estado.harmonia?.baixo?.nivel ?? 1) >= 3},
 	{id: 'recordista', nome: 'Recordista', desc: '25 recordes pessoais de BPM', icone: '📈', xp: 300, ok: () => (estadoJogo().contaRecordes ?? 0) >= 25},
 ];
 
@@ -168,6 +174,13 @@ export function protegerSequencia() {
 	return false;
 }
 
+// acerto ponderado pelo nível nos jogos de ouvido harmônico (0 a 100)
+function ouvidoHarm() {
+	const hs = Object.values(E.estado.harmonia ?? {});
+	if (!hs.length) return 0;
+	return hs.reduce((s, h) => s + (h.total ? (h.acertos / h.total) * (h.nivel / 3) : 0), 0) / 4 * 100;
+}
+
 // ---------- radar de habilidades (0 a 100) ----------
 export function radar() {
 	const h = todasHist();
@@ -185,8 +198,8 @@ export function radar() {
 		{nome: 'Mão direita', v: Math.round(prog(['a2', 'a4']))},
 		{nome: 'Mão esquerda', v: Math.round(prog(['a3']))},
 		{nome: 'Slap', v: Math.round(prog(['a5', 'a6']))},
-		{nome: 'Harmonia', v: Math.round(prog(['b1', 'b2', 'b3']))},
-		{nome: 'Linguagem', v: Math.round(prog(['b4', 'b5', 'b6']))},
+		{nome: 'Harmonia', v: Math.round(0.6 * prog(['b1', 'b2', 'b3']) + 0.4 * ouvidoHarm())},
+		{nome: 'Linguagem', v: Math.round(0.7 * prog(['b4', 'b5', 'b6']) + 0.3 * (100 * Object.values(E.estado.repertorio ?? {}).filter((m) => m.feito).length) / 30)},
 	].map((x) => ({...x, takes: h.length, recentes: recentes.length}));
 }
 
@@ -255,3 +268,45 @@ export function aposBraco(pontos) {
 	return eventos;
 }
 export const xpHoje = () => estadoJogo().xpDia?.[E.hoje()] ?? 0;
+
+// Fim de uma rodada de ouvido harmônico: 4 XP por acerto, bônus de rodada perfeita, nível sobe com
+// 90% em duas rodadas seguidas (máximo 3).
+export function aposHarmonia(jogo, acertos, total) {
+	const h = E.progressoHarmonia(jogo);
+	const eventos = [];
+	h.rodadas++;
+	h.acertos += acertos;
+	h.total += total;
+	const pct = acertos / total;
+	h.melhor = Math.max(h.melhor, Math.round(pct * 100));
+	if (pct === 1) h.perfeitas = (h.perfeitas ?? 0) + 1;
+	h.seguidasBoas = pct >= 0.9 ? h.seguidasBoas + 1 : 0;
+	ganhar(acertos * 4 * h.nivel + (pct === 1 ? 30 : 0), pct === 1 ? 'Rodada perfeita' : 'Ouvido harmônico', eventos);
+	if (h.seguidasBoas >= 2 && h.nivel < 3) {
+		h.nivel++;
+		h.seguidasBoas = 0;
+		eventos.push({tipo: 'nivelJogo', nivel: h.nivel});
+	}
+	E.marcarFeito('harmonia');
+	checarConquistas(null, null, eventos);
+	planoCompleto(eventos);
+	estadoJogo().eventos = [...eventos, ...estadoJogo().eventos].slice(0, 80);
+	E.salvar();
+	return eventos;
+}
+
+// Repertório: tarefa marcada vale pouco; música tirada vale pelo nível.
+export function aposMusica(m, tirou) {
+	const eventos = [];
+	ganhar(tirou ? 60 * m.nivel : 5, tirou ? `Música tirada: ${m.titulo}` : 'Tarefa de transcrição', eventos);
+	E.marcarFeito(`musica:${m.id}`);
+	if (tirou) {
+		checarConquistas(null, null, eventos);
+		const prox = E.musicaDaVez();
+		if (prox) eventos.push({tipo: 'proxMusica', musica: prox, nivelNovo: prox.nivel > m.nivel});
+	}
+	planoCompleto(eventos);
+	estadoJogo().eventos = [...eventos, ...estadoJogo().eventos].slice(0, 80);
+	E.salvar();
+	return eventos;
+}

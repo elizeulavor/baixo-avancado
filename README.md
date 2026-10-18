@@ -20,6 +20,9 @@ App publicado: https://elizeulavor.github.io/baixo-avancado/ · logo e marca em 
 - Ferramentas: metrônomo (2 e 4, só no 1, sumindo, treino de velocidade, 5/4, 7/8), 20 grooves com
   acordes, afinador, **jogo do braço** (ache a nota contra o relógio), **estudo de música** (loop
   A-B e velocidade sem mudar o tom, para tirar de ouvido), gravação livre, calibração.
+- **Ouvido**: 30 músicas para tirar de ouvido em 6 níveis, escolhidas e liberadas pelo app, com o vídeo
+  oficial do YouTube dentro do app (25-100% sem mudar o tom, loop A-B); e harmonia funcional em 4 jogos
+  (função T/SD/D, cadências, graus, raiz no baixo pelo microfone). Ver `metodo/ouvido.md`.
 - Lembrete diário pelo calendário do celular. Funciona sem internet. 4 ou 5 cordas.
 - O Claude é o treinador: lê seu progresso, ajusta o programa, cria drills.
 

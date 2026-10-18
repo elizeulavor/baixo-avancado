@@ -45,12 +45,43 @@ export function importar(txt) {
 // ---------- programa ----------
 export let programa = null;
 export let grooves = null;
+export let repertorio = null;
 export async function carregarPrograma() {
-	const [p, g] = await Promise.all([fetch('programa/programa.json').then((r) => r.json()), fetch('programa/grooves.json').then((r) => r.json())]);
+	const [p, g, r] = await Promise.all(['programa/programa.json', 'programa/grooves.json', 'programa/repertorio.json'].map((u) => fetch(u).then((x) => x.json())));
 	programa = p;
 	grooves = g.grooves;
+	repertorio = r;
 	return p;
 }
+
+// ---------- repertório (tirar de ouvido) ----------
+// O app escolhe: as músicas abrem em sequência dentro do nível, e o nível seguinte abre quando 3
+// músicas do atual estão tiradas. A "música da vez" é a primeira não tirada do nível mais alto aberto.
+export const progressoMusica = (id) => (estado.repertorio ??= {})[id] ??= {tarefas: {}, tom: '', bpm: null, linha: ''};
+export const musicaTirada = (id) => !!estado.repertorio?.[id]?.feito;
+export function nivelAberto(n) {
+	if (n === 1) return true;
+	const ant = repertorio.musicas.filter((m) => m.nivel === n - 1);
+	return nivelAberto(n - 1) && ant.filter((m) => musicaTirada(m.id)).length >= 3;
+}
+export function musicaAberta(m) {
+	if (!nivelAberto(m.nivel)) return false;
+	const doNivel = repertorio.musicas.filter((x) => x.nivel === m.nivel);
+	const i = doNivel.indexOf(m);
+	return i === 0 || musicaTirada(doNivel[i - 1].id);
+}
+export function musicaDaVez() {
+	if (!repertorio) return null;
+	const abertos = repertorio.niveis.map((n) => n.n).filter(nivelAberto);
+	for (const n of abertos.reverse()) {
+		const m = repertorio.musicas.find((x) => x.nivel === n && !musicaTirada(x.id) && musicaAberta(x));
+		if (m) return m;
+	}
+	return repertorio.musicas.find((x) => !musicaTirada(x.id) && musicaAberta(x)) ?? null;
+}
+
+// ---------- ouvido harmônico ----------
+export const progressoHarmonia = (jogo) => (estado.harmonia ??= {})[jogo] ??= {nivel: 1, rodadas: 0, acertos: 0, total: 0, melhor: 0, seguidasBoas: 0};
 export const todosDrills = () => programa.modulos.flatMap((m) => m.drills.map((d) => ({...d, modulo: m})));
 export const drillPorId = (id) => todosDrills().find((d) => d.id === id);
 export const groovePorId = (id) => grooves.find((g) => g.id === id);
@@ -151,11 +182,21 @@ export function planoDoDia(data = hoje()) {
 		itens.push({tipo: 'drill', id: dominados[0].id, papel: 'Revisão (no BPM meta)', minutos: 5, revisao: true});
 		usados.add(dominados[0].id);
 	}
+	const diaN = Math.floor(new Date(data).getTime() / 864e5);
 	if (min >= 30) {
-		const leitura = todos.filter((d) => d.gerar?.tipo === 'leitura' || d.gerar?.tipo === 'ditado');
-		const nivel = leitura.find((d) => !dominado(d)) ?? leitura[0];
-		if (nivel && !usados.has(nivel.id)) itens.push({tipo: 'drill', id: nivel.id, papel: nivel.gerar.tipo === 'ditado' ? 'Ouvido do dia' : 'Leitura do dia', minutos: 5});
+		// alterna: um dia leitura/ditado, no outro ouvido harmônico (o jogo gira entre os quatro)
+		if (diaN % 2 === 0) {
+			const leitura = todos.filter((d) => d.gerar?.tipo === 'leitura' || d.gerar?.tipo === 'ditado');
+			const nivel = leitura.find((d) => !dominado(d)) ?? leitura[0];
+			if (nivel && !usados.has(nivel.id)) itens.push({tipo: 'drill', id: nivel.id, papel: nivel.gerar.tipo === 'ditado' ? 'Ouvido do dia' : 'Leitura do dia', minutos: 5});
+		} else {
+			const jogos = ['funcao', 'cadencia', 'graus', 'baixo'];
+			itens.push({tipo: 'harmonia', id: 'harmonia', jogo: jogos[Math.floor(diaN / 2) % jogos.length], papel: 'Ouvido harmônico', minutos: 5});
+		}
 	}
+	// tirar de ouvido: todo dia a partir de 60 min; em dias alternados a partir de 45 min
+	const mv = musicaDaVez();
+	if (mv && (min >= 60 || (min >= 45 && diaN % 2 === 1))) itens.push({tipo: 'musica', id: `musica:${mv.id}`, musica: mv.id, papel: 'Tirar de ouvido', minutos: 10});
 	if (min >= 60) {
 		const m = moduloAtivo(new Date(data).getDate() % 2 ? 'A' : 'B') ?? programa.modulos[0];
 		const des = m.desafios?.[new Date(data).getDate() % (m.desafios?.length || 1)];
