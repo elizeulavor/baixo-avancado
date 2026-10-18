@@ -440,7 +440,8 @@ export function avaliar(sinal, sr, esperado, op) {
 				continue;
 			}
 			const pc = ((Math.round(tocada) % 12) + 12) % 12;
-			if (aceitos.includes(pc)) {
+			c.certa = aceitos.includes(pc);
+			if (c.certa) {
 				certas++;
 				if (op.modo === 'sequencia' && Math.abs(Math.round(tocada) - c.esperado.midi) >= 12) oitava++;
 			} else {
@@ -510,7 +511,9 @@ export function avaliar(sinal, sr, esperado, op) {
 	// fantasma não detectado não conta como falta (pode ter sido baixo demais para o microfone)
 	const faltando = casados.filter((c) => !c.tocado && !c.esperado.fantasma).length;
 	const fantasmasSumidos = casados.filter((c) => !c.tocado && c.esperado.fantasma).length;
-	const res = {tempo, notas: notasRes, dinamica: din, som, contagem: {esperadas: alvos.filter((a) => !a.livre && !a.fantasma).length, tocadas: notas.length, casadas: ok.length, faltando, extras, fantasmasSumidos}};
+	// nota a nota, para o Raio-X (constelação, replay, mão direita): t esperado (s), erro (ms), nível (dB)
+	const notasTake = casados.map((c) => ({t: c.esperado.t, erro: c.tocado ? c.erro : null, nivel: c.tocado?.nivel ?? null, certa: c.certa ?? null, fantasma: !!c.esperado.fantasma, acento: !!c.esperado.acento}));
+	const res = {inicio: op.inicio, notasTake, tempo, notas: notasRes, dinamica: din, som, contagem: {esperadas: alvos.filter((a) => !a.livre && !a.fantasma).length, tocadas: notas.length, casadas: ok.length, faltando, extras, fantasmasSumidos}};
 	return julgar(res, op.criterios ?? {}, op);
 }
 

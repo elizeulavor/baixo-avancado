@@ -50,3 +50,31 @@ importa e o que fazer no próximo take. Detalhes em `metodo/groove.md`.
 
 Objetivo e exigente, com número em cada frase. Elogio só como fato ("caiu de ±13 para ±10 ms").
 Nunca inventa tendência sem dados.
+
+## Raio-X do take (`app/js/raiox.js`)
+
+O compasso vira um relógio: cada raio é uma semicolcheia, cada anel é um compasso (de dentro para
+fora), cada nota é um ponto. O erro de tempo gira o ponto com lente (±40 ms = meio caminho até o raio
+vizinho; sentido do relógio = atrasado). Tamanho = volume. Cor: verde ±10 ms, ouro até o limite do
+drill, vermelho fora; anel roxo = nota errada; tracejado = faltou. O traço por fora de cada raio é a
+média daquela posição: a assinatura do groove (semicolcheia torta aparece como um traço longo).
+
+- **Ao vivo:** durante o take, a cada 300 ms os ataques novos entram na constelação, logo abaixo do
+  botão de gravar. Posição aproximada (latência ainda não refinada).
+- **Sem latência confiável** (nem calibrada nem achada na gravação): a constelação e a mão direita
+  se centram na média do próprio take. Mostram regularidade, não pressa.
+- **Replay:** "Ouvir meu take" gira um ponteiro com o áudio e acende cada nota quando ela soa.
+- **Mão direita:** notas tocadas em ordem, ímpares contra pares (supõe alternância estrita). Mostra
+  atraso médio, volume e regularidade de cada lado e o galope (diferença de tempo). Leve ≥ 3 ms,
+  audível ≥ 6 ms; volume diferente ≥ 1,5 dB.
+- **Teste do dedo:** em colcheia e semicolcheia o mesmo dedo cai sempre na mesma posição do tempo,
+  então um take não separa dedo de sensação de tempo. Com um take começando no indicador (D_i) e
+  outro no médio (D_m): dedo = (D_i − D_m)/2, posição = (D_i + D_m)/2. Guardado por drill em
+  `localStorage['radix-teste-dedo']` (conveniência; não entra no backup).
+- **Antes e depois:** o primeiro take de cada drill e o melhor (aprovado > caminho até a meta >
+  nota) ficam para sempre no IndexedDB (`marco:primeiro:<drill>`, `marco:melhor:<drill>`), a
+  16 kHz/16 bits, com as notas do Raio-X. A tela do drill mostra os dois lado a lado, com o som.
+  Só valem a partir de 2026-10-18 (takes anteriores não tinham as notas guardadas).
+
+Não validado com baixo real: a paridade da mão direita (rake e cordas soltas quebram a alternância)
+e a constelação ao vivo (o limiar dos ataques em janelas curtas). O primeiro take real decide.

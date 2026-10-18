@@ -10,6 +10,7 @@ import * as Hm from './harmonia.js';
 import * as T from './treinador.js';
 import * as G from './groove-ui.js';
 import * as Pm from './progmus.js';
+import * as R from './raiox.js';
 import * as P from './professor.js';
 import {fraseDoDia} from './frases.js';
 import {parseProgressao, parseLinha, conjuntoEscala, freqMidi, nomeMidi, nomePc, CORDAS, AFINACOES, gerarWalking, NOMES, ESCALAS} from './musica.js';
@@ -449,10 +450,12 @@ function telaDrill(id, q) {
 		<button class="gravar" id="gravar"><span id="rotulo-gravar">GRAVAR</span></button>
 		<button id="lento">▶ 70%</button>
 	</div>
+	<div id="rx-vivo-caixa"></div>
 	<div class="botoes linha-treino"><button id="treinar">🔁 Treinar sem gravar</button><label class="mini-chave"><input type="checkbox" id="tr-modelo"> baixo do modelo junto</label></div>
 	<div class="nivel-mic"><div id="nivel"></div></div>
 	<p class="status-take" id="status">Treinar: o clique em loop, no BPM escolhido, sem avaliar. Gravar: contagem, take e nota.</p>
 	<div id="resultado"></div>
+	<div id="antes-depois"></div>
 	<div id="historico"></div>`;
 	const desenhar = () => {
 		if (oculto) {
@@ -561,6 +564,7 @@ function telaDrill(id, q) {
 	};
 	parar.push(pararTreino);
 	historicoDrill(d);
+	antesDepois(d);
 	if (ultimoResultado?.id === d.id && ultimoResultado.agora) {
 		mostrarResultado(ultimoResultado, d, {sessao, modProva});
 		ultimoResultado.agora = false;
@@ -672,6 +676,8 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 	const ag = agendarCliques(d, bpm, tempos, total * voltas);
 	mostrarContagem(ag.contagem);
 	cursor(ag.inicio, bpm, voltas);
+	const pararVivo = constelacaoAoVivo(d, eventos, tempos, bpm, rec, ag);
+	parar.push(pararVivo);
 	bt.disabled = true;
 	bt.classList.add('ao-vivo');
 	bt.insertAdjacentHTML('beforeend', anel(0, {tam: 120, esp: 4, cor: '#fff', fundo: false}));
@@ -688,6 +694,7 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 	}, 80);
 	await espera((ag.fim - A.agora() + 0.5) * 1000);
 	clearInterval(tick);
+	pararVivo();
 	const take = await rec.parar();
 	A.fecharMicrofone(stream);
 	pararMedidor();
@@ -707,6 +714,7 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 	E.guardarTake({id: takeId, drill: d.id, bpm, sr: take.sr, dados: take.dados, data: E.hoje()});
 	const bpmAntes = E.progresso(d).bpm;
 	const msg = E.registrarTake(d, bpm, res);
+	const marcos = await E.marcarTake(d, take, {data: E.hoje(), bpm, nota: res.nota, aprovado: res.aprovado, dv: res.tempo.desvio, md: res.tempo.media, ac: res.notas?.acerto ?? null, inicio: res.inicio, conf: confiavel, tempos, lim: res.itens.find((i) => i.nome === 'Regularidade do tempo')?.limite ?? 14, notas: R.compactar(res.notasTake)});
 	let ev = J.aposTake(d, bpm, res);
 	let msgProva = null;
 	if (ctxTela.modProva) {
@@ -717,12 +725,12 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 	}
 	const fala = P.aposTake(d, res, {bpm, eventos: ev});
 	if (msgProva) fala.txt = `${msgProva} ${fala.txt}`;
-	ultimoResultado = {id: d.id, res, msg: msgProva ?? msg, takeId, eventos: ev, agora: true, lat, refinada, confiavel, bpmAntes, fala};
+	ultimoResultado = {id: d.id, res, msg: msgProva ?? msg, takeId, eventos: ev, agora: true, lat, refinada, confiavel, bpmAntes, fala, bpm, tempos, marcos};
 	ir();
 	comemorar(ev, res.aprovado);
 }
 
-function analisarTake(d, eventos, tempos, bpm, take, ag, lat, confiavel) {
+function esperadoDoDrill(d, eventos, bpm) {
 	const s = 60 / bpm;
 	const voltas = d.voltas ?? 1;
 	const total = eventos.at(-1).t + eventos.at(-1).d;
@@ -735,6 +743,62 @@ function analisarTake(d, eventos, tempos, bpm, take, ag, lat, confiavel) {
 			esperado.push({...e, t, d: e.d * s});
 		}
 	}
+	return esperado;
+}
+
+// Constelação ao vivo: a cada 300 ms acha os ataques novos na gravação e põe cada um no raio da
+// nota esperada mais próxima. Latência ainda não refinada: posição aproximada (o Raio-X final é o exato).
+function constelacaoAoVivo(d, eventos, tempos, bpm, rec, ag) {
+	const esperado = esperadoDoDrill(d, eventos, bpm).filter((e) => !e.pausa);
+	if (!esperado.length || d.modo === 'conjunto' || d.gradeLivre) return () => {};
+	const ctx = A.audio();
+	const lat = E.latencia() ?? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) + 0.02;
+	const lim = d.criterios?.tempoDesvio ?? 14;
+	const duracao = ag.fim - ag.inicio;
+	const nb = Math.max(1, Math.ceil(duracao / ((tempos * 60) / bpm) - 1e-6));
+	const centrada = E.latencia() == null;
+	$('#rx-vivo-caixa').innerHTML = `<div class="raiox-caixa vivo">${R.svgConstelacao([], {bpm, tempos, lim, nb, id: 'rx-vivo', vivo: true, tam: 260})}<p class="peq">Ao vivo, posição aproximada${centrada ? ', centrada na sua média (sem latência calibrada)' : ''}.</p></div>`;
+	const usados = new Set();
+	const erros = [];
+	let ate = ag.inicio - 0.3;
+	const timer = setInterval(() => {
+		const agora = A.agora();
+		if (agora < ag.inicio + lat + 0.2) return;
+		const tr = rec.trecho(Math.max(0, ate - 2.5));
+		if (!tr) return;
+		const fimTr = tr.inicioCtx + tr.dados.length / tr.sr - 0.08;
+		const {ataques} = detectarAtaques(tr.dados, tr.sr, {desde: ate - tr.inicioCtx});
+		for (const a of ataques) {
+			const tc = a.t + tr.inicioCtx;
+			if (tc <= ate || tc > fimTr) continue;
+			const rel = tc - ag.inicio - lat;
+			let best = -1;
+			for (let i = 0; i < esperado.length; i++) {
+				if (usados.has(i)) continue;
+				const viz = Math.min(0.12, ((esperado[i + 1]?.t ?? esperado[i].t + 0.5) - esperado[i].t) / 2, i ? (esperado[i].t - esperado[i - 1].t) / 2 : 0.12);
+				const dd = Math.abs(rel - esperado[i].t);
+				if (dd <= viz && (best < 0 || dd < Math.abs(rel - esperado[best].t))) best = i;
+			}
+			if (best < 0) continue;
+			usados.add(best);
+			const erro = (rel - esperado[best].t) * 1000;
+			erros.push(erro);
+			R.acrescentar($('#rx-vivo'), {t: esperado[best].t, erro, fantasma: !!esperado[best].fantasma}, erros, {centrada});
+		}
+		ate = Math.max(ate, fimTr);
+	}, 300);
+	return () => {
+		clearInterval(timer);
+		const c = $('#rx-vivo-caixa');
+		if (c) c.innerHTML = '';
+	};
+}
+
+function analisarTake(d, eventos, tempos, bpm, take, ag, lat, confiavel) {
+	const s = 60 / bpm;
+	const voltas = d.voltas ?? 1;
+	const total = eventos.at(-1).t + eventos.at(-1).d;
+	const esperado = esperadoDoDrill(d, eventos, bpm);
 	const prog = d.progressao ? parseProgressao(d.progressao, tempos) : null;
 	const totalProg = prog ? prog.at(-1).inicio + prog.at(-1).dur : 0;
 	const midis = eventos.filter((e) => !e.pausa).map((e) => e.midi);
@@ -788,6 +852,7 @@ function mostrarResultado(r, d, {sessao, modProva}) {
 		<small>${inv ? 'mínimo' : 'máximo'} ${i.limite} · ${esc(i.texto)}</small><div class="regua"><div class="val" style="width:${larg}%"></div><div class="lim" style="left:${(i.limite / escala) * 100}%"></div></div></div>`;
 	}).join('')}</div>
 	${res.dicas.length ? `<ul class="dicas">${res.dicas.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>` : ''}
+	${blocoRaioX(r, d, crit)}
 	<h2>Tempo, nota a nota</h2>${graficoTempo(res, crit)}
 	<p class="peq">Acima da linha: atrasado. Abaixo: adiantado. Faixa verde: ±${crit} ms. ${fmt(res.tempo.dentro10)}% dentro de ±10 ms.</p>
 	<h2>Dinâmica, nota a nota</h2>${graficoDinamica(res)}
@@ -802,17 +867,117 @@ function mostrarResultado(r, d, {sessao, modProva}) {
 	<p class="peq">${r.refinada != null ? `Clique achado na gravação (latência ${(r.lat * 1000).toFixed(0)} ms).` : r.confiavel ? `Latência calibrada: ${(r.lat * 1000).toFixed(0)} ms.` : 'Sem calibração: pressa/atraso não avaliados.'}</p>
 	<div class="botoes"><button id="ouvir">▶ Ouvir meu take</button></div>
 	</div>`;
-	$('#ouvir').onclick = async () => {
+	const ouvir = async () => {
 		const t = await E.lerTake(takeId);
 		if (!t) return;
 		const src = A.tocarBuffer(t.dados, t.sr);
-		parar.push(() => src.stop());
+		const ctx = A.audio();
+		const fimR = R.replay($('#rx-take'), {agora: A.agora, inicioAudio: A.agora() + (ctx.outputLatency || 0), inicioTake: res.inicio, duracao: Math.max(0, ...res.notasTake.map((n) => n.t)) + 0.5});
+		parar.push(() => (src.stop(), fimR()));
 	};
+	$('#ouvir').onclick = ouvir;
+	$$('#rx-ouvir').forEach((b) => (b.onclick = () => ($('#rx-take').scrollIntoView({behavior: 'smooth', block: 'center'}), ouvir())));
+	ligarTesteDedo(r, d);
 	$('#denovo').onclick = () => $('#gravar').click();
 	$$('#seguir').forEach((b) => (b.onclick = seguirTreino));
 	if (r.fala && r.agora && !P.escrito()) setTimeout(() => P.dizer(r.fala.txt, r.fala.tom), 700);
 	animar(el);
 	setTimeout(() => el.scrollIntoView({behavior: 'smooth', block: 'start'}), 150);
+}
+
+// ---------- Raio-X ----------
+function blocoRaioX(r, d, lim) {
+	const {res} = r;
+	if (!res.notasTake?.length || !r.bpm) return '';
+	const tocadas = res.notasTake.filter((n) => n.erro != null);
+	if (tocadas.length < 4) return '';
+	const notas = r.confiavel ? res.notasTake : R.centrar(res.notasTake);
+	const md = R.maoDireita(notas);
+	const marcos = r.marcos ?? [];
+	return `<div class="raiox-caixa">
+	<h2>Raio-X do take</h2>
+	<p class="peq">Cada raio é uma semicolcheia; cada anel, um compasso (de dentro para fora). Ponto em cima do raio = no tempo; girado no sentido do relógio = atrasado. Lente: ±${R.LENTE} ms = meio caminho até o raio vizinho. Tamanho = volume. O traço por fora é a média de cada raio: a assinatura do seu groove.</p>
+	${R.svgConstelacao(notas, {bpm: r.bpm, tempos: r.tempos, lim, id: 'rx-take'})}
+	${r.confiavel ? '' : '<p class="peq" style="text-align:center">Sem latência confiável: centrada na sua média (mostra a regularidade, não a pressa).</p>'}
+	<div class="rx-legenda"><span><i class="rx-ok"></i>±10 ms</span><span><i class="rx-quase"></i>até ±${lim}</span><span><i class="rx-fora"></i>fora</span><span><i class="rx-errada"></i>nota errada</span><span><i class="rx-falta"></i>faltou</span></div>
+	<div class="botoes"><button id="rx-ouvir">▶ Replay com o áudio</button></div>
+	${marcos.length ? `<p class="rx-marco">${marcos.includes('primeiro') ? 'Primeiro take deste drill guardado para sempre: é o seu "antes".' : '★ Novo melhor take deste drill: entrou no antes e depois.'}</p>` : ''}
+	${md ? `<div class="rx-mao">
+		<h3>Mão direita</h3>
+		<div class="medidas"><div><span>Ímpares</span><b>${R.sinal(md.a.erro)} ms</b><small>${R.sinal(md.a.nivel)} dB · ±${R.fmt(md.a.dp, 0)}</small></div><div><span>Pares</span><b>${R.sinal(md.b.erro)} ms</b><small>${R.sinal(md.b.nivel)} dB · ±${R.fmt(md.b.dp, 0)}</small></div><div><span>Galope</span><b>${R.fmt(Math.abs(md.dt))} ms</b><small>${R.sinal(md.ddb)} dB</small></div></div>
+		<ul class="dicas">${R.textoMao(md).map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+		<p class="peq"><b>Teste do dedo.</b> Em colcheia e semicolcheia o mesmo dedo cai sempre na mesma posição do tempo, então um take só não diz se o desvio é do dedo ou da sua sensação de tempo. Grave um take começando com o indicador e outro começando com o médio: o app separa os dois. Este take começou com:</p>
+		<div class="segmento" id="rx-dedo"><button data-dedo="i">Indicador</button><button data-dedo="m">Médio</button></div>
+		<div id="rx-decomp"></div>
+	</div>` : ''}
+	</div>`;
+}
+
+function ligarTesteDedo(r, d) {
+	const caixa = $('#rx-dedo');
+	if (!caixa) return;
+	const md = R.maoDireita(r.res.notasTake);
+	const hoje = E.hoje();
+	const dataCurta = (x) => x.split('-').reverse().slice(0, 2).join('/');
+	const mostrar = (dedo) => {
+		$$('#rx-dedo button').forEach((b) => b.classList.toggle('ativo', b.dataset.dedo === dedo));
+		const t = R.guardarDedo(d.id, dedo, md, hoje);
+		const out = $('#rx-decomp');
+		if (t.i && t.m) {
+			const dec = R.decompor(t.i, t.m);
+			out.innerHTML = `<div class="rx-veredito"><b>Dedo × tempo</b><ul class="dicas">${R.textoDecomposicao(dec).map((x) => `<li>${esc(x)}</li>`).join('')}</ul><p class="peq">Takes de ${dataCurta(t.i.data)} (indicador) e ${dataCurta(t.m.data)} (médio). Vale com alternância estrita, sem rake.</p></div>`;
+		} else out.innerHTML = `<p class="peq">Agora grave um take começando com o ${dedo === 'i' ? 'médio' : 'indicador'}.</p>`;
+	};
+	caixa.querySelectorAll('button').forEach((b) => (b.onclick = () => mostrar(b.dataset.dedo)));
+	// sugere o dedo que falta testar; só guarda quando o aluno toca no botão
+	const ant = R.dedosDoDrill(d.id);
+	const sug = ant.i && !ant.m ? 'm' : 'i';
+	$$('#rx-dedo button').forEach((b) => b.classList.toggle('sugerido', b.dataset.dedo === sug));
+}
+
+// Antes e depois: o primeiro take do drill contra o melhor, lado a lado, com o som dos dois.
+async function antesDepois(d) {
+	const el = $('#antes-depois');
+	if (!el) return;
+	const [p, m] = await Promise.all([E.lerMarco(d.id, 'primeiro'), E.lerMarco(d.id, 'melhor')]);
+	if (!el.isConnected || !p) return;
+	const mesmo = !m || (m.data === p.data && m.bpm === p.bpm && m.nota === p.nota);
+	const lado = (x, rot, id) => `<div class="ad-lado"><span class="ad-rot">${rot}</span>${R.svgConstelacao(x.conf === false ? R.centrar(R.expandir(x.notas)) : R.expandir(x.notas), {bpm: x.bpm, tempos: x.tempos, lim: x.lim, id, tam: 220})}
+		<div class="ad-num"><b>${x.bpm}</b> BPM · <b>±${R.fmt(x.dv, 0)}</b> ms${x.ac != null ? ` · <b>${R.fmt(x.ac, 0)}%</b>` : ''}</div><small>${x.data.split('-').reverse().join('/')} · nota ${x.nota}${x.aprovado ? ' · aprovado' : ''}</small></div>`;
+	if (mesmo) {
+		el.innerHTML = `<div class="cartao ad"><h2>Antes e depois</h2><p class="sub">Seu primeiro take deste drill está guardado (${p.bpm} BPM, ±${R.fmt(p.dv, 0)} ms). Quando você superar esse take, os dois aparecem aqui lado a lado, com o som de cada um.</p></div>`;
+		return;
+	}
+	const dias = Math.max(0, Math.round((new Date(m.data) - new Date(p.data)) / 864e5));
+	const ganhoBpm = m.bpm - p.bpm, ganhoDv = p.dv - m.dv;
+	el.innerHTML = `<div class="cartao ad"><h2>Antes e depois</h2>
+	<p class="sub">${dias ? `${dias} dia${dias > 1 ? 's' : ''}` : 'Mesmo dia'}: ${ganhoBpm ? `${ganhoBpm > 0 ? '+' : '−'}${Math.abs(ganhoBpm)} BPM${d.bpm.meta < d.bpm.inicio ? ' (drill lento: descer é a meta)' : ''}` : 'mesmo BPM'}, regularidade ${ganhoDv >= 0 ? `${R.fmt(ganhoDv, 0)} ms mais apertada` : `${R.fmt(-ganhoDv, 0)} ms mais solta`}.</p>
+	<div class="ad-par">${lado(p, 'ANTES', 'ad-antes')}${lado(m, 'DEPOIS', 'ad-depois')}</div>
+	<div class="botoes"><button id="ad-a">▶ Antes</button><button class="principal" id="ad-ab">▶ Antes → depois</button><button id="ad-b">▶ Depois</button></div></div>`;
+	let pararAtual = null;
+	const tocar = (x, svgId) => new Promise((ok) => {
+		const src = A.tocarBuffer(x.dados, x.sr);
+		const ctx = A.audio();
+		const fimR = R.replay($(`#${svgId}`), {agora: A.agora, inicioAudio: A.agora() + (ctx.outputLatency || 0), inicioTake: x.inicio, duracao: Math.max(0, ...x.notas.map((n) => n[0])) + 0.5});
+		pararAtual = () => {
+			src.onended = null;
+			src.stop();
+			fimR();
+			ok(false);
+		};
+		src.onended = () => (fimR(), ok(true));
+	});
+	const parado = () => pararAtual?.();
+	parar.push(parado);
+	$('#ad-a').onclick = () => (parado(), tocar(p, 'ad-antes'));
+	$('#ad-b').onclick = () => (parado(), tocar(m, 'ad-depois'));
+	$('#ad-ab').onclick = async () => {
+		parado();
+		if (await tocar(p, 'ad-antes')) {
+			await espera(600);
+			tocar(m, 'ad-depois');
+		}
+	};
 }
 
 function graficoTempo(res, lim) {

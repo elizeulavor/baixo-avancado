@@ -60,7 +60,7 @@ app/                 o app (PWA): index.html, js/, programa/, icones/, sw.js
 app/programa/        programa.json (módulos e drills) e grooves.json
 app/js/              musica.js (notação, geradores), analise.js (avaliação), audio.js, estado.js, main.js, tab.js,
                      ritmo.js (jogos de groove), groove-ui.js, professor.js, frases.js, harmonia.js, treinador.js,
-                     progmus.js (harmonia nas músicas)
+                     progmus.js (harmonia nas músicas), raiox.js (constelação do take, mão direita, antes e depois)
 app/programa/        também repertorio.json (tirar de ouvido) e progressoes.json (harmonia nas músicas)
 docs/                ROTEIRO-COMERCIAL.md (caminho até multiusuário e assinatura)
 CONTINUIDADE.md      onde o projeto existe, como restaurar, como nunca perder o acesso

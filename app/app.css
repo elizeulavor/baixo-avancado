@@ -535,3 +535,52 @@ nav a { font-size: 10.5px; }
 button.aviso { width: 100%; text-align: left; font: inherit; cursor: pointer; }
 .aviso-backup { border-color: rgba(63, 208, 201, 0.4) !important; background: rgba(63, 208, 201, 0.08) !important; color: var(--texto) !important; }
 button.mini { padding: 5px 10px; font-size: 12px; border-radius: 10px; margin-left: auto; }
+
+/* ---------- Raio-X do take ---------- */
+.raiox-caixa { margin-top: 18px; }
+.raiox-caixa.vivo { margin-top: 6px; text-align: center; animation: rxSurge .4s ease-out; }
+@keyframes rxSurge { from { opacity: 0; transform: translateY(6px); } }
+.raiox-caixa.vivo .raiox { max-width: 260px; }
+.raiox-caixa h2 .peq { font-weight: 400; margin-left: 6px; }
+.raiox { display: block; width: 100%; max-width: 360px; margin: 10px auto 4px; }
+.raiox .rx-anel { fill: none; stroke: var(--linha); stroke-width: 1; }
+.raiox .rx-raio { stroke: var(--linha); stroke-width: 1; }
+.raiox .rx-raio-forte { stroke: var(--linha2); stroke-width: 1.4; }
+.raiox .rx-num { fill: var(--apagado); font: 600 10px var(--titulo); }
+.raiox .rx-centro { fill: var(--texto); font: 700 22px var(--titulo); }
+.raiox .rx-centro-sub { fill: var(--apagado); font: 9px var(--corpo); letter-spacing: .08em; }
+.raiox .rx-ponteiro { stroke: var(--ouro); stroke-width: 1.6; stroke-linecap: round; filter: drop-shadow(0 0 4px rgba(245, 184, 74, .7)); transition: opacity .3s; }
+.raiox circle.rx-ok, .rx-legenda i.rx-ok { fill: var(--ok); }
+.raiox circle.rx-quase, .rx-legenda i.rx-quase { fill: var(--ouro); }
+.raiox circle.rx-fora, .rx-legenda i.rx-fora { fill: var(--nok); }
+.raiox circle.rx-errada, .rx-legenda i.rx-errada { stroke: var(--trilhaB); stroke-width: 2; }
+.raiox circle.rx-falta, .rx-legenda i.rx-falta { fill: none; stroke: var(--nok); stroke-width: 1.2; stroke-dasharray: 2 2; opacity: .7; }
+.raiox circle.rx-fant { opacity: .55; }
+.raiox .rx-pontos circle { transition: opacity .25s; }
+.raiox circle.rx-espera { opacity: .14; }
+.raiox circle.rx-entra { animation: rxEntra .45s cubic-bezier(.2, 1.6, .4, 1); transform-box: fill-box; transform-origin: center; }
+@keyframes rxEntra { 0% { transform: scale(2.6); filter: brightness(2); } 100% { transform: scale(1); } }
+.raiox .rx-assin { fill: none; stroke-width: 3; stroke-linecap: round; }
+.raiox .rx-assin.rx-ok { stroke: var(--ok); } .raiox .rx-assin.rx-quase { stroke: var(--ouro); } .raiox .rx-assin.rx-fora { stroke: var(--nok); }
+.raiox .rx-assin-ok { fill: var(--ok); }
+.rx-legenda { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 14px; font-size: 12px; color: var(--suave); }
+.rx-legenda i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; background: var(--cartao3); }
+.rx-legenda i.rx-ok { background: var(--ok); } .rx-legenda i.rx-quase { background: var(--ouro); } .rx-legenda i.rx-fora { background: var(--nok); }
+.rx-legenda i.rx-errada { background: transparent; border: 2px solid var(--trilhaB); } .rx-legenda i.rx-falta { background: transparent; border: 1px dashed var(--nok); }
+.rx-marco { text-align: center; color: var(--ouro); font-size: 13px; margin-top: 8px; }
+.rx-mao { margin-top: 16px; background: var(--cartao); border: 1px solid var(--linha); border-radius: var(--raio); padding: 14px; }
+.rx-mao h3 { margin: 0 0 8px; }
+.rx-mao .medidas small { display: block; color: var(--apagado); font-size: 11px; }
+.segmento { display: flex; gap: 6px; margin: 8px 0; }
+.segmento button { flex: 1; }
+.segmento button.sugerido:not(.ativo) { border-color: rgba(245, 184, 74, .45); }
+.segmento button.ativo { background: var(--ouro); color: var(--ouro-txt); border-color: var(--ouro); }
+.rx-veredito { margin-top: 10px; border-left: 3px solid var(--ouro); padding-left: 10px; }
+.ad { margin-top: 18px; }
+.ad-par { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ad-lado { text-align: center; min-width: 0; }
+.ad-lado .raiox { margin: 4px auto; }
+.ad-rot { font: 700 11px var(--titulo); letter-spacing: .14em; color: var(--suave); }
+.ad-lado:last-child .ad-rot { color: var(--ouro); }
+.ad-num { font-size: 13px; } .ad-num b { font-family: var(--titulo); }
+.ad-lado small { color: var(--apagado); font-size: 11px; }

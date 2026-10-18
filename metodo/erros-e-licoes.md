@@ -52,3 +52,6 @@ Cada linha: data, o que aconteceu, a regra que ficou.
   das notas casadas, nota 0 e dica de microfone.
 - 2026-10-17: arquivo de código lido e regravado pelo PowerShell 5.1 (`Get-Content`/`Set-Content`)
   perdeu os acentos. Regra: editar só com as ferramentas de arquivo ou `[IO.File]` em UTF-8.
+- 2026-10-18: no teste do Raio-X sem latência calibrada, um atraso constante de ~44 ms pintou
+  tudo de vermelho com regularidade de ±6 ms. Regra: sem latência confiável, qualquer visual de
+  tempo se centra na média do take (a avaliação já fazia isso nos números).

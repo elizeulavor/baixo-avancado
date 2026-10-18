@@ -379,12 +379,57 @@ export async function guardarTake(take) {
 			const r = st.getAllKeys();
 			r.onsuccess = () => ok(r.result);
 		});
-		todos.sort();
-		for (const k of todos.slice(0, Math.max(0, todos.length - 12))) st.delete(k);
+		const comuns = todos.filter((k) => /^\d+$/.test(k)).sort(); // marcos ("marco:...") ficam para sempre
+		for (const k of comuns.slice(0, Math.max(0, comuns.length - 12))) st.delete(k);
 	} catch (e) {
 		console.warn('gravação não guardada', e);
 	}
 }
+// Takes marcantes de cada drill, guardados para sempre: o primeiro e o melhor (antes e depois).
+// Áudio reduzido a 16 kHz em 16 bits (~0,6 MB por 20 s); com eles vão as notas do Raio-X.
+function reduzir(dados, sr) {
+	const f = sr / 16000;
+	if (f <= 1) return {pcm: Int16Array.from(dados, (v) => Math.max(-1, Math.min(1, v)) * 32767), sr};
+	const n = Math.floor(dados.length / f);
+	const pcm = new Int16Array(n);
+	for (let i = 0; i < n; i++) {
+		const a = Math.floor(i * f), b = Math.max(a + 1, Math.floor((i + 1) * f));
+		let s = 0;
+		for (let k = a; k < b; k++) s += dados[k];
+		pcm[i] = Math.max(-1, Math.min(1, s / (b - a))) * 32767;
+	}
+	return {pcm, sr: sr / f};
+}
+// quanto o take vale: aprovado pesa mais, depois o caminho até o BPM meta, depois a nota
+function valor(d, m) {
+	const {inicio, meta} = d.bpm;
+	const f = meta === inicio ? 1 : (m.bpm - inicio) / (meta - inicio);
+	return (m.aprovado ? 10 : 0) + f * 5 + m.nota / 100;
+}
+export async function lerMarco(drill, tipo) {
+	const m = await lerTake(`marco:${tipo}:${drill}`);
+	if (!m) return null;
+	return {...m, dados: Float32Array.from(m.pcm, (v) => v / 32767)};
+}
+export async function marcarTake(d, take, info) {
+	try {
+		const [primeiro, melhor] = await Promise.all([lerTake(`marco:primeiro:${d.id}`), lerTake(`marco:melhor:${d.id}`)]);
+		const novos = [];
+		if (!primeiro) novos.push('primeiro');
+		if (!melhor || valor(d, info) > valor(d, melhor)) novos.push('melhor');
+		if (!novos.length) return [];
+		const {pcm, sr} = reduzir(take.dados, take.sr);
+		const b = await db();
+		const tx = b.transaction('takes', 'readwrite');
+		for (const tipo of novos) tx.objectStore('takes').put({id: `marco:${tipo}:${d.id}`, drill: d.id, tipo, pcm, sr, ...info});
+		await new Promise((ok) => (tx.oncomplete = tx.onerror = ok));
+		return novos;
+	} catch (e) {
+		console.warn('take marcante não guardado', e);
+		return [];
+	}
+}
+
 // Um ponto de restauração por dia (o estado inteiro, os últimos 14 dias). Protege contra bug ou
 // dado corrompido; não protege contra limpar os dados do navegador (para isso, o backup).
 export async function pontoDoDia() {
