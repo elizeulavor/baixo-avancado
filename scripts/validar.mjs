@@ -144,8 +144,31 @@ for (const jogo of Rt.ORDEM) {
 const inf = Rt.roteiroInfinito({});
 for (let k = 0; k < 40; k++) if (!inf.compasso(k)) erros.push('eco infinito: compasso faltando');
 const {totalFrases} = await import('../app/js/frases.js');
+// progressões das músicas: campos, cifras que o app toca, 4 opções distintas
+const prog = ler('app/programa/progressoes.json');
+const {parseAcorde} = await import('../app/js/musica.js');
+const {opcoes: opcoesProg} = await import('../app/js/progmus.js');
+const idsProg = new Set();
+for (const m of prog.musicas) {
+	const onde = `progressão ${m.id}`;
+	if (idsProg.has(m.id)) erros.push(`${onde}: id repetido`);
+	idsProg.add(m.id);
+	for (const c of ['titulo', 'artista', 'yt', 'canal', 'trecho', 'nivel', 'graus', 'explica']) if (m[c] == null || m[c] === '') erros.push(`${onde}: falta ${c}`);
+	if (!/^[\w-]{11}$/.test(m.yt ?? '')) erros.push(`${onde}: id de vídeo inválido`);
+	if (!prog.niveis.some((n) => n.n === m.nivel)) erros.push(`${onde}: nível ${m.nivel} não existe`);
+	if (m.cifras) {
+		if (m.cifras.length !== m.graus.length) erros.push(`${onde}: ${m.cifras.length} cifras para ${m.graus.length} graus`);
+		for (const c of m.cifras) try {
+			parseAcorde(c.replace('♭', 'b'));
+		} catch (e) {
+			erros.push(`${onde}: ${e.message}`);
+		}
+	}
+	const o = opcoesProg(m, prog.musicas);
+	if (o.lista.length !== 4 || new Set(o.lista.map((g) => g.join())).size !== 4 || o.certa < 0) erros.push(`${onde}: opções não saíram 4 distintas`);
+}
 
-console.log(`${programa.modulos.length} módulos, ${n} drills, ${grooves.grooves.length} grooves, ${rep.musicas.length} músicas, ${Object.keys(H.JOGOS).length} jogos de harmonia, ${Rt.ORDEM.length} jogos de groove (${nNiveis} níveis), ${totalFrases()} frases do dia`);
+console.log(`${programa.modulos.length} módulos, ${n} drills, ${grooves.grooves.length} grooves, ${rep.musicas.length} músicas, ${Object.keys(H.JOGOS).length} jogos de harmonia, ${Rt.ORDEM.length} jogos de groove (${nNiveis} níveis), ${prog.musicas.length} progressões de músicas, ${totalFrases()} frases do dia`);
 for (const a of avisos) console.log(`aviso  ${a}`);
 for (const e of erros) console.log(`ERRO   ${e}`);
 console.log(erros.length ? `\n${erros.length} erro(s).` : '\nPrograma válido.');

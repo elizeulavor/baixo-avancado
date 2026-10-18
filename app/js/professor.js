@@ -8,17 +8,18 @@ export const MODOS = {ambos: 'Fala e balão', voz: 'Só fala', balao: 'Só balã
 const cfg = () => E.estado.config;
 export const modo = () => cfg().professor ?? 'ambos';
 export const escrito = () => modo() === 'escrito';
-const comVoz = () => ['ambos', 'voz'].includes(modo()) && 'speechSynthesis' in window;
+const temVoz = typeof window !== 'undefined' && 'speechSynthesis' in window;
+const comVoz = () => ['ambos', 'voz'].includes(modo()) && temVoz;
 const comBalao = () => ['ambos', 'balao'].includes(modo());
 
 // ---------- voz ----------
 let vozes = [];
 function carregarVozes() {
-	if (!('speechSynthesis' in window)) return [];
+	if (!temVoz) return [];
 	vozes = speechSynthesis.getVoices().filter((v) => /^pt(-|_)?BR/i.test(v.lang) || /^pt/i.test(v.lang));
 	return vozes;
 }
-if ('speechSynthesis' in window) {
+if (temVoz) {
 	carregarVozes();
 	speechSynthesis.onvoiceschanged = carregarVozes;
 }
@@ -51,7 +52,7 @@ let microAberto = false;
 let pendente = null;
 export function microfone(aberto) {
 	microAberto = aberto;
-	if (aberto && 'speechSynthesis' in window) speechSynthesis.cancel();
+	if (aberto && temVoz) speechSynthesis.cancel();
 	if (!aberto && pendente) {
 		const p = pendente;
 		pendente = null;

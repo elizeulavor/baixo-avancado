@@ -9,19 +9,39 @@ export const hoje = (d = new Date()) => {
 
 function padrao() {
 	return {
-		config: {afinacao: 'EADG', minutos: 45, lembrete: '19:30', latencia: null, latenciaData: null, volumeClick: 0.8, dias: [1, 2, 3, 4, 5, 6], fone: false, professor: 'ambos', vozProfessor: '', velVoz: 1.05},
+		config: {afinacao: 'EADG', minutos: 45, lembrete: '19:30', latencia: null, latenciaData: null, volumeClick: 0.8, dias: [1, 2, 3, 4, 5, 6], professor: 'ambos', vozProfessor: '', velVoz: 1.05,
+			saida: 'alto', latencias: {}, entrada: '', ultimoBackup: null},
 		drills: {}, // id -> {bpm, aprovacoesMeta: [datas], tentativas, ultimo: {...}, historico: [{data, bpm, nota, aprovado}]}
 		planos: {}, // data -> {itens: [...], feitos: {}}
 		sessoes: {}, // data -> minutos
 		criado: hoje(),
+		versao: VERSAO,
 	};
 }
 
+// Versão do formato dos dados. Mudou o formato: suba a versão e escreva a migração em migrar();
+// quem já usa o app abre e continua de onde estava.
+export const VERSAO = 2;
+function migrar(s) {
+	const v = s.versao ?? 1;
+	if (v < 2) {
+		// v2: perfis de saída de áudio, com latência própria para cada um
+		s.config ??= {};
+		s.config.saida ??= s.config.fone ? 'fone' : 'alto';
+		s.config.latencias ??= {};
+		if (s.config.latencia != null && s.config.latencias.alto == null) s.config.latencias.alto = s.config.latencia;
+	}
+	s.versao = VERSAO;
+	return s;
+}
 export let estado = carregar();
 function carregar() {
 	try {
 		const s = JSON.parse(localStorage.getItem(CHAVE));
-		if (s) return {...padrao(), ...s, config: {...padrao().config, ...s.config}};
+		if (s) {
+			const m = migrar(s);
+			return {...padrao(), ...m, config: {...padrao().config, ...m.config}};
+		}
 	} catch {}
 	return padrao();
 }
@@ -38,19 +58,43 @@ export function exportar() {
 export function importar(txt) {
 	const j = JSON.parse(txt);
 	if (j.app !== 'baixo-avancado' || !j.estado) throw new Error('arquivo não é um backup deste app');
-	estado = {...padrao(), ...j.estado};
+	const m = migrar(j.estado);
+	estado = {...padrao(), ...m, config: {...padrao().config, ...m.config}};
 	salvar();
 }
+
+// ---------- saída de áudio ----------
+// alto: alto-falante do celular · bluetooth: caixa/amp/fone Bluetooth · fone: fone com fio no
+// celular · usb: interface de áudio USB (o baixo entra direto, sem microfone)
+export const SAIDAS = {
+	alto: {nome: 'Alto-falante do celular', ic: '🔊', curto: 'Alto-falante'},
+	bluetooth: {nome: 'Bluetooth (amp, caixa ou fone)', ic: '🛜', curto: 'Bluetooth'},
+	fone: {nome: 'Fone com fio no celular', ic: '🎧', curto: 'Fone com fio'},
+	usb: {nome: 'Interface USB (baixo direto)', ic: '🔌', curto: 'USB'},
+};
+export const saida = () => estado.config.saida ?? 'alto';
+// latência calibrada da saída atual (s), ou null
+export const latencia = () => estado.config.latencias?.[saida()] ?? (saida() === 'alto' ? estado.config.latencia : null);
+export function guardarLatencia(v) {
+	(estado.config.latencias ??= {})[saida()] = v;
+	if (saida() === 'alto') estado.config.latencia = v;
+	estado.config.latenciaData = hoje();
+	salvar();
+}
+// o microfone não ouve o acompanhamento (fone com fio ou interface USB): bateria completa no groove
+export const semVazamento = () => ['fone', 'usb'].includes(saida());
 
 // ---------- programa ----------
 export let programa = null;
 export let grooves = null;
 export let repertorio = null;
+export let progressoes = null;
 export async function carregarPrograma() {
-	const [p, g, r] = await Promise.all(['programa/programa.json', 'programa/grooves.json', 'programa/repertorio.json'].map((u) => fetch(u).then((x) => x.json())));
+	const [p, g, r, pr] = await Promise.all(['programa/programa.json', 'programa/grooves.json', 'programa/repertorio.json', 'programa/progressoes.json'].map((u) => fetch(u).then((x) => x.json())));
 	programa = p;
 	grooves = g.grooves;
 	repertorio = r;
+	progressoes = pr;
 	return p;
 }
 
@@ -311,12 +355,16 @@ export function montar(d) {
 	return {...r, tempos: temposPorCompasso(d.compasso)};
 }
 
-// ---------- gravações (IndexedDB, guarda as últimas 12) ----------
+// ---------- gravações (IndexedDB, guarda as últimas 12) e pontos de restauração ----------
 const DB = 'baixo-gravacoes';
 function db() {
 	return new Promise((ok, erro) => {
-		const r = indexedDB.open(DB, 1);
-		r.onupgradeneeded = () => r.result.createObjectStore('takes', {keyPath: 'id'});
+		const r = indexedDB.open(DB, 2);
+		r.onupgradeneeded = () => {
+			const nomes = r.result.objectStoreNames;
+			if (!nomes.contains('takes')) r.result.createObjectStore('takes', {keyPath: 'id'});
+			if (!nomes.contains('pontos')) r.result.createObjectStore('pontos', {keyPath: 'data'});
+		};
 		r.onsuccess = () => ok(r.result);
 		r.onerror = () => erro(r.error);
 	});
@@ -335,6 +383,36 @@ export async function guardarTake(take) {
 		for (const k of todos.slice(0, Math.max(0, todos.length - 12))) st.delete(k);
 	} catch (e) {
 		console.warn('gravação não guardada', e);
+	}
+}
+// Um ponto de restauração por dia (o estado inteiro, os últimos 14 dias). Protege contra bug ou
+// dado corrompido; não protege contra limpar os dados do navegador (para isso, o backup).
+export async function pontoDoDia() {
+	try {
+		const b = await db();
+		const tx = b.transaction('pontos', 'readwrite');
+		const st = tx.objectStore('pontos');
+		st.put({data: hoje(), txt: exportar()});
+		const datas = await new Promise((ok) => {
+			const r = st.getAllKeys();
+			r.onsuccess = () => ok(r.result);
+		});
+		datas.sort();
+		for (const d of datas.slice(0, Math.max(0, datas.length - 14))) st.delete(d);
+	} catch (e) {
+		console.warn('ponto de restauração não guardado', e);
+	}
+}
+export async function pontos() {
+	try {
+		const b = await db();
+		return await new Promise((ok) => {
+			const r = b.transaction('pontos').objectStore('pontos').getAll();
+			r.onsuccess = () => ok(r.result.sort((x, y) => y.data.localeCompare(x.data)));
+			r.onerror = () => ok([]);
+		});
+	} catch {
+		return [];
 	}
 }
 export async function lerTake(id) {

@@ -68,13 +68,10 @@ export function telaGroove(arg, q) {
 		<div class="dia-groove">${dia.map((d) => `<div class="${feitos.includes(d.jogo) ? 'feito' : ''}"><span>${Rt.JOGOS[d.jogo].icone}</span><b>${Rt.JOGOS[d.jogo].nome}</b><small>nível ${d.nivel}</small></div>`).join('')}</div>
 		<a class="botao principal grande" href="#groove/dia">${G.dias[E.hoje()]?.ok ? '✓ Groove do dia feito' : feitos.length ? 'Continuar o groove do dia' : 'Groove do dia · 6 min · +40 XP'}</a>
 	</div>
-	<label class="chave cartao entra"><input type="checkbox" id="fone" ${E.estado.config.fone ? 'checked' : ''}><span><b>🎧 Fone com fio</b><small>Com fone, bateria e teclado completos. Sem fone, só chimbal filtrado (o microfone não confunde com o baixo).</small></span></label>
+	<div class="cartao chave entra"><span><b>Como você ouve</b><small>${E.semVazamento() ? 'Fone ou USB: bateria e teclado completos.' : 'Alto-falante ou Bluetooth: só chimbal filtrado, que o microfone não confunde com o baixo.'}</small></span>${H.chipSaida()}</div>
 	${GRUPOS.map(([nome, sub, jogos]) => `<h2>${nome}</h2><p class="peq" style="margin-top:-6px">${sub}</p><div class="ladrilhos">${jogos.map(ladrilho).join('')}${nome === 'Ouvido rítmico' ? `<a class="ladrilho destaque entra" href="#gjogo/eco?inf"><span class="ic">∞</span><div><b>Eco infinito</b><small>3 vidas · recorde ${G.recordes.infinito ?? 0}</small></div></a>` : ''}</div>`).join('')}
 	<p class="peq" style="margin-top:22px">Toque <b>uma nota só</b> (A solta, ou abafada) nos jogos de microfone: o tempo é o que conta. Celular perto do amplificador.</p>`;
-	$('#fone').onchange = (e) => {
-		E.estado.config.fone = e.target.checked;
-		E.salvar();
-	};
+	H.ligarChipSaida(() => telaGroove(arg, q));
 	H.animar();
 }
 function ladrilho(jogo) {
@@ -179,7 +176,7 @@ function moverMedidor(v, alvo, tol) {
 }
 
 function jogoMic(ctx) {
-	const fone = !!E.estado.config.fone;
+	const fone = E.semVazamento();
 	const r = ctx.infinito ? Rt.roteiroInfinito({}) : Rt.roteiro(ctx.jogo, ctx.n, {grooves: E.grooves, fone});
 	const el = $('#jogo');
 	el.innerHTML = `<div class="palco-groove" id="palco">${palcoInicial(r)}</div>
@@ -197,6 +194,12 @@ function jogoMic(ctx) {
 	const pronto = A.preparar(A.GRUPOS.jogosGroove, (f, t) => carga.firstElementChild && (carga.firstElementChild.style.width = `${(100 * f) / t}%`)).then(() => (carga.hidden = true));
 	if (ctx.infinito) $('#vidas').innerHTML = '♥♥♥';
 	$('#ir').onclick = async () => {
+		// uma vez por dia o app pergunta como você está ouvindo (alto-falante, Bluetooth, fone, USB)
+		const {mudou} = await H.confirmarSaida();
+		if (mudou) {
+			jogoMic(ctx);
+			return $('#ir').click();
+		}
 		await pronto;
 		rodar(r, ctx);
 	};
@@ -231,7 +234,7 @@ async function rodar(r, ctx) {
 		return;
 	}
 	P.microfone(true);
-	const fone = !!E.estado.config.fone;
+	const fone = E.semVazamento();
 	const pararMedidor = H.medidorMic(stream);
 	const rec = A.gravar(stream);
 	let acabou = false;
@@ -252,8 +255,8 @@ async function rodar(r, ctx) {
 	const sBeat = r.barDur / r.tempos;
 	window.__radixGroove = {t0, r}; // para o teste de ponta a ponta (aluno simulado)
 	const cfg = E.estado.config;
-	let lat = cfg.latencia ?? (ac.outputLatency || 0) + (ac.baseLatency || 0) + 0.02;
-	let confiavel = cfg.latencia != null;
+	let lat = E.latencia() ?? (ac.outputLatency || 0) + (ac.baseLatency || 0) + 0.02;
+	let confiavel = E.latencia() != null;
 	let refinada = false;
 	const cliques = [], cliquesContagem = [];
 	const usados = [];

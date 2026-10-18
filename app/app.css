@@ -487,7 +487,7 @@ nav a { font-size: 10.5px; }
 .placar-groove .ganhos { justify-content: center; }
 .prof-inline { margin: 12px 0; padding: 12px 14px; border-radius: 16px; background: rgba(63, 208, 201, 0.08); border: 1px solid rgba(63, 208, 201, 0.25); font-size: 14.5px; line-height: 1.45; }
 .prof-inline b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--groove); margin-bottom: 2px; }
-.balao-prof { position: fixed; left: 12px; right: 12px; bottom: calc(86px + env(safe-area-inset-bottom)); z-index: 40; max-width: 560px; margin: 0 auto; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 20px; background: rgba(20, 22, 27, 0.96); border: 1px solid rgba(63, 208, 201, 0.35); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); transform: translateY(20px); opacity: 0; transition: transform 0.35s cubic-bezier(.2, .9, .3, 1.2), opacity 0.3s; }
+.balao-prof { position: fixed; left: 12px; right: 12px; top: calc(10px + env(safe-area-inset-top)); z-index: 40; max-width: 560px; margin: 0 auto; display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 20px; background: rgba(20, 22, 27, 0.96); border: 1px solid rgba(63, 208, 201, 0.35); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); transform: translateY(-20px); opacity: 0; transition: transform 0.35s cubic-bezier(.2, .9, .3, 1.2), opacity 0.3s; }
 .balao-prof.visivel { transform: none; opacity: 1; }
 .balao-prof.elogio { border-color: rgba(61, 220, 151, 0.45); }
 .balao-prof.correcao { border-color: rgba(245, 184, 74, 0.45); }
@@ -513,3 +513,25 @@ nav a { font-size: 10.5px; }
 .tempo-f i { height: 22px; border-radius: 4px; background: var(--cartao3); }
 .tempo-f i.on { background: var(--groove); }
 .grade-frase.compassos2 { flex-wrap: wrap; }
+
+/* ---------- saída de áudio, treino, backup ---------- */
+.linha-saida { display: flex; align-items: center; gap: 10px; margin: 12px 0 2px; flex-wrap: wrap; }
+.linha-saida .peq { flex: 1; min-width: 160px; }
+.chip-saida { flex: none; padding: 7px 12px; border-radius: 99px; font-size: 13px; font-weight: 600; background: var(--cartao2); border: 1px solid var(--linha2); color: var(--texto); }
+.chave .chip-saida { margin-left: auto; align-self: center; }
+.folha-saida { text-align: left; max-height: 86vh; overflow-y: auto; }
+.folha-saida h3 { margin-bottom: 10px; }
+.opcao-saida { display: block; width: 100%; text-align: left; margin: 8px 0; padding: 12px 14px; border-radius: 16px; background: var(--cartao2); border: 1px solid var(--linha); color: var(--texto); }
+.opcao-saida b { display: block; font-size: 15px; }
+.opcao-saida small { display: block; color: var(--suave); font-size: 12.5px; line-height: 1.4; margin-top: 3px; font-weight: 400; }
+.opcao-saida i { display: block; font-style: normal; font-size: 11.5px; color: var(--groove); margin-top: 4px; }
+.opcao-saida.atual { border-color: var(--ouro); box-shadow: 0 0 0 1px rgba(245, 184, 74, 0.25); }
+.entrada-audio { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--suave); margin-top: 10px; }
+.linha-treino { align-items: center; margin-top: 4px; }
+.linha-treino #treinar { flex: 1; }
+.linha-treino #treinar.ativo-treino { border-color: var(--groove); color: var(--groove); box-shadow: 0 0 18px rgba(63, 208, 201, 0.2); }
+.mini-chave { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--suave); }
+.mini-chave input { accent-color: var(--groove); width: 18px; height: 18px; }
+button.aviso { width: 100%; text-align: left; font: inherit; cursor: pointer; }
+.aviso-backup { border-color: rgba(63, 208, 201, 0.4) !important; background: rgba(63, 208, 201, 0.08) !important; color: var(--texto) !important; }
+button.mini { padding: 5px 10px; font-size: 12px; border-radius: 10px; margin-left: auto; }

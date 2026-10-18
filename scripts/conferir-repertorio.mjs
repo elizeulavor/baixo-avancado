@@ -7,8 +7,10 @@ import {fileURLToPath} from 'node:url';
 
 const raiz = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rep = JSON.parse(fs.readFileSync(path.join(raiz, 'app/programa/repertorio.json'), 'utf8'));
+const prog = JSON.parse(fs.readFileSync(path.join(raiz, 'app/programa/progressoes.json'), 'utf8'));
 let erros = 0;
-for (const m of rep.musicas) {
+// repertório (tirar de ouvido) e progressões das músicas (harmonia)
+for (const m of [...rep.musicas, ...prog.musicas.map((x) => ({...x, titulo: `[progressão] ${x.titulo}`}))]) {
 	const r = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${m.yt}&format=json`);
 	if (!r.ok) {
 		erros++;

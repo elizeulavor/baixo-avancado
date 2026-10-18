@@ -43,7 +43,14 @@ export const GRUPOS = {
 };
 
 export const volumes = {click: 0.9, bateria: 0.8, acordes: 0.55, baixo: 0.9};
-export const preferencias = {click: 'claves'}; // claves | madeira
+export const preferencias = {click: 'claves', entrada: ''}; // clique: claves | madeira
+export async function entradasDeAudio() {
+	try {
+		return (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'audioinput');
+	} catch {
+		return [];
+	}
+}
 
 // Clique do metrônomo: claves (ou woodblock). Acento = batida forte; subdivisão = fraca e baixa.
 export function click(t, nivel = 1) {
@@ -113,7 +120,9 @@ export function cliqueGroove(t, f = 1) {
 // Um ciclo do groove a partir de t (bpmQ em semínimas). soAgudos: sem fone, só a percussão aguda,
 // filtrada; com fone, a banda inteira (bateria e teclado).
 // desde/ate (tempo de contexto): só os passos dentro da janela (começar no meio do ciclo).
-export function cicloGroove(g, t, {bpmQ, soAgudos = false, progressao = null, ciclo = 0, desde = -Infinity, ate = Infinity}) {
+// acorde: um acorde fixo para o ciclo inteiro (ouvido harmônico com groove); baixoPc: o baixo toca
+// essa nota no padrão de baixo do groove.
+export function cicloGroove(g, t, {bpmQ, soAgudos = false, progressao = null, ciclo = 0, desde = -Infinity, ate = Infinity, acorde: acordeFixo = null, baixoPc = null}) {
 	audio();
 	const passoDur = (60 / bpmQ) * (g.ciclo / g.passos);
 	const prog = !soAgudos && progressao ? parseProgressao(progressao, temposPorCompasso(g.compasso)) : null;
@@ -136,6 +145,15 @@ export function cicloGroove(g, t, {bpmQ, soAgudos = false, progressao = null, ci
 			const ch = g.comp?.[k];
 			if (ch && ch !== '.') acorde(p.acorde, ts, passoDur * 3, VEL[ch] ?? 0.7, g.teclado);
 			else if (!g.comp && Math.abs((tempoAbs % totalProg) - p.inicio) < 1e-6) acorde(p.acorde, ts, 1.2, 0.8, g.teclado);
+		}
+		if (acordeFixo && !soAgudos) {
+			const ch = g.comp?.[k];
+			if (ch && ch !== '.') acorde(acordeFixo, ts, passoDur * 3, VEL[ch] ?? 0.7, g.teclado);
+			else if (!g.comp && k === 0) acorde(acordeFixo, ts, passoDur * g.passos * 0.9, 0.8, g.teclado);
+		}
+		if (baixoPc != null && !soAgudos) {
+			const cb = g.baixo?.[k];
+			if (cb && cb !== '.') notaBaixo(28 + ((baixoPc - 4 + 12) % 12), ts, passoDur * 2.5, {acento: cb === 'X', acustico: g.baixoAcustico});
 		}
 	}
 	destInstr = undefined;
@@ -288,10 +306,11 @@ export function tocarGroove(groove, {bpm, progressao, baixo = 'nenhum', linhaWal
 }
 
 // Toca uma lista de eventos (o modelo do drill). Devolve o instante do tempo 1 do compasso 1.
-export function tocarEventos(eventos, {bpm, contagem = 1, tempos = 4, clickModo = 'normal', comBaixo = true, comClick = true, voltas = 1}) {
+// inicioEm: instante exato (contexto) do tempo 1 (para emendar voltas do treino sem buraco)
+export function tocarEventos(eventos, {bpm, contagem = 1, tempos = 4, clickModo = 'normal', comBaixo = true, comClick = true, voltas = 1, inicioEm = null}) {
 	audio();
 	const s = 60 / bpm;
-	const inicio = ctx.currentTime + 0.15 + contagem * tempos * s;
+	const inicio = inicioEm ?? ctx.currentTime + 0.15 + contagem * tempos * s;
 	for (let c = 0; c < contagem * Math.ceil(tempos); c++) click(inicio - (contagem * tempos - c) * s, c % Math.ceil(tempos) === 0 ? 1 : 0.6);
 	const total = eventos.length ? eventos[eventos.length - 1].t + eventos[eventos.length - 1].d : 0;
 	if (comClick) {
@@ -334,11 +353,18 @@ class Gravador extends AudioWorkletProcessor {
 registerProcessor('gravador', Gravador);`;
 let workletPronto = null;
 
+// preferencias.entrada: deviceId escolhido (interface USB); vazio = microfone padrão do aparelho
 export async function abrirMicrofone() {
 	audio();
-	const stream = await navigator.mediaDevices.getUserMedia({
-		audio: {echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1},
-	});
+	const base = {echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1};
+	let stream;
+	try {
+		stream = await navigator.mediaDevices.getUserMedia({audio: preferencias.entrada ? {...base, deviceId: {exact: preferencias.entrada}} : base});
+	} catch (e) {
+		// a interface escolhida não está ligada: cai para o microfone padrão
+		if (!preferencias.entrada || e.name === 'NotAllowedError') throw e;
+		stream = await navigator.mediaDevices.getUserMedia({audio: base});
+	}
 	if (!workletPronto) {
 		const url = URL.createObjectURL(new Blob([WORKLET], {type: 'application/javascript'}));
 		workletPronto = ctx.audioWorklet.addModule(url);

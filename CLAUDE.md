@@ -48,6 +48,10 @@ opinião, seja crítico. Respostas curtas.
 6. **O progresso do aluno mora no celular.** Nunca peça para limpar dados do navegador. Mudança de
    programa preserva os ids dos drills que já existem; drill novo, id novo.
 7. **Lição aprendida vai para `metodo/erros-e-licoes.md`.**
+8. **Ao fim de toda sessão que mudou arquivos: commit em `main`, `git push` e `node scripts/backup.mjs`.**
+   Nada fica só no editor, só na nuvem de uma ferramenta ou só no site publicado (`CONTINUIDADE.md`).
+9. **Mudou o formato do estado do aluno: suba `VERSAO` em `estado.js` e escreva a migração.** O
+   progresso de quem já usa nunca pode quebrar.
 
 ## Pastas
 
@@ -55,7 +59,11 @@ opinião, seja crítico. Respostas curtas.
 app/                 o app (PWA): index.html, js/, programa/, icones/, sw.js
 app/programa/        programa.json (módulos e drills) e grooves.json
 app/js/              musica.js (notação, geradores), analise.js (avaliação), audio.js, estado.js, main.js, tab.js,
-                     ritmo.js (jogos de groove), groove-ui.js, professor.js, frases.js, harmonia.js, treinador.js
+                     ritmo.js (jogos de groove), groove-ui.js, professor.js, frases.js, harmonia.js, treinador.js,
+                     progmus.js (harmonia nas músicas)
+app/programa/        também repertorio.json (tirar de ouvido) e progressoes.json (harmonia nas músicas)
+docs/                ROTEIRO-COMERCIAL.md (caminho até multiusuário e assinatura)
+CONTINUIDADE.md      onde o projeto existe, como restaurar, como nunca perder o acesso
 metodo/              como o curso funciona, formato do drill, como a avaliação mede
 entrada/             o aluno solta aqui o backup exportado e áudios para transcrever
 relatorios/          o que /revisar escreve, um arquivo por data
@@ -76,6 +84,7 @@ node scripts/preparar-sons.mjs       # baixa e prepara os sons reais em app/sons
 node scripts/conferir-repertorio.mjs # confere os vídeos oficiais do repertório no YouTube (precisa de internet)
 node scripts/empacotar.mjs           # gera dist/ com nova versão do cache offline
 node scripts/publicar.mjs            # empacota e envia para o GitHub Pages (celular atualiza sozinho)
+node scripts/backup.mjs              # repositório inteiro (.bundle) + dados fora do git (.zip) em ..\Baixo-Avancado-backups
 ```
 
 ## Publicação

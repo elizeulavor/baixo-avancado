@@ -311,12 +311,53 @@ function perguntaModo(faixa, dif, ctx) {
 }
 
 // ---------- som ----------
-export const GRUPOS = ['piano', 'rhodes', 'baixo', 'click', 'bateria'];
+export const GRUPOS = ['piano', 'rhodes', 'baixo', 'click', 'bateria', 'acustico'];
 const raizGrave = (pc) => 28 + ((pc - 4 + 12) % 12); // E1 a D#2
 
 // Toca orientador (se pedido) + pausa + alvo. timbre: piano | rhodes | banda. Devolve o fim.
+// ---------- com groove: a progressão tocada por uma banda no estilo dela ----------
+let grooves = [];
+export const usarGrooves = (g) => (grooves = g ?? []);
+const GROOVE_DO_ESTILO = {
+	'básica': 'pop', pop: 'pop', 'doo-wop': 'seisoito', rock: 'rock', 'blues/gospel': 'gospel', 'jazz (turnaround)': 'jazz2', 'ii-V-I': 'jazz2',
+	gospel: 'gospel', jazz: 'jazz2', 'J-pop': 'pop', 'dominante secundária': 'disco', 'pop/soul': 'neosoul', coral: 'gospel', balada: 'pop',
+	'choro/MPB': 'partidoalto', samba: 'samba', soul: 'neosoul', 'rock mixolídio': 'rock', 'rock/games': 'rock', 'pop menor': 'pop',
+	'menor harmônico': 'neosoul', andaluz: 'reggae', 'jazz (SubV)': 'jazz2', backdoor: 'neosoul', 'dórico': 'funk', 'ii-V-i menor': 'neosoul',
+};
+export function grooveDoEstilo(estilo) {
+	const id = GROOVE_DO_ESTILO[estilo] ?? sorteia(['pop', 'rock', 'gospel', 'neosoul', 'samba', 'funk', 'disco']); // sorteia antes de procurar
+	return grooves.find((g) => g.id === id);
+}
+function tocarComGroove(p, {so, orientar}) {
+	const ctx = A.audio();
+	let t = ctx.currentTime + 0.12;
+	if (so !== 'alvo' && orientar) {
+		const dC = 0.55;
+		for (const ac of p.orientador) {
+			A.acorde(ac, t, dC * 0.95, 0.8, 'piano');
+			A.notaBaixo(raizGrave(ac.baixo), t, dC * 0.9, {acento: true});
+			t += dC;
+		}
+		t += 0.4;
+	}
+	const g = p.grooveTocado ??= grooveDoEstilo(p.estilo);
+	if (!g) return tocar(p, {so, timbre: 'banda', orientar: false});
+	const bpmQ = g.bpm * (g.pulso ?? 1) * 0.92;
+	const dur = (60 / bpmQ) * g.ciclo;
+	p.alvo.forEach((ac, k) => {
+		A.cicloGroove(g, t, {bpmQ, acorde: ac, baixoPc: ac.baixo, ciclo: k});
+		t += dur;
+	});
+	// o último acorde soa até o fim, com o prato
+	A.INSTR.crash(t, 0.7);
+	A.acorde(p.alvo.at(-1), t, 1.4, 0.7, g.teclado);
+	A.notaBaixo(raizGrave(p.alvo.at(-1).baixo), t, 1.4, {acento: true});
+	return t + 1.5;
+}
+
 export function tocar(p, {so = 'tudo', timbre = 'piano', orientar = true} = {}) {
 	if (p.tocarProprio) return p.tocarProprio({timbre});
+	if (timbre === 'groove' && p.alvo.length) return tocarComGroove(p, {so, orientar});
 	const ctx = A.audio();
 	const dA = p.tempo;
 	const dC = Math.min(0.75, dA * 0.6);

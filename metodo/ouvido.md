@@ -61,6 +61,23 @@ a base. Os três jogos usam o mesmo motor (rating, Rush, Survive, seus erros, de
 
 O que não veio: ranking (o app é de uma pessoa só) e dicionário de escalas (há no braço).
 
+## Harmonia com ritmo e nas músicas (2026-10-18)
+
+- **Timbre "groove"**: a progressão da pergunta é tocada por uma banda no estilo dela (pop, rock,
+  gospel, neo-soul, samba, partido alto, funk, reggae, jazz em 2…), um acorde por compasso, com o
+  baixo no padrão do groove tocando a raiz (ou a nota da inversão). No automático entra a partir
+  de 1300 de rating. Ajuste em Ouvido › Ajustes.
+- **Harmonia nas músicas** (`app/programa/progressoes.json`, tela `#progmus`): 18 músicas cuja
+  progressão volta o tempo todo, em 4 níveis (I–V–vi–IV e parentes; outras ordens; menor, andaluz,
+  dórico e empréstimo; jazz e bossa). O trecho toca no vídeo oficial (player do YouTube), e a
+  pergunta é qual sequência de graus está tocando. As opções erradas são a progressão de outra
+  música do mesmo tamanho ou variações (um grau trocado, dois de lugar). Depois da resposta: cifras,
+  tom e explicação, e a progressão no piano ou com groove para comparar.
+- Só entram graus e cifras (análise harmônica, não transcrição). Tom e cifras ficam em branco quando
+  não há certeza do tom original da gravação (Every Breath You Take, Hit the Road Jack, Ipanema,
+  Fly Me to the Moon, Just the Two of Us): vale o grau.
+- Vídeos: `node scripts/conferir-repertorio.mjs` confere repertório e progressões juntos.
+
 ## Harmonia funcional, versão 1 (histórico)
 
 Quatro jogos, três níveis cada, piano e baixo gravados, tom sorteado a cada pergunta.

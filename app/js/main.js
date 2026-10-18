@@ -4,11 +4,12 @@
 import * as E from './estado.js';
 import * as A from './audio.js';
 import * as J from './jogo.js';
-import {avaliar, medirLatencia, refinarLatencia, alturaAoVivo} from './analise.js';
+import {avaliar, medirLatencia, refinarLatencia, alturaAoVivo, detectarAtaques} from './analise.js';
 import {renderTab} from './tab.js';
 import * as Hm from './harmonia.js';
 import * as T from './treinador.js';
 import * as G from './groove-ui.js';
+import * as Pm from './progmus.js';
 import * as P from './professor.js';
 import {fraseDoDia} from './frases.js';
 import {parseProgressao, parseLinha, conjuntoEscala, freqMidi, nomeMidi, nomePc, CORDAS, AFINACOES, gerarWalking, NOMES, ESCALAS} from './musica.js';
@@ -85,6 +86,74 @@ function modal(html, aoFechar) {
 	};
 	document.body.appendChild(m);
 }
+// ---------- saída de áudio: como o aluno está ouvindo ----------
+const DICA_SAIDA = {
+	alto: 'O microfone ouve o baixo (amp ou baixo acústico) e o clique. A latência se acha sozinha no clique.',
+	bluetooth: 'O som chega 150-300 ms atrasado e o app desconta a latência calibrada. O microfone do celular precisa ouvir o baixo: com o fone ligado no amp e o som do amp desligado, ele não ouve nada (use USB, se o seu amp tiver).',
+	fone: 'Fone com fio no celular: o microfone ouve só o baixo, e o groove toca com bateria completa.',
+	usb: 'Amp ou interface com áudio USB (por exemplo NUX Mighty Plug Pro ou Mighty Space): cabo USB-C no celular, o baixo entra direto e o fone fica no amp. A medição mais limpa.',
+};
+function textoSaida() {
+	const s = E.saida(), l = E.latencia();
+	const nome = E.SAIDAS[s].curto;
+	if (l == null) return s === 'alto' ? `${nome}: sem calibração ainda (o app tenta achar o clique na gravação). <a href="#ferramentas/calibrar">Calibrar</a>` : `<b>${nome} sem calibração</b>: o app não sabe o atraso do som. <a href="#ferramentas/calibrar">Calibrar tocando junto (1 min)</a>`;
+	return `${nome} · latência ${Math.round(l * 1000)} ms. 1 compasso de contagem.`;
+}
+function chipSaida() {
+	const s = E.SAIDAS[E.saida()];
+	return `<button class="chip-saida" data-chip-saida type="button">${s.ic} ${s.curto} ▾</button>`;
+}
+// abre a escolha; resolve com true quando a saída mudou
+function escolherSaida({titulo = 'Como você está ouvindo?', confirmar = false} = {}) {
+	return new Promise((ok) => {
+		const m = document.createElement('div');
+		m.className = 'modal';
+		const atual = E.saida();
+		m.innerHTML = `<div class="caixa folha-saida"><p class="peq">SAÍDA DE SOM</p><h3>${titulo}</h3>
+			${Object.entries(E.SAIDAS).map(([k, v]) => {
+				const l = E.estado.config.latencias?.[k] ?? (k === 'alto' ? E.estado.config.latencia : null);
+				return `<button class="opcao-saida ${k === atual ? 'atual' : ''}" data-s="${k}"><b>${v.ic} ${v.nome}</b><small>${DICA_SAIDA[k]}</small><i>${l != null ? `calibrado: ${Math.round(l * 1000)} ms` : k === 'alto' ? 'acha a latência sozinho' : 'precisa calibrar'}</i></button>`;
+			}).join('')}
+			<label class="entrada-audio">Entrada <select id="s-entrada"><option value="">Microfone do celular (padrão)</option></select></label>
+			<p class="peq">A interface USB aparece na lista depois que o microfone foi liberado uma vez.</p>
+			${confirmar ? '' : '<button class="fantasma-btn" data-fechar>Fechar</button>'}</div>`;
+		document.body.appendChild(m);
+		A.entradasDeAudio().then((ls) => {
+			const sel = m.querySelector('#s-entrada');
+			ls.filter((d) => d.deviceId && d.deviceId !== 'default').forEach((d, i) => sel.insertAdjacentHTML('beforeend', `<option value="${esc(d.deviceId)}" ${E.estado.config.entrada === d.deviceId ? 'selected' : ''}>${esc(d.label || `Entrada ${i + 1}`)}</option>`));
+		});
+		const fechar = (mudou) => {
+			const sel = m.querySelector('#s-entrada');
+			const entradaMudou = (E.estado.config.entrada ?? '') !== sel.value;
+			E.estado.config.entrada = sel.value;
+			A.preferencias.entrada = sel.value;
+			E.salvar();
+			m.remove();
+			ok(mudou || entradaMudou);
+		};
+		m.querySelectorAll('[data-s]').forEach((b) => (b.onclick = () => {
+			const antes = E.saida();
+			E.estado.config.saida = b.dataset.s;
+			E.estado.config.saidaConfirmada = E.hoje();
+			fechar(antes !== b.dataset.s);
+		}));
+		m.querySelector('[data-fechar]')?.addEventListener('click', () => fechar(false));
+	});
+}
+// uma vez por dia, antes do primeiro take: confirma a saída (o aluno alterna Bluetooth e alto-falante)
+async function confirmarSaida() {
+	if (E.estado.config.saidaConfirmada === E.hoje()) return {mudou: false};
+	const mudou = await escolherSaida({titulo: 'Antes de gravar: como você está ouvindo hoje?', confirmar: true});
+	if (E.saida() !== 'alto' && E.latencia() == null) toast('📡', 'Calibre esta saída', 'Ferramentas › Calibrar › Tocando junto. Sem isso o app não mede pressa/atraso.');
+	return {mudou};
+}
+function ligarChipSaida(aoMudar) {
+	$$('[data-chip-saida]').forEach((b) => (b.onclick = async () => {
+		await escolherSaida();
+		aoMudar?.();
+	}));
+}
+
 // Comemora o que o jogo devolveu: som de instrumento real, confete, toasts e modal de nível.
 function comemorar(eventos, aprovado) {
 	if (aprovado) {
@@ -125,14 +194,14 @@ function comemorar(eventos, aprovado) {
 }
 
 // ---------- roteador ----------
-const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, relatorio: telaRelatorio, ferramentas: telaFerramentas, perfil: telaPerfil, groove: (a, q) => G.telaGroove(a, q), gjogo: (a, q) => G.telaJogoGroove(a, q)};
+const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, relatorio: telaRelatorio, ferramentas: telaFerramentas, perfil: telaPerfil, groove: (a, q) => G.telaGroove(a, q), gjogo: (a, q) => G.telaJogoGroove(a, q), progmus: (a) => Pm.tela(a)};
 function ir() {
 	limpar();
 	const [caminho, q = ''] = (location.hash.slice(1) || 'hoje').split('?');
 	const [nome, arg] = caminho.split('/');
 	const params = new URLSearchParams(q);
 	(rotas[nome] ?? telaHoje)(arg, params);
-	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', relatorio: 'hoje', musica: 'ouvido', harmonia: 'ouvido', gjogo: 'groove'}[nome] ?? nome;
+	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', relatorio: 'hoje', musica: 'ouvido', harmonia: 'ouvido', gjogo: 'groove', progmus: 'ouvido'}[nome] ?? nome;
 	$$('nav a').forEach((a) => a.classList.toggle('ativo', a.getAttribute('href') === `#${aba}`));
 	window.scrollTo(0, 0);
 }
@@ -142,7 +211,7 @@ window.addEventListener('hashchange', ir);
 let ultimaPausa = 0;
 setInterval(() => {
 	const r = location.hash.slice(1).split(/[/?]/)[0];
-	if (document.visibilityState !== 'visible' || !['drill', 'ferramentas', 'prova', 'desafio', 'gjogo', 'harmonia', 'musica'].includes(r)) return;
+	if (document.visibilityState !== 'visible' || !['drill', 'ferramentas', 'prova', 'desafio', 'gjogo', 'harmonia', 'musica', 'progmus'].includes(r)) return;
 	E.adicionarMinutos(0.5);
 	const m = E.estado.sessoes[E.hoje()] ?? 0;
 	if (Math.floor(m / 30) > ultimaPausa && m >= 30) {
@@ -228,7 +297,8 @@ function telaHoje() {
 	</div>
 	${cartaoTreinador()}
 	<div class="semana">${semana}</div>
-	${E.estado.config.latencia == null ? `<a class="aviso" href="#ferramentas/calibrar"><b>Calibre antes do primeiro take (30 s).</b> Sem isso o app mede a regularidade, mas não sabe se você está adiantado ou atrasado.</a>` : ''}
+	${E.latencia() == null ? `<a class="aviso" href="#ferramentas/calibrar"><b>Calibre ${E.saida() === 'alto' ? 'antes do primeiro take (30 s)' : `o ${E.SAIDAS[E.saida()].curto} (1 min, tocando junto)`}.</b> Sem isso o app mede a regularidade, mas não sabe se você está adiantado ou atrasado.</a>` : ''}
+	${precisaBackup() ? `<button class="aviso aviso-backup" id="bk-hoje"><b>💾 Seu progresso só existe neste celular.</b> ${E.estado.config.ultimoBackup ? `Último backup em ${E.estado.config.ultimoBackup}.` : 'Ainda sem backup.'} Toque para salvar no Google Drive, e-mail ou WhatsApp (1 toque).</button>` : ''}
 	<h2>Etapas</h2>
 	<div class="missoes">${plano.itens.map((i) => cartaoMissao(i, plano, prox)).join('')}</div>
 	<button class="fantasma-btn" id="refazer" style="width:100%">Sortear outro plano para hoje</button>`;
@@ -237,6 +307,10 @@ function telaHoje() {
 		if (!f.feitos) P.dizer(P.inicioTreino(plano, seq), 'info');
 		seguirTreino();
 	};
+	$$('#bk-hoje').forEach((b) => (b.onclick = async () => {
+		await fazerBackup();
+		telaHoje();
+	}));
 	$('#refazer').onclick = () => {
 		E.refazerPlano();
 		telaHoje();
@@ -369,13 +443,15 @@ function telaDrill(id, q) {
 	</div>
 	<div id="tab" class="tab-caixa"></div>
 	<div class="carregando" id="carga" hidden><div></div></div>
+	<div class="linha-saida">${chipSaida()}<span class="peq" id="txt-saida">${textoSaida()}</span></div>
 	<div class="estudio">
 		<button id="modelo">▶ Modelo</button>
 		<button class="gravar" id="gravar"><span id="rotulo-gravar">GRAVAR</span></button>
 		<button id="lento">▶ 70%</button>
 	</div>
+	<div class="botoes linha-treino"><button id="treinar">🔁 Treinar sem gravar</button><label class="mini-chave"><input type="checkbox" id="tr-modelo"> baixo do modelo junto</label></div>
 	<div class="nivel-mic"><div id="nivel"></div></div>
-	<p class="status-take" id="status">${E.estado.config.latencia == null ? 'Sem calibração: não mede pressa/atraso. <a href="#ferramentas/calibrar">Calibrar</a>' : 'Alto-falante ligado, sem fone Bluetooth. 1 compasso de contagem.'}</p>
+	<p class="status-take" id="status">Treinar: o clique em loop, no BPM escolhido, sem avaliar. Gravar: contagem, take e nota.</p>
 	<div id="resultado"></div>
 	<div id="historico"></div>`;
 	const desenhar = () => {
@@ -442,9 +518,48 @@ function telaDrill(id, q) {
 	$('#modelo').onclick = () => tocarModelo(1);
 	$('#lento').onclick = () => tocarModelo(0.7);
 	$('#gravar').onclick = async () => {
+		pararTreino();
+		await confirmarSaida();
+		$('#txt-saida').innerHTML = textoSaida();
 		await pronto;
 		gravarTake(d, eventos, tempos, bpm, cursor, {sessao, modProva});
 	};
+	const reSaida = () => {
+		$('.linha-saida').innerHTML = `${chipSaida()}<span class="peq" id="txt-saida">${textoSaida()}</span>`;
+		ligarChipSaida(reSaida);
+	};
+	ligarChipSaida(reSaida);
+	// treino sem gravar: o exercício em loop com o clique do drill (e o baixo do modelo, se marcado);
+	// cada volta começa exatamente no fim da anterior; o BPM novo vale na volta seguinte
+	let treino = null;
+	function pararTreino() {
+		if (!treino) return;
+		treino.ativo = false;
+		treino.timers.forEach(clearTimeout);
+		treino = null;
+		const b = $('#treinar');
+		if (b) {
+			b.textContent = '🔁 Treinar sem gravar';
+			b.classList.remove('ativo-treino');
+		}
+	}
+	$('#treinar').onclick = async () => {
+		if (treino) return pararTreino();
+		await pronto;
+		treino = {ativo: true, timers: []};
+		const t = treino;
+		$('#treinar').textContent = '■ Parar o treino';
+		$('#treinar').classList.add('ativo-treino');
+		const volta = (inicioEm) => {
+			if (!t.ativo) return;
+			const r = A.tocarEventos(eventos, {bpm, tempos, clickModo: d.click === 'gap' ? 'normal' : d.click, comBaixo: $('#tr-modelo')?.checked, contagem: inicioEm == null ? 1 : 0, voltas: 1, inicioEm});
+			if (inicioEm == null) mostrarContagem(Array.from({length: Math.ceil(tempos)}, (_, k) => ({t: r.inicio - (Math.ceil(tempos) - k) * (60 / bpm), n: k + 1})));
+			cursor(r.inicio, bpm, 1);
+			t.timers.push(setTimeout(() => volta(r.fim), Math.max(0, (r.fim - A.agora() - 0.4) * 1000)));
+		};
+		volta(null);
+	};
+	parar.push(pararTreino);
 	historicoDrill(d);
 	if (ultimoResultado?.id === d.id && ultimoResultado.agora) {
 		mostrarResultado(ultimoResultado, d, {sessao, modProva});
@@ -583,10 +698,10 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 	st.textContent = 'Analisando tempo, notas, dinâmica e som…';
 	await espera(30);
 	const ctx = A.audio();
-	const palpite = E.estado.config.latencia ?? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) + 0.02;
+	const palpite = E.latencia() ?? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) + 0.02;
 	const refinada = refinarLatencia(take.dados, take.sr, take.inicioCtx, ag.cliques, palpite);
 	const lat = refinada ?? palpite;
-	const confiavel = refinada != null || E.estado.config.latencia != null;
+	const confiavel = refinada != null || E.latencia() != null;
 	const res = analisarTake(d, eventos, tempos, bpm, take, ag, lat, confiavel);
 	const takeId = `${Date.now()}`;
 	E.guardarTake({id: takeId, drill: d.id, bpm, sr: take.sr, dados: take.dados, data: E.hoje()});
@@ -830,7 +945,7 @@ function telaRelatorio() {
 	<div class="treinador">${foco.length ? foco.map((l) => `<${l.link ? `a href="${l.link}"` : 'div'} class="linha-t"><span class="ic-t">${l.ic}</span><span>${esc(l.txt)}${l.link ? ' <b class="seta-t">›</b>' : ''}</span></${l.link ? 'a' : 'div'}>`).join('') : '<div class="linha-t"><span class="ic-t">📏</span><span>Grave mais takes para eu enxergar tendências.</span></div>'}</div>
 	<p class="peq">Para uma análise completa com o Claude: Perfil › Exportar, salve em <code>entrada/</code> e peça <b>revisar</b>.</p>
 	<div class="botoes"><button id="exp-rel">Exportar agora</button><a class="botao principal" href="#hoje">Treinar</a></div>`;
-	$('#exp-rel').onclick = () => baixar(`baixo-progresso-${E.hoje()}.json`, E.exportar(), 'application/json');
+	$('#exp-rel').onclick = () => fazerBackup();
 	animar();
 }
 
@@ -863,6 +978,7 @@ function telaOuvido() {
 		<p class="sub">Foco: <b>${esc(mv.foco)}</b></p>
 		<a class="botao principal grande" href="#musica/${mv.id}">Tirar esta música · +${60 * mv.nivel} XP</a>
 	</div>` : '<div class="heroi"><h3>Repertório completo.</h3></div>'}
+	${Pm.cartaoOuvido()}
 	<h2>Harmonia funcional</h2>
 	${(() => {
 		const G = E.harmoniaGeral();
@@ -882,7 +998,7 @@ function telaOuvido() {
 		}).join('')}</div>
 		<details class="cartao ajustes-ouvido"><summary>⚙ Ajustes do ouvido</summary>
 			<div class="form">
-				<label>Timbre <select id="h-timbre">${[['auto', 'automático (varia com o nível)'], ['piano', 'piano'], ['rhodes', 'Rhodes'], ['banda', 'banda (bateria + Rhodes + baixo)']].map(([v, n]) => `<option value="${v}" ${G.timbre === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+				<label>Timbre <select id="h-timbre">${[['auto', 'automático (varia com o nível)'], ['piano', 'piano'], ['rhodes', 'Rhodes'], ['banda', 'banda (bateria + Rhodes + baixo)'], ['groove', 'groove do estilo (pop, rock, gospel, samba, jazz…)']].map(([v, n]) => `<option value="${v}" ${G.timbre === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
 				<label class="largo"><span><input type="checkbox" id="h-orientar" ${G.sempreOrientar ? 'checked' : ''}> Sempre tocar o orientador de tom (I IV V I)</span></label>
 				<label class="largo"><span><input type="checkbox" id="h-baixo" ${G.responderNoBaixo ? 'checked' : ''}> Responder tocando no baixo (completar, graus, inversões)</span></label>
 			</div></details>`;
@@ -1127,7 +1243,8 @@ function telaHarmonia(id, q) {
 		else el.innerHTML = `<div class="pontos-rodada">${Array.from({length: total}, (_, k) => `<i class="${k < i ? (resultados[k] ? 'f' : 'e') : ''}"></i>`).join('')}</div>`;
 	};
 	const resultados = [];
-	const timbre = (rating) => (G.timbre !== 'auto' ? G.timbre : rating < 1500 ? 'piano' : ['piano', 'rhodes', 'banda'][Math.floor(Math.random() * 3)]);
+	// automático: piano no começo; a partir de 1300, às vezes o groove do estilo; acima de 1500, sorteia tudo
+	const timbre = (rating) => (G.timbre !== 'auto' ? G.timbre : rating < 1300 ? 'piano' : rating < 1500 ? (Math.random() < 0.35 ? 'groove' : 'piano') : ['piano', 'rhodes', 'banda', 'groove', 'groove'][Math.floor(Math.random() * 5)]);
 	let timbreAtual = 'piano';
 	const tocar = (so) => {
 		if (!p) return;
@@ -1151,14 +1268,15 @@ function telaHarmonia(id, q) {
 		mesmoTom = trocou ? 1 : mesmoTom + 1;
 		p.jogo = jogo;
 		p.orientar = trocou || G.sempreOrientar || jogo === 'funcao';
-		timbreAtual = timbre(rating);
+		timbreAtual = p.semTom && timbre(rating) === 'groove' ? 'piano' : timbre(rating);
+		if (timbreAtual === 'groove') p.grooveTocado = Hm.grooveDoEstilo(p.estilo);
 		const noBaixo = Hm.JOGOS[jogo].soBaixo || (G.responderNoBaixo && Hm.JOGOS[jogo].baixo);
 		const previa = rating < 1300 && p.previa && !noBaixo;
 		const seqVisivel = jogo === 'completar'
 			? `<div class="progressao">${p.seqCompleta.map((g, k) => (p.slots.includes(k) ? `<div class="chip-grau vazio" data-s="${p.slots.indexOf(k)}">?</div>` : `<div class="chip-grau ${corF(p.opcoes.find((o) => o.id === g)?.f)}">${esc(g)}</div>`)).join('')}</div>`
 			: jogo === 'graus' || jogo === 'baixo' ? `<div class="progressao"><div class="chip-grau f-T">${p.modo === 'menor' ? 'i' : 'I'}</div>${p.slots.map((_, k) => `<div class="chip-grau vazio" data-s="${k}">?</div>`).join('')}</div>` : '';
 		$('#perg').innerHTML = `<div class="cartao centro">
-			<p class="peq">${ehModo ? `${Hm.JOGOS[jogo].nome} · ` : ''}${p.estilo ? `${esc(p.estilo)} · ` : ''}${p.semTom ? `a partir de ${p.tom}` : `tom de ${p.tom}${p.modo === 'menor' ? ' menor' : ''}`}${timbreAtual !== 'piano' ? ` · ${timbreAtual}` : ''}${trocou && i && !p.semTom ? ' · <b>tom novo</b>' : ''}</p>
+			<p class="peq">${ehModo ? `${Hm.JOGOS[jogo].nome} · ` : ''}${p.estilo ? `${esc(p.estilo)} · ` : ''}${p.semTom ? `a partir de ${p.tom}` : `tom de ${p.tom}${p.modo === 'menor' ? ' menor' : ''}`}${timbreAtual !== 'piano' ? ` · ${timbreAtual === 'groove' ? `groove ${esc(p.grooveTocado?.nome ?? '')}` : timbreAtual}` : ''}${trocou && i && !p.semTom ? ' · <b>tom novo</b>' : ''}</p>
 			<div class="botoes"><button class="principal" id="ouvir">▶ Ouvir</button>${p.semTom ? '' : '<button id="so-alvo">↻ Só a pergunta</button><button id="orientar" title="Orientador de tom: I IV V I">🎯 Tom</button>'}</div>
 			${seqVisivel}
 		</div>
@@ -1705,60 +1823,106 @@ function ferrLivre(el) {
 		st.textContent = 'Analisando…';
 		await espera(30);
 		const ctx = A.audio();
-		const palpite = E.estado.config.latencia ?? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) + 0.02;
+		const palpite = E.latencia() ?? (ctx.outputLatency || 0) + (ctx.baseLatency || 0) + 0.02;
 		const refinada = refinarLatencia(take.dados, take.sr, take.inicioCtx, ag.cliques, palpite);
 		const lat = refinada ?? palpite;
-		const res = analisarTake(d, eventos, 4, bpm, take, ag, lat, refinada != null || E.estado.config.latencia != null);
+		const res = analisarTake(d, eventos, 4, bpm, take, ag, lat, refinada != null || E.latencia() != null);
 		const takeId = `${Date.now()}`;
 		E.guardarTake({id: takeId, drill: 'livre', bpm, sr: take.sr, dados: take.dados, data: E.hoje()});
 		st.textContent = '';
-		mostrarResultado({res, msg: `Gravação livre a ${bpm} BPM.`, takeId, eventos: [], lat, refinada, confiavel: refinada != null || E.estado.config.latencia != null}, d, {});
+		mostrarResultado({res, msg: `Gravação livre a ${bpm} BPM.`, takeId, eventos: [], lat, refinada, confiavel: refinada != null || E.latencia() != null}, d, {});
 	};
 }
 
 function ferrCalibrar(el) {
-	const c = E.estado.config;
-	el.innerHTML = `<div class="cartao"><p>Mede quanto o som leva do alto-falante até o microfone. Com isso o app sabe se você está <b>adiantado ou atrasado</b>, e não só se está regular.</p>
-	<ol class="sub"><li>Tire o fone. Volume em ~70%.</li><li>Ambiente quieto, celular parado.</li><li>Toque em Calibrar e fique em silêncio por 6 s.</li></ol>
-	<div class="info">${c.latencia != null ? `Calibrado: ${(c.latencia * 1000).toFixed(0)} ms em ${c.latenciaData}.` : 'Ainda não calibrado.'}</div></div>
-	<div class="botoes"><button class="principal grande" id="cal">Calibrar</button></div><p class="status-take" id="cst"></p>
-	<p class="peq">Nos takes o app também procura o clique dentro da gravação e se ajusta sozinho quando consegue ouvi-lo. Com fone vale esta calibração. Fone Bluetooth atrasa 150-300 ms e varia: não use.</p>`;
-	$('#cal').onclick = async () => {
-		const st = $('#cst');
+	const s = E.saida();
+	const l = E.latencia();
+	const pelaVoz = s === 'fone' || s === 'usb'; // o microfone não ouve o clique: só tocando junto
+	el.innerHTML = `<div class="linha-saida">${chipSaida()}<span class="peq">cada saída guarda a sua latência</span></div>
+	<div class="info">${l != null ? `${E.SAIDAS[s].curto}: <b>${Math.round(l * 1000)} ms</b>, calibrado em ${E.estado.config.latenciaData ?? '–'}.` : `${E.SAIDAS[s].curto}: ainda não calibrado.`}</div>
+	<div class="cartao"><h3>Tocando junto</h3><p class="sub">Vale para qualquer saída, inclusive Bluetooth, fone no amp e USB. O app toca 4 cliques de contagem e mais 16; você toca uma nota (A solta) junto com cada um dos 16, como num take. A diferença entre o clique e a sua nota, como chega ao microfone, é a latência que você sente.</p>
+		<div class="botoes"><button class="principal grande" id="cal-junto">🎸 Calibrar tocando junto</button></div></div>
+	${pelaVoz ? '' : `<div class="cartao"><h3>Pelo clique</h3><p class="sub">Só alto-falante (do celular ou do amp por Bluetooth): o microfone ouve o próprio clique. Silêncio por 6 s, volume em ~70%.</p>
+		<div class="botoes"><button id="cal">Calibrar pelo clique</button></div></div>`}
+	<p class="status-take" id="cst"></p>
+	<p class="peq">Nos takes com alto-falante o app também acha o clique dentro da gravação e se ajusta sozinho. Bluetooth varia de um aparelho para outro: calibre de novo se trocar de caixa, fone ou amp.</p>`;
+	ligarChipSaida(() => ferrCalibrar(el));
+	const st = $('#cst');
+	const abrir = async () => {
 		await carregarCom(A.GRUPOS.click);
-		let stream;
 		try {
-			stream = await A.abrirMicrofone();
+			return await A.abrirMicrofone();
 		} catch {
 			st.textContent = 'Microfone negado.';
-			return;
+			return null;
 		}
+	};
+	const salvar = (lat, txt) => {
+		E.estado.config.saidaConfirmada = E.hoje();
+		E.guardarLatencia(lat);
+		ferrCalibrar(el);
+		$('#cst').textContent = txt;
+		A.somUI('aprovado');
+	};
+	$$('#cal').forEach((b) => (b.onclick = async () => {
+		const stream = await abrir();
+		if (!stream) return;
 		const rec = A.gravar(stream);
 		await espera(300);
 		const t0 = A.agora() + 0.3;
-		const cliques = Array.from({length: 10}, (_, i) => t0 + i * 0.5);
+		const cliques = Array.from({length: 10}, (_, i) => t0 + i * 0.6);
 		const vol = A.volumes.click;
 		A.volumes.click = 1.2;
 		cliques.forEach((t) => A.click(t, 1));
 		st.textContent = 'Ouvindo…';
-		await espera((cliques.at(-1) - A.agora() + 0.7) * 1000);
+		await espera((cliques.at(-1) - A.agora() + 0.8) * 1000);
 		A.volumes.click = vol;
 		const take = await rec.parar();
 		A.fecharMicrofone(stream);
 		const r = take && medirLatencia(take.dados, take.sr, take.inicioCtx, cliques);
 		if (!r || r.espalhamento > 6) {
-			st.textContent = r ? `Medição instável (±${r.espalhamento.toFixed(1)} ms). Aumente o volume e repita.` : 'Não ouvi os cliques. Aumente o volume, tire o fone e repita.';
+			st.textContent = r ? `Medição instável (±${r.espalhamento.toFixed(1)} ms). Aumente o volume e repita, ou calibre tocando junto.` : 'Não ouvi os cliques. Aumente o volume ou calibre tocando junto.';
 			return;
 		}
-		c.latencia = r.latencia;
-		c.latenciaData = E.hoje();
-		E.salvar();
-		ferrCalibrar(el);
-		$('#cst').textContent = `Latência: ${(r.latencia * 1000).toFixed(0)} ms (±${r.espalhamento.toFixed(1)} ms, ${r.n} cliques). Salvo.`;
-		A.somUI('aprovado');
+		salvar(r.latencia, `Latência: ${(r.latencia * 1000).toFixed(0)} ms (±${r.espalhamento.toFixed(1)} ms, ${r.n} cliques). Salvo para ${E.SAIDAS[s].curto}.`);
+	}));
+	$('#cal-junto').onclick = async () => {
+		const stream = await abrir();
+		if (!stream) return;
+		P.microfone(true);
+		const rec = A.gravar(stream);
+		await espera(300);
+		const bpm = 80, sb = 60 / bpm;
+		const t0 = A.agora() + 0.4;
+		const conta = Array.from({length: 4}, (_, i) => t0 + i * sb);
+		const cliques = Array.from({length: 16}, (_, i) => t0 + (4 + i) * sb);
+		conta.forEach((t, i) => A.click(t, i ? 0.6 : 1));
+		cliques.forEach((t, i) => A.click(t, i % 4 ? 0.6 : 1));
+		mostrarContagem(conta.map((t, i) => ({t, n: i + 1})));
+		st.textContent = 'Toque uma nota junto com cada clique…';
+		await espera((cliques.at(-1) - A.agora() + 0.9) * 1000);
+		const take = await rec.parar();
+		A.fecharMicrofone(stream);
+		P.microfone(false);
+		if (!take) return;
+		// a nota do aluno: primeiro ataque entre 80 ms antes e 500 ms depois de cada clique
+		const ats = detectarAtaques(take.dados, take.sr).ataques.map((a) => a.t + take.inicioCtx);
+		const difs = cliques.map((c) => ats.find((t) => t > c - 0.08 && t < c + 0.5)).map((t, i) => (t == null ? null : t - cliques[i])).filter((v) => v != null);
+		if (difs.length < 10) {
+			st.textContent = `Só ouvi ${difs.length} das 16 notas. Aproxime o celular do amp (ou confira a entrada USB) e repita.`;
+			return;
+		}
+		const ord = [...difs].sort((a, b) => a - b);
+		const med = ord[Math.floor(ord.length / 2)];
+		const bons = difs.filter((d) => Math.abs(d - med) < 0.04);
+		const dp = Math.sqrt(bons.reduce((a, d) => a + (d - med) ** 2, 0) / Math.max(1, bons.length - 1)) * 1000;
+		if (bons.length < 10 || dp > 18) {
+			st.textContent = `Instável (±${dp.toFixed(0)} ms entre as notas). Toque mais junto do clique, sem antecipar, e repita.`;
+			return;
+		}
+		salvar(med, `Latência: ${Math.round(med * 1000)} ms (±${dp.toFixed(0)} ms em ${bons.length} notas). Salvo para ${E.SAIDAS[s].curto}.`);
 	};
 }
-
 // ---------- Perfil ----------
 function radarSvg(dados) {
 	const w = 300, c = w / 2, r = 104;
@@ -1827,7 +1991,9 @@ function telaPerfil() {
 		<p class="peq">Evento que repete nos dias marcados, com alarme. iPhone: abra e "Adicionar todos". Android: abra com o Google Agenda.</p>
 		<h2>Backup</h2>
 		<p class="peq">O progresso mora neste aparelho. Exporte de vez em quando; o arquivo também serve para o Claude analisar (pasta <code>entrada/</code>).</p>
-		<div class="botoes"><button id="exp">Exportar</button><label class="botao botao-arquivo">Importar<input type="file" id="imp" accept=".json,application/json"></label></div>
+		<div class="botoes"><button class="principal" id="exp">💾 Backup (1 toque)</button><label class="botao botao-arquivo">Importar<input type="file" id="imp" accept=".json,application/json"></label></div>
+		<p class="peq">${E.estado.config.ultimoBackup ? `Último backup: ${E.estado.config.ultimoBackup}.` : 'Nenhum backup ainda.'} O app também guarda sozinho um ponto de restauração por dia (os últimos 14), para o caso de erro.</p>
+		<div id="pontos"></div>
 		<div class="botoes"><button id="instalar" hidden>Instalar o app</button></div>
 		<p class="peq">Radix · baixo avançado. Sons: gravações reais (Karoryfer, Versilian, Project16, jRhodes); créditos em sons/CREDITOS.md.</p>
 	</details>`;
@@ -1856,7 +2022,21 @@ function telaPerfil() {
 		if (sel && P.listaVozes().length) sel.insertAdjacentHTML('beforeend', P.listaVozes().map((v) => `<option ${c.vozProfessor === v.name ? 'selected' : ''}>${esc(v.name)}</option>`).join(''));
 	}, 800);
 	$('#ics').onclick = () => baixar('lembrete-baixo.ics', E.arquivoLembrete(), 'text/calendar');
-	$('#exp').onclick = () => baixar(`baixo-progresso-${E.hoje()}.json`, E.exportar(), 'application/json');
+	$('#exp').onclick = async () => {
+		if (await fazerBackup()) telaPerfil();
+	};
+	E.pontos().then((ps) => {
+		const el = $('#pontos');
+		if (!el || !ps.length) return;
+		el.innerHTML = `<details class="cartao"><summary class="peq">Pontos de restauração (${ps.length})</summary>${ps.map((p) => `<div class="drill-linha"><span class="est">↺</span><span>${p.data}</span><button class="mini" data-ponto="${p.data}">Voltar para este dia</button></div>`).join('')}</details>`;
+		$$('[data-ponto]').forEach((b) => (b.onclick = () => {
+			const p = ps.find((x) => x.data === b.dataset.ponto);
+			if (!p || !confirm(`Voltar o progresso para ${p.data}? O que foi feito depois disso se perde (faça um backup antes, se quiser guardar).`)) return;
+			E.importar(p.txt);
+			toast('↺', 'Progresso restaurado', p.data);
+			telaPerfil();
+		}));
+	});
 	$('#imp').onchange = async (e) => {
 		const f = e.target.files[0];
 		if (!f) return;
@@ -1878,6 +2058,37 @@ function telaPerfil() {
 		};
 	}
 	animar();
+}
+// ---------- backup do progresso ----------
+// aviso semanal na tela Hoje, a partir do momento em que há algo a perder
+function precisaBackup() {
+	const tem = Object.keys(E.estado.drills).length || E.totalEstrelasGroove() || Object.keys(E.estado.harmonia ?? {}).length;
+	if (!tem) return false;
+	const u = E.estado.config.ultimoBackup;
+	return !u || (new Date(`${E.hoje()}T12:00`) - new Date(`${u}T12:00`)) / 864e5 >= 7;
+}
+// 1 toque: o menu de compartilhar do celular (Google Drive, e-mail, WhatsApp); sem ele, download
+async function fazerBackup() {
+	const nome = `baixo-progresso-${E.hoje()}.json`;
+	const txt = E.exportar();
+	const arq = new File([txt], nome, {type: 'application/json'});
+	let ok = false;
+	try {
+		if (navigator.canShare?.({files: [arq]})) {
+			await navigator.share({files: [arq], title: 'Backup do Radix', text: 'Progresso do Radix. Guarde no Google Drive (ou na pasta entrada/ do computador).'});
+			ok = true;
+		}
+	} catch (e) {
+		if (e.name === 'AbortError') return false; // o aluno cancelou
+	}
+	if (!ok) {
+		baixar(nome, txt, 'application/json');
+		ok = true;
+	}
+	E.estado.config.ultimoBackup = E.hoje();
+	E.salvar();
+	toast('💾', 'Backup feito', 'Guarde o arquivo no Drive ou em entrada/ no computador.');
+	return true;
 }
 function baixar(nome, conteudo, tipo) {
 	const url = URL.createObjectURL(new Blob([conteudo], {type: tipo}));
@@ -1908,6 +2119,10 @@ window.addEventListener('beforeinstallprompt', (e) => {
 	if (J.protegerSequencia()) setTimeout(() => toast('🛡', 'Escudo usado', 'Ontem ficou sem treino; a sequência foi protegida.'), 800);
 	// o áudio só pode começar depois de um toque; os sons leves já vão sendo carregados
 	document.addEventListener('pointerdown', () => A.preparar([...A.GRUPOS.click, ...A.GRUPOS.ui]).catch(() => {}), {once: true});
-	G.instalar({tela, esc, anel, animar, comemorar, toast, modal, limpar, seguirTreino, medidorMic, mostrarContagem, aoSair: (f) => parar.push(f)});
+	A.preferencias.entrada = E.estado.config.entrada ?? '';
+	Hm.usarGrooves(E.grooves);
+	Pm.instalar({tela, esc, comemorar, carregarYT, aoSair: (f) => parar.push(f)});
+	G.instalar({tela, esc, anel, animar, comemorar, toast, modal, limpar, seguirTreino, medidorMic, mostrarContagem, chipSaida, ligarChipSaida, confirmarSaida, aoSair: (f) => parar.push(f)});
+	E.pontoDoDia(); // ponto de restauração do dia
 	ir();
 })();
