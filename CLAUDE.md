@@ -61,4 +61,13 @@ node scripts/servidor.mjs [porta]    # só o servidor
 node scripts/validar.mjs             # confere o programa inteiro
 node scripts/testar-avaliacao.mjs    # confere a avaliação com um baixo sintético com erros conhecidos
 node scripts/empacotar.mjs           # gera dist/ com nova versão do cache offline
+node scripts/publicar.mjs            # empacota e envia para o GitHub Pages (celular atualiza sozinho)
 ```
+
+## Publicação
+
+- GitHub Pages, conta `elizeulavor`, repositório público `elizeulavor/baixo-avancado` (código em `main`,
+  app publicado em `gh-pages`). Endereço: https://elizeulavor.github.io/baixo-avancado/
+- Atualizar: commit em `main` + `node scripts/publicar.mjs`. Confirme com o aluno antes de publicar.
+- O repositório é público: nada pessoal entra nele (`entrada/` e `relatorios/` estão no `.gitignore`).
+- Git e gh instalados via winget; se o terminal não achar `gh`, use `C:\Program Files\GitHub CLI\gh.exe`.
