@@ -1,0 +1,821 @@
+{
+ "baixo": [
+  {
+   "id": "b1-mf",
+   "arq": "baixo/b1-mf.mp3",
+   "midi": 23,
+   "vel": 0.7
+  },
+  {
+   "id": "b1-f",
+   "arq": "baixo/b1-f.mp3",
+   "midi": 23,
+   "vel": 1
+  },
+  {
+   "id": "d2-mf",
+   "arq": "baixo/d2-mf.mp3",
+   "midi": 26,
+   "vel": 0.7
+  },
+  {
+   "id": "d2-f",
+   "arq": "baixo/d2-f.mp3",
+   "midi": 26,
+   "vel": 1
+  },
+  {
+   "id": "f2-mf",
+   "arq": "baixo/f2-mf.mp3",
+   "midi": 29,
+   "vel": 0.7
+  },
+  {
+   "id": "f2-f",
+   "arq": "baixo/f2-f.mp3",
+   "midi": 29,
+   "vel": 1
+  },
+  {
+   "id": "ab2-mf",
+   "arq": "baixo/ab2-mf.mp3",
+   "midi": 32,
+   "vel": 0.7
+  },
+  {
+   "id": "ab2-f",
+   "arq": "baixo/ab2-f.mp3",
+   "midi": 32,
+   "vel": 1
+  },
+  {
+   "id": "b2-mf",
+   "arq": "baixo/b2-mf.mp3",
+   "midi": 35,
+   "vel": 0.7
+  },
+  {
+   "id": "b2-f",
+   "arq": "baixo/b2-f.mp3",
+   "midi": 35,
+   "vel": 1
+  },
+  {
+   "id": "d3-mf",
+   "arq": "baixo/d3-mf.mp3",
+   "midi": 38,
+   "vel": 0.7
+  },
+  {
+   "id": "d3-f",
+   "arq": "baixo/d3-f.mp3",
+   "midi": 38,
+   "vel": 1
+  },
+  {
+   "id": "f3-mf",
+   "arq": "baixo/f3-mf.mp3",
+   "midi": 41,
+   "vel": 0.7
+  },
+  {
+   "id": "f3-f",
+   "arq": "baixo/f3-f.mp3",
+   "midi": 41,
+   "vel": 1
+  },
+  {
+   "id": "ab3-mf",
+   "arq": "baixo/ab3-mf.mp3",
+   "midi": 44,
+   "vel": 0.7
+  },
+  {
+   "id": "ab3-f",
+   "arq": "baixo/ab3-f.mp3",
+   "midi": 44,
+   "vel": 1
+  },
+  {
+   "id": "b3-mf",
+   "arq": "baixo/b3-mf.mp3",
+   "midi": 47,
+   "vel": 0.7
+  },
+  {
+   "id": "b3-f",
+   "arq": "baixo/b3-f.mp3",
+   "midi": 47,
+   "vel": 1
+  },
+  {
+   "id": "d4-mf",
+   "arq": "baixo/d4-mf.mp3",
+   "midi": 50,
+   "vel": 0.7
+  },
+  {
+   "id": "d4-f",
+   "arq": "baixo/d4-f.mp3",
+   "midi": 50,
+   "vel": 1
+  },
+  {
+   "id": "f4-mf",
+   "arq": "baixo/f4-mf.mp3",
+   "midi": 53,
+   "vel": 0.7
+  },
+  {
+   "id": "f4-f",
+   "arq": "baixo/f4-f.mp3",
+   "midi": 53,
+   "vel": 1
+  },
+  {
+   "id": "ab4-mf",
+   "arq": "baixo/ab4-mf.mp3",
+   "midi": 56,
+   "vel": 0.7
+  },
+  {
+   "id": "ab4-f",
+   "arq": "baixo/ab4-f.mp3",
+   "midi": 56,
+   "vel": 1
+  }
+ ],
+ "baixoFantasma": [
+  {
+   "id": "b1",
+   "arq": "baixoFantasma/b1.mp3",
+   "midi": 23,
+   "vel": 1
+  },
+  {
+   "id": "d2",
+   "arq": "baixoFantasma/d2.mp3",
+   "midi": 26,
+   "vel": 1
+  },
+  {
+   "id": "f2",
+   "arq": "baixoFantasma/f2.mp3",
+   "midi": 29,
+   "vel": 1
+  },
+  {
+   "id": "ab2",
+   "arq": "baixoFantasma/ab2.mp3",
+   "midi": 32,
+   "vel": 1
+  },
+  {
+   "id": "b2",
+   "arq": "baixoFantasma/b2.mp3",
+   "midi": 35,
+   "vel": 1
+  },
+  {
+   "id": "d3",
+   "arq": "baixoFantasma/d3.mp3",
+   "midi": 38,
+   "vel": 1
+  },
+  {
+   "id": "f3",
+   "arq": "baixoFantasma/f3.mp3",
+   "midi": 41,
+   "vel": 1
+  },
+  {
+   "id": "ab3",
+   "arq": "baixoFantasma/ab3.mp3",
+   "midi": 44,
+   "vel": 1
+  },
+  {
+   "id": "b3",
+   "arq": "baixoFantasma/b3.mp3",
+   "midi": 47,
+   "vel": 1
+  },
+  {
+   "id": "d4",
+   "arq": "baixoFantasma/d4.mp3",
+   "midi": 50,
+   "vel": 1
+  },
+  {
+   "id": "f4",
+   "arq": "baixoFantasma/f4.mp3",
+   "midi": 53,
+   "vel": 1
+  },
+  {
+   "id": "ab4",
+   "arq": "baixoFantasma/ab4.mp3",
+   "midi": 56,
+   "vel": 1
+  }
+ ],
+ "baixoStaccato": [
+  {
+   "id": "b1",
+   "arq": "baixoStaccato/b1.mp3",
+   "midi": 23,
+   "vel": 1
+  },
+  {
+   "id": "d2",
+   "arq": "baixoStaccato/d2.mp3",
+   "midi": 26,
+   "vel": 1
+  },
+  {
+   "id": "f2",
+   "arq": "baixoStaccato/f2.mp3",
+   "midi": 29,
+   "vel": 1
+  },
+  {
+   "id": "ab2",
+   "arq": "baixoStaccato/ab2.mp3",
+   "midi": 32,
+   "vel": 1
+  },
+  {
+   "id": "b2",
+   "arq": "baixoStaccato/b2.mp3",
+   "midi": 35,
+   "vel": 1
+  },
+  {
+   "id": "d3",
+   "arq": "baixoStaccato/d3.mp3",
+   "midi": 38,
+   "vel": 1
+  },
+  {
+   "id": "f3",
+   "arq": "baixoStaccato/f3.mp3",
+   "midi": 41,
+   "vel": 1
+  },
+  {
+   "id": "ab3",
+   "arq": "baixoStaccato/ab3.mp3",
+   "midi": 44,
+   "vel": 1
+  },
+  {
+   "id": "b3",
+   "arq": "baixoStaccato/b3.mp3",
+   "midi": 47,
+   "vel": 1
+  },
+  {
+   "id": "d4",
+   "arq": "baixoStaccato/d4.mp3",
+   "midi": 50,
+   "vel": 1
+  },
+  {
+   "id": "f4",
+   "arq": "baixoStaccato/f4.mp3",
+   "midi": 53,
+   "vel": 1
+  },
+  {
+   "id": "ab4",
+   "arq": "baixoStaccato/ab4.mp3",
+   "midi": 56,
+   "vel": 1
+  }
+ ],
+ "pop": [
+  {
+   "id": "E1",
+   "arq": "pop/E1.mp3",
+   "midi": 28,
+   "vel": 1
+  },
+  {
+   "id": "G1",
+   "arq": "pop/G1.mp3",
+   "midi": 31,
+   "vel": 1
+  },
+  {
+   "id": "B1",
+   "arq": "pop/B1.mp3",
+   "midi": 35,
+   "vel": 1
+  },
+  {
+   "id": "D2",
+   "arq": "pop/D2.mp3",
+   "midi": 38,
+   "vel": 1
+  },
+  {
+   "id": "F2",
+   "arq": "pop/F2.mp3",
+   "midi": 41,
+   "vel": 1
+  },
+  {
+   "id": "A2",
+   "arq": "pop/A2.mp3",
+   "midi": 45,
+   "vel": 1
+  },
+  {
+   "id": "C3",
+   "arq": "pop/C3.mp3",
+   "midi": 48,
+   "vel": 1
+  },
+  {
+   "id": "E3",
+   "arq": "pop/E3.mp3",
+   "midi": 52,
+   "vel": 1
+  },
+  {
+   "id": "G3",
+   "arq": "pop/G3.mp3",
+   "midi": 55,
+   "vel": 1
+  }
+ ],
+ "slap": [
+  {
+   "id": "E1",
+   "arq": "slap/E1.mp3",
+   "midi": 28,
+   "vel": 1
+  },
+  {
+   "id": "G1",
+   "arq": "slap/G1.mp3",
+   "midi": 31,
+   "vel": 1
+  },
+  {
+   "id": "B1",
+   "arq": "slap/B1.mp3",
+   "midi": 35,
+   "vel": 1
+  },
+  {
+   "id": "D2",
+   "arq": "slap/D2.mp3",
+   "midi": 38,
+   "vel": 1
+  },
+  {
+   "id": "F2",
+   "arq": "slap/F2.mp3",
+   "midi": 41,
+   "vel": 1
+  },
+  {
+   "id": "A2",
+   "arq": "slap/A2.mp3",
+   "midi": 45,
+   "vel": 1
+  },
+  {
+   "id": "C3",
+   "arq": "slap/C3.mp3",
+   "midi": 48,
+   "vel": 1
+  },
+  {
+   "id": "E3",
+   "arq": "slap/E3.mp3",
+   "midi": 52,
+   "vel": 1
+  },
+  {
+   "id": "G3",
+   "arq": "slap/G3.mp3",
+   "midi": 55,
+   "vel": 1
+  }
+ ],
+ "acustico": [
+  {
+   "id": "c1",
+   "arq": "acustico/c1.mp3",
+   "midi": 24,
+   "vel": 1
+  },
+  {
+   "id": "eb1",
+   "arq": "acustico/eb1.mp3",
+   "midi": 27,
+   "vel": 1
+  },
+  {
+   "id": "gb1",
+   "arq": "acustico/gb1.mp3",
+   "midi": 30,
+   "vel": 1
+  },
+  {
+   "id": "a1",
+   "arq": "acustico/a1.mp3",
+   "midi": 33,
+   "vel": 1
+  },
+  {
+   "id": "c2",
+   "arq": "acustico/c2.mp3",
+   "midi": 36,
+   "vel": 1
+  },
+  {
+   "id": "eb2",
+   "arq": "acustico/eb2.mp3",
+   "midi": 39,
+   "vel": 1
+  },
+  {
+   "id": "gb2",
+   "arq": "acustico/gb2.mp3",
+   "midi": 42,
+   "vel": 1
+  },
+  {
+   "id": "a2",
+   "arq": "acustico/a2.mp3",
+   "midi": 45,
+   "vel": 1
+  },
+  {
+   "id": "c3",
+   "arq": "acustico/c3.mp3",
+   "midi": 48,
+   "vel": 1
+  },
+  {
+   "id": "eb3",
+   "arq": "acustico/eb3.mp3",
+   "midi": 51,
+   "vel": 1
+  }
+ ],
+ "bateria": [
+  {
+   "id": "snare-1",
+   "arq": "bateria/snare-1.mp3",
+   "vel": 0.35
+  },
+  {
+   "id": "hat-1",
+   "arq": "bateria/hat-1.mp3",
+   "vel": 0.5
+  },
+  {
+   "id": "kick-1",
+   "arq": "bateria/kick-1.mp3",
+   "vel": 0.55
+  },
+  {
+   "id": "surdo-1",
+   "arq": "bateria/surdo-1.mp3",
+   "vel": 0.6
+  },
+  {
+   "id": "rim-1",
+   "arq": "bateria/rim-1.mp3",
+   "vel": 0.7
+  },
+  {
+   "id": "ride-1",
+   "arq": "bateria/ride-1.mp3",
+   "vel": 0.7
+  },
+  {
+   "id": "snare-2",
+   "arq": "bateria/snare-2.mp3",
+   "vel": 0.75
+  },
+  {
+   "id": "hat-2",
+   "arq": "bateria/hat-2.mp3",
+   "vel": 0.75
+  },
+  {
+   "id": "kick-2",
+   "arq": "bateria/kick-2.mp3",
+   "vel": 0.8
+  },
+  {
+   "id": "shaker-1",
+   "arq": "bateria/shaker-1.mp3",
+   "vel": 0.8
+  },
+  {
+   "id": "kick-3",
+   "arq": "bateria/kick-3.mp3",
+   "vel": 1
+  },
+  {
+   "id": "snare-3",
+   "arq": "bateria/snare-3.mp3",
+   "vel": 1
+  },
+  {
+   "id": "rim-2",
+   "arq": "bateria/rim-2.mp3",
+   "vel": 1
+  },
+  {
+   "id": "rimshot",
+   "arq": "bateria/rimshot.mp3",
+   "vel": 1
+  },
+  {
+   "id": "hat-3",
+   "arq": "bateria/hat-3.mp3",
+   "vel": 1
+  },
+  {
+   "id": "hatAberto",
+   "arq": "bateria/hatAberto.mp3",
+   "vel": 1
+  },
+  {
+   "id": "hatPedal",
+   "arq": "bateria/hatPedal.mp3",
+   "vel": 1
+  },
+  {
+   "id": "ride-2",
+   "arq": "bateria/ride-2.mp3",
+   "vel": 1
+  },
+  {
+   "id": "rideBell",
+   "arq": "bateria/rideBell.mp3",
+   "vel": 1
+  },
+  {
+   "id": "crash",
+   "arq": "bateria/crash.mp3",
+   "vel": 1
+  },
+  {
+   "id": "surdo-2",
+   "arq": "bateria/surdo-2.mp3",
+   "vel": 1
+  },
+  {
+   "id": "surdoAbafado",
+   "arq": "bateria/surdoAbafado.mp3",
+   "vel": 1
+  },
+  {
+   "id": "tom",
+   "arq": "bateria/tom.mp3",
+   "vel": 1
+  },
+  {
+   "id": "agogoAlto",
+   "arq": "bateria/agogoAlto.mp3",
+   "vel": 1
+  },
+  {
+   "id": "agogoBaixo",
+   "arq": "bateria/agogoBaixo.mp3",
+   "vel": 1
+  },
+  {
+   "id": "triangulo",
+   "arq": "bateria/triangulo.mp3",
+   "vel": 1
+  },
+  {
+   "id": "trianguloAberto",
+   "arq": "bateria/trianguloAberto.mp3",
+   "vel": 1
+  },
+  {
+   "id": "shaker-2",
+   "arq": "bateria/shaker-2.mp3",
+   "vel": 1
+  },
+  {
+   "id": "pandeiro",
+   "arq": "bateria/pandeiro.mp3",
+   "vel": 1
+  },
+  {
+   "id": "clave",
+   "arq": "bateria/clave.mp3",
+   "vel": 1
+  },
+  {
+   "id": "cowbell",
+   "arq": "bateria/cowbell.mp3",
+   "vel": 1
+  },
+  {
+   "id": "conga",
+   "arq": "bateria/conga.mp3",
+   "vel": 1
+  },
+  {
+   "id": "congaTapa",
+   "arq": "bateria/congaTapa.mp3",
+   "vel": 1
+  },
+  {
+   "id": "tumba",
+   "arq": "bateria/tumba.mp3",
+   "vel": 1
+  },
+  {
+   "id": "tamborim",
+   "arq": "bateria/tamborim.mp3",
+   "vel": 1
+  },
+  {
+   "id": "bongoBaixo",
+   "arq": "bateria/bongoBaixo.mp3",
+   "vel": 1
+  },
+  {
+   "id": "ganza",
+   "arq": "bateria/ganza.mp3",
+   "vel": 1
+  },
+  {
+   "id": "guiro",
+   "arq": "bateria/guiro.mp3",
+   "vel": 1
+  },
+  {
+   "id": "clap",
+   "arq": "bateria/clap.mp3",
+   "vel": 1
+  }
+ ],
+ "click": [
+  {
+   "id": "forte",
+   "arq": "click/forte.mp3",
+   "vel": 1
+  },
+  {
+   "id": "fraco",
+   "arq": "click/fraco.mp3",
+   "vel": 1
+  },
+  {
+   "id": "madeira",
+   "arq": "click/madeira.mp3",
+   "vel": 1
+  }
+ ],
+ "piano": [
+  {
+   "id": "C3",
+   "arq": "piano/C3.mp3",
+   "midi": 48,
+   "vel": 1
+  },
+  {
+   "id": "E3",
+   "arq": "piano/E3.mp3",
+   "midi": 52,
+   "vel": 1
+  },
+  {
+   "id": "G#3",
+   "arq": "piano/Gs3.mp3",
+   "midi": 56,
+   "vel": 1
+  },
+  {
+   "id": "C4",
+   "arq": "piano/C4.mp3",
+   "midi": 60,
+   "vel": 1
+  },
+  {
+   "id": "E4",
+   "arq": "piano/E4.mp3",
+   "midi": 64,
+   "vel": 1
+  },
+  {
+   "id": "G#4",
+   "arq": "piano/Gs4.mp3",
+   "midi": 68,
+   "vel": 1
+  },
+  {
+   "id": "C5",
+   "arq": "piano/C5.mp3",
+   "midi": 72,
+   "vel": 1
+  }
+ ],
+ "ui": [
+  {
+   "id": "vibra-C",
+   "arq": "ui/vibra-C.mp3",
+   "vel": 1
+  },
+  {
+   "id": "vibra-E",
+   "arq": "ui/vibra-E.mp3",
+   "vel": 1
+  },
+  {
+   "id": "vibra-G",
+   "arq": "ui/vibra-G.mp3",
+   "vel": 1
+  },
+  {
+   "id": "vibra-C5",
+   "arq": "ui/vibra-C5.mp3",
+   "vel": 1
+  },
+  {
+   "id": "glock",
+   "arq": "ui/glock.mp3",
+   "vel": 1
+  },
+  {
+   "id": "prato",
+   "arq": "ui/prato.mp3",
+   "vel": 1
+  },
+  {
+   "id": "sino",
+   "arq": "ui/sino.mp3",
+   "vel": 1
+  }
+ ],
+ "rhodes": [
+  {
+   "id": "m040",
+   "arq": "rhodes/m040.mp3",
+   "midi": 40,
+   "vel": 1
+  },
+  {
+   "id": "m045",
+   "arq": "rhodes/m045.mp3",
+   "midi": 45,
+   "vel": 1
+  },
+  {
+   "id": "m050",
+   "arq": "rhodes/m050.mp3",
+   "midi": 50,
+   "vel": 1
+  },
+  {
+   "id": "m055",
+   "arq": "rhodes/m055.mp3",
+   "midi": 55,
+   "vel": 1
+  },
+  {
+   "id": "m059",
+   "arq": "rhodes/m059.mp3",
+   "midi": 59,
+   "vel": 1
+  },
+  {
+   "id": "m062",
+   "arq": "rhodes/m062.mp3",
+   "midi": 62,
+   "vel": 1
+  },
+  {
+   "id": "m065",
+   "arq": "rhodes/m065.mp3",
+   "midi": 65,
+   "vel": 1
+  },
+  {
+   "id": "m071",
+   "arq": "rhodes/m071.mp3",
+   "midi": 71,
+   "vel": 1
+  },
+  {
+   "id": "m076",
+   "arq": "rhodes/m076.mp3",
+   "midi": 76,
+   "vel": 1
+  }
+ ]
+}

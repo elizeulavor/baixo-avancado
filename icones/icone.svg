@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+	<!-- Ícone do app: fundo cheio (serve como "maskable" no Android), símbolo dentro da área segura -->
+	<defs>
+		<radialGradient id="fundo" cx="0.22" cy="0.12" r="1.1">
+			<stop offset="0" stop-color="#211d16"/><stop offset="0.6" stop-color="#0b0c0f"/><stop offset="1" stop-color="#07080a"/>
+		</radialGradient>
+		<linearGradient id="ouro" gradientUnits="userSpaceOnUse" x1="120" y1="60" x2="320" y2="470">
+			<stop offset="0" stop-color="#f8e6b4"/><stop offset="0.5" stop-color="#e2b864"/><stop offset="1" stop-color="#b47c2c"/>
+		</linearGradient>
+		<filter id="brilho" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="10"/></filter>
+	</defs>
+	<rect width="512" height="512" fill="url(#fundo)"/>
+	<g transform="translate(256 256) scale(0.74) translate(-256 -250)">
+		<path d="M48 266 L 120 266 L 140 252 L 160 280 L 180 266 L 200 266 L 236 392 L 296 108 L 318 300 L 340 220 L 360 288 L 382 240 L 402 276 L 420 254 L 440 268 L 464 264" fill="none" stroke="#e2b864" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" filter="url(#brilho)"/>
+		<path d="M48 266 L 120 266 L 140 252 L 160 280 L 180 266 L 200 266 L 236 392 L 296 108 L 318 300 L 340 220 L 360 288 L 382 240 L 402 276 L 420 254 L 440 268 L 464 264" fill="none" stroke="url(#ouro)" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+	</g>
+</svg>

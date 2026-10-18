@@ -1,0 +1,341 @@
+{
+  "versao": 1,
+  "regras": {
+    "dominar": "Aprovado no BPM meta em 2 dias diferentes.",
+    "subir": "Aprovou no BPM atual: o próximo treino começa no BPM seguinte.",
+    "modulo": "Módulo concluído quando todos os drills estão dominados. Duas trilhas andam juntas: A (mão, tempo, groove) e B (harmonia e linguagem)."
+  },
+  "modulos": [
+    {
+      "id": "a1", "trilha": "A", "titulo": "Relógio interno",
+      "meta": "Tempo que não depende do clique: clique esparso, clique sumindo, subdivisões trocando e compassos ímpares.",
+      "drills": [
+        {"id": "a1-1", "titulo": "Semínimas lentas, clique só no 2 e 4", "objetivo": "Segurar o tempo devagar, quando o espaço entre as notas é maior.",
+         "instrucao": "O BPM desce a cada aprovação. Cada nota com a mesma duração e o mesmo volume.",
+         "linha": "(A0:4)*4 | (D0:4)*4 | (E3:4)*4 | (A0:4)*4", "bpm": {"inicio": 80, "meta": 48, "passo": -4}, "click": "2e4", "voltas": 2,
+         "dinamica": {"tipo": "uniforme", "max": 3}},
+        {"id": "a1-2", "titulo": "Colcheias com clique só no 1", "objetivo": "O compasso inteiro sem referência no meio.",
+         "linha": "A0:8 A0 A2 A2 D0 D0 D2 D2 | D0:8 D0 D2 D2 G0 G0 G2 G2 | A0:8 A0 A2 A2 D0 D0 D2 D2 | E0:8 E0 E2 E2 A0 A0 A2 A2",
+         "bpm": {"inicio": 72, "meta": 120, "passo": 4}, "click": "1", "voltas": 2},
+        {"id": "a1-3", "titulo": "Semicolcheias com o clique sumindo", "objetivo": "Dois compassos com clique, dois sem. A nota volta junto com o clique.",
+         "linha": "(E0:16 E0 E7 E5)*4 | (A0:16 A0 A7 A5)*4 | (E0:16 E0 E7 E5)*4 | (D0:16 D0 D7 D5)*4",
+         "bpm": {"inicio": 70, "meta": 112, "passo": 4}, "click": "gap", "gap": [2, 2], "voltas": 2},
+        {"id": "a1-4", "titulo": "Grupos de 3 sobre semicolcheias", "objetivo": "Acentuar a cada 3 semicolcheias sem perder o 1.",
+         "instrucao": "O acento cai em lugares diferentes do tempo; o desenho só fecha no compasso 4.",
+         "linha": "(E5>:16 E7 A5)*16", "bpm": {"inicio": 70, "meta": 116, "passo": 4}, "voltas": 1,
+         "dinamica": {"tipo": "acentos", "min": 5}},
+        {"id": "a1-5", "titulo": "Tercina e semicolcheia alternando", "objetivo": "Trocar de subdivisão a cada compasso sem acelerar nem frear.",
+         "linha": "(A5:8t)*12 | (A5:16)*16 | (D5:8t)*12 | (D5:16)*16", "bpm": {"inicio": 66, "meta": 108, "passo": 3}, "voltas": 1},
+        {"id": "a1-6", "titulo": "Quintinas", "objetivo": "Cinco notas iguais por tempo, depois quatro.",
+         "linha": "(A5:16q)*20 | (A5:16)*16 | (D5:16q)*20 | (D5:16)*16", "bpm": {"inicio": 56, "meta": 92, "passo": 3}, "voltas": 1,
+         "criterios": {"tempoDesvio": 15}},
+        {"id": "a1-7", "titulo": "Compasso 7/8 (2+2+3)", "objetivo": "Sentir o grupo de 3 no fim sem contar nos dedos.",
+         "compasso": "7/8", "grupos": [2, 2, 3],
+         "linha": "E0>:8 E0 A2> A2 D2> D0 A2 | E0>:8 E0 A2> A2 D2> D0 A2 | A0>:8 A0 D2> D2 G2> G0 D2 | E0>:8 E3 E5> E3 A0> E5 E3",
+         "bpm": {"inicio": 80, "meta": 132, "passo": 4}, "voltas": 2, "dinamica": {"tipo": "acentos", "min": 4}},
+        {"id": "a1-8", "titulo": "Compasso 5/4", "objetivo": "Frase de 5 tempos que soa natural.",
+         "compasso": 5, "linha": "E0:8 E0 E3 E5 A0 A2 A3 A2 E5 E3 | A0:8 A0 A3 A5 D0 D2 D3 D2 A5 A3 | E0:8 E0 E3 E5 A0 A2 A3 A2 E5 E3 | D0:8 D0 A5 A3 A0 E5 E3 E5 E3 E0",
+         "bpm": {"inicio": 84, "meta": 140, "passo": 4}, "voltas": 1}
+      ],
+      "desafios": [
+        "Três minutos de semínimas a 40 BPM com clique só no 1. Grave em Ferramentas > Gravar livre e confira a regularidade.",
+        "Toque a1-3 com o clique sumindo por 4 compassos em vez de 2.",
+        "Cante as semicolcheias em voz alta enquanto toca a1-5."
+      ]
+    },
+    {
+      "id": "a2", "trilha": "A", "titulo": "Mão direita: controle e dinâmica",
+      "meta": "Volume igual quando deve ser igual, acento quando escrito, pausa que fica em silêncio.",
+      "drills": [
+        {"id": "a2-1", "titulo": "Troca de corda em semicolcheias", "objetivo": "Mesmo volume nas quatro cordas.", "aquecimento": true,
+         "linha": "(E5:16 A7 D7 G7 D7 A7)*8", "bpm": {"inicio": 70, "meta": 124, "passo": 4}, "voltas": 1,
+         "dinamica": {"tipo": "uniforme", "max": 2.5}},
+        {"id": "a2-2", "titulo": "Acento que anda", "objetivo": "Acento em cada uma das quatro semicolcheias, uma por compasso.",
+         "linha": "(A5>:16 A5 A5 A5)*4 | (A5:16 A5> A5 A5)*4 | (A5:16 A5 A5> A5)*4 | (A5:16 A5 A5 A5>)*4",
+         "bpm": {"inicio": 70, "meta": 116, "passo": 4}, "voltas": 1, "dinamica": {"tipo": "acentos", "min": 6}},
+        {"id": "a2-3", "titulo": "Crescendo em 4 compassos", "objetivo": "Do quase inaudível ao forte, subindo de forma constante.",
+         "linha": "(A5:8)*32", "bpm": {"inicio": 90, "meta": 90, "passo": 0}, "voltas": 1,
+         "dinamica": {"tipo": "crescendo", "min": 15}, "criterios": {"tempoDesvio": 16}},
+        {"id": "a2-4", "titulo": "Staccato contra legato", "objetivo": "Controlar quanto tempo cada nota soa.",
+         "instrucao": "Compasso 1: corte cada nota pela metade. Compasso 2: cada nota encosta na próxima.",
+         "linha": "A5^:8 A5^ D5^ D5^ D7^ D7^ A7^ A7^ | A5~:4 D5~ D7~ A7~", "bpm": {"inicio": 72, "meta": 112, "passo": 4}, "voltas": 2,
+         "criterios": {"staccato": 55, "legato": 85}},
+        {"id": "a2-5", "titulo": "Pausas limpas com cordas soltas", "objetivo": "Corda solta é a mais difícil de calar. A pausa precisa ficar em silêncio.",
+         "linha": "E0:8 r A0 r D0 r G0 r | G0:8 r D0 r A0 r E0 r", "bpm": {"inicio": 80, "meta": 126, "passo": 4}, "voltas": 2,
+         "criterios": {"silencio": 24}},
+        {"id": "a2-6", "titulo": "Rake descendente", "objetivo": "O mesmo dedo arrasta de uma corda para a de baixo.", "aquecimento": true,
+         "linha": "(G7:16 D7 A7 E7)*4 | (G5:16 D5 A5 E5)*4", "bpm": {"inicio": 76, "meta": 132, "passo": 4}, "voltas": 2,
+         "dinamica": {"tipo": "uniforme", "max": 3}}
+      ],
+      "desafios": [
+        "Grave a2-1 com os olhos fechados. Compare a regularidade com o take de olhos abertos.",
+        "a2-2 com ghost no lugar das notas sem acento."
+      ]
+    },
+    {
+      "id": "a3", "trilha": "A", "titulo": "Mão esquerda: digitação e alcance",
+      "meta": "Deslocamentos, ligados, extensões e harmônicos sem perder tempo nem afinação.",
+      "drills": [
+        {"id": "a3-1", "titulo": "Permutação 1-3-2-4", "objetivo": "Independência de dedos, um dedo por casa.", "aquecimento": true,
+         "gerar": {"tipo": "permutacao", "dedos": "1324", "casa": 5, "voltas": 4, "figura": "16"},
+         "bpm": {"inicio": 70, "meta": 126, "passo": 4}, "voltas": 1, "criterios": {"notas": 97}},
+        {"id": "a3-2", "titulo": "Permutação 1-4-2-3", "objetivo": "O par 4-2 é o mais fraco: dê atenção a ele.", "aquecimento": true,
+         "gerar": {"tipo": "permutacao", "dedos": "1423", "casa": 7, "voltas": 4, "figura": "16"},
+         "bpm": {"inicio": 66, "meta": 120, "passo": 4}, "voltas": 1, "criterios": {"notas": 97}},
+        {"id": "a3-3", "titulo": "Escala maior numa corda só", "objetivo": "Deslocamentos longos na corda G, da casa 2 à 14.",
+         "gerar": {"tipo": "escala", "tom": "A", "escala": "maior", "oitavas": 1, "corda": "G", "figura": "8"},
+         "bpm": {"inicio": 70, "meta": 132, "passo": 4}, "voltas": 2},
+        {"id": "a3-4", "titulo": "Trinados em hammer-on e pull-off", "objetivo": "Só a primeira nota de cada grupo é tocada pela mão direita.",
+         "linha": "(A5:16 A7h A5u A7h)*4 | (D5:16 D7h D5u D7h)*4 | (D7:16 D9h D7u D9h)*4 | (A7:16 A9h A7u A9h)*4",
+         "bpm": {"inicio": 70, "meta": 120, "passo": 4}, "voltas": 1, "criterios": {"notas": 90, "faltas": 10}},
+        {"id": "a3-5", "titulo": "Extensões na primeira posição", "objetivo": "Cinco casas sem mudar a mão de lugar.", "aquecimento": true,
+         "linha": "E1:16 E2 E4 E5 A1 A2 A4 A5 D1 D2 D4 D5 G1 G2 G4 G5 | G5:16 G4 G2 G1 D5 D4 D2 D1 A5 A4 A2 A1 E5 E4 E2 E1",
+         "bpm": {"inicio": 60, "meta": 112, "passo": 4}, "voltas": 2},
+        {"id": "a3-6", "titulo": "Harmônicos naturais", "objetivo": "Harmônico limpo, afinado e com o mesmo volume.",
+         "linha": "E12n:4 A12n D12n G12n | E7n:4 A7n D7n G7n | E5n:4 A5n D5n G5n | G7n:4 D7n A7n E7n",
+         "bpm": {"inicio": 70, "meta": 100, "passo": 5}, "voltas": 1, "criterios": {"notas": 90}}
+      ],
+      "desafios": [
+        "Faça a3-3 nas cordas D e A, no tom de G.",
+        "Invente sua própria permutação de 4 dedos e toque a 100 BPM."
+      ]
+    },
+    {
+      "id": "a4", "trilha": "A", "titulo": "Ghost notes e groove de semicolcheia",
+      "meta": "Três níveis de volume (acento, nota, fantasma) e semicolcheia contínua com o tempo firme.",
+      "drills": [
+        {"id": "a4-1", "titulo": "Fantasmas no nível certo", "objetivo": "A ghost note é ouvida como ritmo, não como nota.",
+         "linha": "(A5:16 A5x A5x A5x)*4 | (A5:16 A5x A5 A5x)*4 | (A5:16 A5x A5x A5)*4 | (A5:16 A5 A5x A5)*4",
+         "bpm": {"inicio": 72, "meta": 112, "passo": 4}, "voltas": 1, "dinamica": {"fantasma": 12}},
+        {"id": "a4-2", "titulo": "Funk em E", "objetivo": "Groove de semicolcheia com pausas e fantasmas no lugar.",
+         "linha": "E0:16 r E0x E12 r E0x D2:8 A2:16 E0x D2 E0 r:8 G2:16 A2 | E0:8 E0x:16 E0 r:16 G0:16 G2:8 E0:16 E0x E3 E5 r:4",
+         "bpm": {"inicio": 80, "meta": 112, "passo": 3}, "voltas": 2, "dinamica": {"fantasma": 10}, "groove": "funk"},
+        {"id": "a4-3", "titulo": "Neo-soul com semicolcheia suingada", "objetivo": "A segunda semicolcheia atrasa de propósito, sempre do mesmo tanto.",
+         "linha": "A5:8 r:16 A5x A8:16 r A10 A8 D7:8 A5:16 A8 r:4 | E3:8 r:16 E3x:16 A5:16 r:16 A3:16 E5:16 E3:8. E3x:16 r:4",
+         "bpm": {"inicio": 72, "meta": 96, "passo": 3}, "swing": 0.15, "voltas": 2, "dinamica": {"fantasma": 10}, "groove": "neosoul",
+         "progressao": "| Dm7 | G7 |"},
+        {"id": "a4-4", "titulo": "Semicolcheia contínua com fantasmas", "objetivo": "Nenhum buraco: a mão direita nunca para.",
+         "linha": "E0:16 E0x E0x E0 E0x E0x E12 E0x E0 E0x E0x E10 E0x E12 E0x E0 | A0:16 A0x A0x A0 A0x A0x A12 A0x A0 A0x A0x A10 A0x A12 A0x A0",
+         "bpm": {"inicio": 80, "meta": 116, "passo": 3}, "voltas": 2, "dinamica": {"fantasma": 10}, "criterios": {"tempoDesvio": 12}},
+        {"id": "a4-5", "titulo": "Três níveis de volume", "objetivo": "Acento, nota normal e fantasma, todos distintos.",
+         "linha": "(E0>:16 E0x E0 E0x)*4 | (A0>:16 A0x A0 A0x)*4", "bpm": {"inicio": 76, "meta": 116, "passo": 4}, "voltas": 2,
+         "dinamica": {"tipo": "acentos", "min": 5, "fantasma": 10}}
+      ],
+      "desafios": [
+        "Escreva (na tablatura do Claude, comando /drill) um groove seu de 2 compassos com ghost notes e treine até 100 BPM.",
+        "Toque a4-2 com o groove de funk em Ferramentas e grave 2 minutos."
+      ]
+    },
+    {
+      "id": "a5", "trilha": "A", "titulo": "Slap I",
+      "meta": "Polegar e pop no mesmo volume, oitavas, ghost de mão esquerda e hammer no meio do slap.",
+      "drills": [
+        {"id": "a5-1", "titulo": "Oitavas em slap", "objetivo": "O pop não pode explodir mais que o polegar.",
+         "linha": "(E0s:8 D2p)*4 | (A0s:8 G2p)*4 | (E3s:8 D5p)*4 | (A2s:8 G4p)*4",
+         "bpm": {"inicio": 80, "meta": 132, "passo": 4}, "voltas": 1, "dinamica": {"tipo": "uniforme", "max": 4}},
+        {"id": "a5-2", "titulo": "Polegar, fantasma, pop", "objetivo": "Semicolcheia contínua com a mão esquerda abafando.",
+         "linha": "(E0s:16 E0x D2p E0x)*4 | (A0s:16 A0x G2p A0x)*4", "bpm": {"inicio": 80, "meta": 120, "passo": 4}, "voltas": 2,
+         "dinamica": {"fantasma": 8}},
+        {"id": "a5-3", "titulo": "Hammer depois do polegar", "objetivo": "A nota do hammer tem que soar tão alto quanto a batida.",
+         "linha": "(E0s:16 E2h E0x D2p)*4 | (A0s:16 A2h A0x G2p)*4", "bpm": {"inicio": 76, "meta": 116, "passo": 4}, "voltas": 2,
+         "criterios": {"notas": 92}},
+        {"id": "a5-4", "titulo": "Pentatônica menor em slap", "objetivo": "Escala com polegar, pop e oitava, sem perder a pulsação.",
+         "linha": "E0s:16 E0x D2p E3s E5s E5x D7p A0s A2s A2x G4p A5s E5s E3s E0s r",
+         "bpm": {"inicio": 72, "meta": 112, "passo": 4}, "voltas": 4},
+        {"id": "a5-5", "titulo": "Slap com volume uniforme", "objetivo": "Polegar e pop dentro de 3 dB.",
+         "linha": "(E0s:8 D2p A0s G2p)*2 | (E3s:8 D5p A3s G5p)*2", "bpm": {"inicio": 80, "meta": 124, "passo": 4}, "voltas": 2,
+         "dinamica": {"tipo": "uniforme", "max": 3}}
+      ],
+      "desafios": ["Toque a5-2 sobre o groove de funk por 3 minutos sem parar."]
+    },
+    {
+      "id": "a6", "trilha": "A", "titulo": "Slap II: double thumb e open hammer",
+      "meta": "Polegar para baixo e para cima, open hammer pluck e tercinas rápidas.",
+      "drills": [
+        {"id": "a6-1", "titulo": "Double thumb básico", "objetivo": "A segunda nota de cada grupo é o polegar voltando (para cima).",
+         "linha": "(E0s:16 A0s D2p A0s)*4 | (E3s:16 A3s D5p A3s)*4", "bpm": {"inicio": 66, "meta": 110, "passo": 3}, "voltas": 2},
+        {"id": "a6-2", "titulo": "Open hammer pluck em tercinas", "objetivo": "Polegar, hammer, pop: três notas por tempo.",
+         "linha": "(E0s:8t E2h D2p)*4 | (A0s:8t A2h G2p)*4", "bpm": {"inicio": 66, "meta": 120, "passo": 3}, "voltas": 2,
+         "criterios": {"notas": 92}},
+        {"id": "a6-3", "titulo": "Double thumb em tercinas", "objetivo": "Polegar para baixo, para cima, pop.",
+         "linha": "(E0s:8t A0s D2p)*4 | (A0s:8t D0s G2p)*4", "bpm": {"inicio": 66, "meta": 112, "passo": 3}, "voltas": 2},
+        {"id": "a6-4", "titulo": "Double thumb contínuo", "objetivo": "Semicolcheia só de polegar, para baixo e para cima.",
+         "linha": "(E0s:16 E0s A2s A2s)*4 | (A0s:16 A0s D2s D2s)*4", "bpm": {"inicio": 60, "meta": 104, "passo": 3}, "voltas": 2,
+         "dinamica": {"tipo": "uniforme", "max": 4}},
+        {"id": "a6-5", "titulo": "Groove de slap completo", "objetivo": "Polegar, pop, fantasma e hammer no mesmo groove.",
+         "linha": "E0s:16 E0x D2p E0x E3s E0x D5p E5s A0s E0x G2p A2h A0s E0x D2p E0x | A0s:16 A0x G2p A0x A3s A0x G5p A5s E0s E0x D2p E2h E0s E0x D2p D4h",
+         "bpm": {"inicio": 72, "meta": 108, "passo": 3}, "voltas": 2, "dinamica": {"fantasma": 8}, "groove": "funk"}
+      ],
+      "desafios": ["Crie um groove de slap de 4 compassos usando double thumb e grave sobre o groove de funk."]
+    },
+    {
+      "id": "b1", "trilha": "B", "titulo": "Tétrades por todo o braço",
+      "meta": "Arpejos de quatro sons nos 12 tons, com inversões, condução de vozes e aproximação cromática.",
+      "drills": [
+        {"id": "b1-1", "titulo": "Maj7 no ciclo de quartas", "objetivo": "1-3-5-7-8-7-5-3 nos 12 tons, sem parar entre eles.",
+         "gerar": {"tipo": "arpejo", "acordes": ["{t}maj7"], "padrao": "13578753", "tons": "quartas", "figura": "8"},
+         "bpm": {"inicio": 72, "meta": 144, "passo": 4}, "voltas": 1},
+        {"id": "b1-2", "titulo": "m7 no ciclo de quartas", "objetivo": "O mesmo desenho, menor com sétima.",
+         "gerar": {"tipo": "arpejo", "acordes": ["{t}m7"], "padrao": "13578753", "tons": "quartas", "figura": "8"},
+         "bpm": {"inicio": 72, "meta": 144, "passo": 4}, "voltas": 1},
+        {"id": "b1-3", "titulo": "Dominante e meio-diminuto", "objetivo": "X7 e Xm7(b5) seguidos, nos 12 tons.",
+         "gerar": {"tipo": "arpejo", "acordes": ["{t}7", "{t}m7b5"], "padrao": "1357", "tons": "quartas", "figura": "8"},
+         "bpm": {"inicio": 72, "meta": 144, "passo": 4}, "voltas": 1},
+        {"id": "b1-4", "titulo": "Condução de vozes em ii-V-I", "objetivo": "Cada arpejo começa na nota do acorde mais próxima da última.",
+         "gerar": {"tipo": "arpejo", "padrao": "proxima", "figura": "8", "acordes": ["Dm7", "G7", "Cmaj7", "Cmaj7", "Cm7", "F7", "Bbmaj7", "Bbmaj7", "Bbm7", "Eb7", "Abmaj7", "Abmaj7", "Abm7", "Db7", "Gbmaj7", "Gbmaj7"]},
+         "bpm": {"inicio": 72, "meta": 132, "passo": 4}, "voltas": 1},
+        {"id": "b1-5", "titulo": "Inversão com a 3ª no baixo", "objetivo": "3-5-7-8 para maj7 e dominante, nos 12 tons.",
+         "gerar": {"tipo": "arpejo", "acordes": ["{t}maj7", "{t}7"], "padrao": "3571", "tons": "quartas", "figura": "8"},
+         "bpm": {"inicio": 72, "meta": 138, "passo": 4}, "voltas": 1},
+        {"id": "b1-6", "titulo": "Arpejo com aproximação cromática", "objetivo": "Cada nota do acorde precedida pelo semitom de baixo.",
+         "gerar": {"tipo": "arpejo", "acordes": ["{t}m7"], "padrao": "aprox", "tons": "quartas", "figura": "8"},
+         "bpm": {"inicio": 72, "meta": 138, "passo": 4}, "voltas": 1}
+      ],
+      "desafios": [
+        "Toque b1-1 de cor, sem olhar a tablatura, nos 12 tons.",
+        "Arpejos de b1-4 em semicolcheias (dobro de notas por acorde)."
+      ]
+    },
+    {
+      "id": "b2", "trilha": "B", "titulo": "Escalas e modos aplicados",
+      "meta": "Escalas em sequências (terças, grupos), modos sobre o mesmo centro e escalas de dominante. Tons sorteados todo dia.",
+      "drills": [
+        {"id": "b2-1", "titulo": "Maior em terças (3 tons do dia)", "objetivo": "Sequência de terças subindo e descendo.",
+         "gerar": {"tipo": "escala", "escala": "maior", "oitavas": 1, "padrao": "tercas", "figura": "8", "tons": "diario", "quantos": 3},
+         "bpm": {"inicio": 80, "meta": 152, "passo": 4}, "voltas": 1},
+        {"id": "b2-2", "titulo": "Menor melódica em grupos de 4", "objetivo": "Duas oitavas em grupos de quatro semicolcheias.",
+         "gerar": {"tipo": "escala", "escala": "menorMelodica", "oitavas": 2, "padrao": "grupos4", "figura": "16", "tons": "diario", "quantos": 1},
+         "bpm": {"inicio": 60, "meta": 108, "passo": 3}, "voltas": 1},
+        {"id": "b2-3", "titulo": "Os 7 modos sobre o mesmo centro", "objetivo": "Ouvir o que muda de um modo para o outro.",
+         "gerar": {"tipo": "escala", "tom": "diario", "escalas": ["lidio", "maior", "mixolidio", "dorico", "menor", "frigio", "locrio"], "oitavas": 1, "figura": "16"},
+         "bpm": {"inicio": 60, "meta": 112, "passo": 4}, "voltas": 1},
+        {"id": "b2-4", "titulo": "Alterada e dominante diminuta", "objetivo": "As duas escalas de dominante alterado.",
+         "gerar": {"tipo": "escala", "tom": "diario", "escalas": ["alterada", "dominanteDiminuta"], "oitavas": 1, "figura": "16"},
+         "bpm": {"inicio": 60, "meta": 112, "passo": 4}, "voltas": 2},
+        {"id": "b2-5", "titulo": "Pentatônica em grupos de 3 (tercinas)", "objetivo": "Duas oitavas em tercinas.",
+         "gerar": {"tipo": "escala", "escala": "pentaMenor", "oitavas": 2, "padrao": "grupos3", "figura": "8t", "tons": "diario", "quantos": 1},
+         "bpm": {"inicio": 66, "meta": 120, "passo": 3}, "voltas": 1},
+        {"id": "b2-6", "titulo": "Bebop dominante descendo", "objetivo": "A nota de passagem cromática põe as notas do acorde no tempo.",
+         "gerar": {"tipo": "escala", "escala": "bebopDominante", "oitavas": 2, "padrao": "desce", "figura": "8", "tons": "diario", "quantos": 2},
+         "bpm": {"inicio": 80, "meta": 168, "passo": 4}, "voltas": 1}
+      ],
+      "desafios": ["Escolha um tom e toque os 7 modos começando cada um da sua própria tônica, de cor."]
+    },
+    {
+      "id": "b3", "trilha": "B", "titulo": "Walking bass",
+      "meta": "Walking em 2 e em 4, blues, ii-V-I nos 12 tons e rhythm changes rápido. A linha é sua; o app confere as notas-alvo.",
+      "drills": [
+        {"id": "b3-1", "titulo": "Blues em F em 2", "objetivo": "Mínimas. Nota do acorde em toda troca de acorde.",
+         "instrucao": "A tablatura é um exemplo. Toque a sua linha: o app só exige nota do acorde em cada troca.",
+         "gerar": {"tipo": "walking", "feel": 2, "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |"},
+         "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |",
+         "modo": "alvos", "bpm": {"inicio": 90, "meta": 160, "passo": 5}, "click": "2e4", "voltas": 1, "groove": "jazz2"},
+        {"id": "b3-2", "titulo": "Blues em F em 4", "objetivo": "Semínimas contínuas, nota do acorde em toda troca.",
+         "gerar": {"tipo": "walking", "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |"},
+         "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |",
+         "modo": "alvos", "bpm": {"inicio": 100, "meta": 200, "passo": 6}, "click": "2e4", "voltas": 1, "groove": "jazz"},
+        {"id": "b3-3", "titulo": "Blues em Bb com aproximação obrigatória", "objetivo": "O último tempo antes de cada troca fica a um semitom da raiz seguinte.",
+         "gerar": {"tipo": "walking", "progressao": "| Bb7 | Eb7 | Bb7 | Bb7 | Eb7 | Eb7 | Bb7 | G7 | Cm7 | F7 | Bb7 G7 | Cm7 F7 |"},
+         "progressao": "| Bb7 | Eb7 | Bb7 | Bb7 | Eb7 | Eb7 | Bb7 | G7 | Cm7 | F7 | Bb7 G7 | Cm7 F7 |",
+         "modo": "aproximacao", "bpm": {"inicio": 100, "meta": 192, "passo": 6}, "click": "2e4", "voltas": 1, "groove": "jazz",
+         "criterios": {"notas": 90}},
+        {"id": "b3-4", "titulo": "ii-V-I descendo por tons inteiros", "objetivo": "C, Bb, Ab, Gb maior: quatro tons seguidos.",
+         "gerar": {"tipo": "walking", "progressao": "| Dm7 | G7 | Cmaj7 | Cmaj7 | Cm7 | F7 | Bbmaj7 | Bbmaj7 | Bbm7 | Eb7 | Abmaj7 | Abmaj7 | Abm7 | Db7 | Gbmaj7 | Gbmaj7 |"},
+         "progressao": "| Dm7 | G7 | Cmaj7 | Cmaj7 | Cm7 | F7 | Bbmaj7 | Bbmaj7 | Bbm7 | Eb7 | Abmaj7 | Abmaj7 | Abm7 | Db7 | Gbmaj7 | Gbmaj7 |",
+         "modo": "alvos", "bpm": {"inicio": 100, "meta": 184, "passo": 6}, "click": "2e4", "voltas": 1, "groove": "jazz"},
+        {"id": "b3-5", "titulo": "Rhythm changes (parte A) em Bb", "objetivo": "Dois acordes por compasso em andamento rápido.",
+         "gerar": {"tipo": "walking", "progressao": "| Bb6 G7 | Cm7 F7 | Dm7 G7 | Cm7 F7 | Fm7 Bb7 | Eb6 Ebm6 | Dm7 G7 | Cm7 F7 |"},
+         "progressao": "| Bb6 G7 | Cm7 F7 | Dm7 G7 | Cm7 F7 | Fm7 Bb7 | Eb6 Ebm6 | Dm7 G7 | Cm7 F7 |",
+         "modo": "alvos", "bpm": {"inicio": 120, "meta": 224, "passo": 8}, "click": "2e4", "voltas": 2, "groove": "jazz"},
+        {"id": "b3-6", "titulo": "Blues menor em C com aproximação", "objetivo": "Blues menor com aproximação cromática em toda troca.",
+         "gerar": {"tipo": "walking", "progressao": "| Cm7 | Cm7 | Cm7 | Cm7 | Fm7 | Fm7 | Cm7 | Cm7 | Ab7 | G7 | Cm7 | G7 |"},
+         "progressao": "| Cm7 | Cm7 | Cm7 | Cm7 | Fm7 | Fm7 | Cm7 | Cm7 | Ab7 | G7 | Cm7 | G7 |",
+         "modo": "aproximacao", "bpm": {"inicio": 100, "meta": 180, "passo": 6}, "click": "2e4", "voltas": 1, "groove": "jazz",
+         "criterios": {"notas": 90}}
+      ],
+      "desafios": [
+        "Três voltas seguidas de blues em F em 4, sem repetir nenhum compasso. Grave em Gravar livre com o groove de jazz.",
+        "Walking em 4 sobre o blues em Bb tocando só na região aguda (casa 7 em diante)."
+      ]
+    },
+    {
+      "id": "b4", "trilha": "B", "titulo": "Brasil: samba, partido alto, bossa, baião, frevo",
+      "meta": "As levadas brasileiras com a acentuação certa: o surdo no 2, a antecipação da bossa, o desenho do baião.",
+      "drills": [
+        {"id": "b4-1", "titulo": "Samba: raiz curta, quinta longa", "objetivo": "A nota longa é o surdo de marcação: acentuada.",
+         "linha": "A5:8. A5:16 E5>:4 A5:8. A5:16 E5>:4 | E3:8. E3:16 A5>:4 E3:8. E3:16 A5>:4 | A3:8. A3:16 E3>:4 A3:8. A3:16 E3>:4 | A0:8. A0:16 E0>:4 A0:8. A0:16 E0>:4",
+         "progressao": "| Dm7 | G7 | Cmaj7 | A7 |", "bpm": {"inicio": 70, "meta": 112, "passo": 3}, "voltas": 2, "groove": "samba",
+         "dinamica": {"tipo": "acentos", "min": 3}},
+        {"id": "b4-2", "titulo": "Partido alto", "objetivo": "As antecipações do partido alto no lugar exato.",
+         "linha": "A5:16 r r A7 r r A5:8 r:16 A5:16 r r D7:16 r A5:8 | E3:16 r r E5 r r E3:8 r:16 E3:16 r r A5:16 r E3:8",
+         "progressao": "| Dm7 | G7 |", "bpm": {"inicio": 70, "meta": 108, "passo": 3}, "voltas": 2, "groove": "partidoalto",
+         "criterios": {"silencio": 18}},
+        {"id": "b4-3", "titulo": "Bossa nova: raiz e quinta com antecipação", "objetivo": "Notas longas e ligadas; o tempo flutua, a nota não.",
+         "linha": "A3~:4. E3~:8 E3~:4 A3~:4 | A0~:4. E0~:8 E0~:4 A0~:4 | A5~:4. E5~:8 E5~:4 A5~:4 | E3~:4. A5~:8 A5~:4 E3~:4",
+         "progressao": "| Cmaj7 | A7 | Dm7 | G7 |", "bpm": {"inicio": 100, "meta": 152, "passo": 4}, "voltas": 2, "groove": "bossa",
+         "criterios": {"legato": 80}},
+        {"id": "b4-4", "titulo": "Baião", "objetivo": "Pontuada, ligada, colcheia: o desenho da zabumba.",
+         "linha": "A0:8. D2:8. A0:8 A0:8. D2:8. A0:8 | A0:8. D2:8. A0:8 A0:8. D2:8. A0:8 | D0:8. G2:8. D0:8 D0:8. G2:8. D0:8 | E0:8. A2:8. E0:8 E0:8. A2:8. E0:8",
+         "progressao": "| A7 | A7 | D7 | E7 |", "bpm": {"inicio": 80, "meta": 132, "passo": 4}, "voltas": 2, "groove": "baiao"},
+        {"id": "b4-5", "titulo": "Frevo", "objetivo": "Semicolcheia rápida e leve.",
+         "linha": "(A1:16 D0 D3 D0)*4 | (E1:16 A0 A3 A0)*4", "progressao": "| Bb | F7 |",
+         "bpm": {"inicio": 96, "meta": 150, "passo": 4}, "voltas": 2, "groove": "frevo"},
+        {"id": "b4-6", "titulo": "Samba com síncope", "objetivo": "Antecipações sem perder o surdo no 2.",
+         "linha": "A5:8. A5:16 E5:8 A5:8 r:16 A5:16 E5:8 E5>:4 | E3:8. E3:16 A5:8 E3:8 r:16 E3:16 A5:8 A5>:4",
+         "progressao": "| Dm7 | G7 |", "bpm": {"inicio": 72, "meta": 112, "passo": 3}, "voltas": 2, "groove": "samba"}
+      ],
+      "desafios": [
+        "Toque b4-1 sobre o groove de samba com a progressão | Am7 | D7 | Gmaj7 | E7 | (transponha você mesmo).",
+        "Monte uma linha de baião de 4 compassos sobre | G7 | G7 | C7 | D7 | e grave."
+      ]
+    },
+    {
+      "id": "b5", "trilha": "B", "titulo": "Leitura e ouvido",
+      "meta": "Leitura à primeira vista e ditado musical. Exercício novo todo dia; ninguém decora.",
+      "drills": [
+        {"id": "b5-1", "titulo": "Leitura do dia: nível 1", "objetivo": "Primeira vista: toque sem ensaiar.",
+         "instrucao": "Olhe 20 segundos antes de gravar. Não ouça o modelo antes.",
+         "gerar": {"tipo": "leitura", "nivel": 1, "compassos": 4, "diario": true}, "bpm": {"inicio": 70, "meta": 110, "passo": 4}, "voltas": 1},
+        {"id": "b5-2", "titulo": "Leitura do dia: nível 2", "objetivo": "Síncopes, pausas e semicolcheias.",
+         "gerar": {"tipo": "leitura", "nivel": 2, "compassos": 4, "diario": true}, "bpm": {"inicio": 66, "meta": 104, "passo": 3}, "voltas": 1},
+        {"id": "b5-3", "titulo": "Leitura do dia: nível 3", "objetivo": "Tercinas, tons com muitas alterações e região aguda.",
+         "gerar": {"tipo": "leitura", "nivel": 3, "compassos": 4, "diario": true}, "bpm": {"inicio": 60, "meta": 96, "passo": 3}, "voltas": 1},
+        {"id": "b5-4", "titulo": "Ditado do dia: nível 1", "objetivo": "Ouça o modelo (pode repetir) e toque sem ver a tablatura.",
+         "gerar": {"tipo": "ditado", "nivel": 1, "compassos": 2, "diario": true}, "oculto": true, "bpm": {"inicio": 70, "meta": 100, "passo": 3}, "voltas": 2},
+        {"id": "b5-5", "titulo": "Ditado do dia: nível 2", "objetivo": "Ditado com síncopes e saltos maiores.",
+         "gerar": {"tipo": "ditado", "nivel": 2, "compassos": 2, "diario": true}, "oculto": true, "bpm": {"inicio": 66, "meta": 96, "passo": 3}, "voltas": 2}
+      ],
+      "desafios": ["Tire de ouvido 8 compassos da linha de baixo de uma música que você gosta e peça ao Claude para virar drill (comando /drill)."]
+    },
+    {
+      "id": "b6", "trilha": "B", "titulo": "Improviso e linguagem",
+      "meta": "Cercaduras, notas-alvo, modos em improviso e desenvolvimento de motivo.",
+      "drills": [
+        {"id": "b6-1", "titulo": "Cercaduras na 3ª de cada acorde", "objetivo": "Nota de cima, semitom de baixo, alvo. O alvo cai no tempo 3.",
+         "gerar": {"tipo": "cercadura", "progressao": "| Dm7 | G7 | Cmaj7 | Cmaj7 | Cm7 | F7 | Bbmaj7 | Bbmaj7 |"},
+         "bpm": {"inicio": 96, "meta": 176, "passo": 5}, "voltas": 1},
+        {"id": "b6-2", "titulo": "Improviso em colcheias com notas-alvo", "objetivo": "Colcheias livres; nota do acorde em toda troca.",
+         "instrucao": "A tablatura é só referência. Improvise em colcheias contínuas.",
+         "gerar": {"tipo": "walking", "progressao": "| Dm7 | G7 | Cmaj7 | A7 | Dm7 | G7 | Cmaj7 | Cmaj7 |"},
+         "progressao": "| Dm7 | G7 | Cmaj7 | A7 | Dm7 | G7 | Cmaj7 | Cmaj7 |",
+         "modo": "alvos", "gradeLivre": true, "grade": 0.5, "bpm": {"inicio": 90, "meta": 160, "passo": 5}, "voltas": 1, "groove": "jazz",
+         "criterios": {"notas": 90}},
+        {"id": "b6-3", "titulo": "Improviso em D dórico", "objetivo": "Oito compassos em colcheias, só notas do modo.",
+         "gerar": {"tipo": "escala", "tom": "D", "escala": "dorico", "oitavas": 2, "figura": "8"},
+         "modo": "conjunto", "conjunto": {"tom": "D", "escala": "dorico"}, "grade": 0.5,
+         "bpm": {"inicio": 90, "meta": 150, "passo": 5}, "voltas": 1, "groove": "funk", "progressao": "| Dm7 | Dm7 | G7 | G7 |"},
+        {"id": "b6-4", "titulo": "Improviso na escala alterada", "objetivo": "Sobre G7alt: só notas da escala alterada.",
+         "gerar": {"tipo": "escala", "tom": "G", "escala": "alterada", "oitavas": 2, "figura": "8"},
+         "modo": "conjunto", "conjunto": {"tom": "G", "escala": "alterada"}, "grade": 0.5,
+         "bpm": {"inicio": 80, "meta": 140, "passo": 5}, "voltas": 1, "progressao": "| G7alt | G7alt |"},
+        {"id": "b6-5", "titulo": "Motivo deslocado", "objetivo": "A mesma frase começando uma colcheia depois a cada compasso.",
+         "linha": "A5:8 A7 D5 D7 A7:4 r:4 | r:8 A5:8 A7 D5 D7 A7:4 r:8 | r:4 A5:8 A7 D5 D7 A7:4 | r:4. A5:8 A7 D5 D7 A7:8",
+         "bpm": {"inicio": 80, "meta": 140, "passo": 4}, "voltas": 2, "criterios": {"silencio": 18}}
+      ],
+      "desafios": [
+        "Solo de 16 compassos sobre o blues em F usando só cercaduras e notas do acorde. Grave em Gravar livre.",
+        "Crie um motivo de 3 notas e desenvolva por 8 compassos (inversão, aumento, deslocamento)."
+      ]
+    }
+  ]
+}
