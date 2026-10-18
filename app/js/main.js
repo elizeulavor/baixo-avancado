@@ -7,6 +7,7 @@ import * as J from './jogo.js';
 import {avaliar, medirLatencia, refinarLatencia, alturaAoVivo} from './analise.js';
 import {renderTab} from './tab.js';
 import * as Hm from './harmonia.js';
+import * as T from './treinador.js';
 import {parseProgressao, parseLinha, conjuntoEscala, freqMidi, nomeMidi, nomePc, CORDAS, AFINACOES, gerarWalking, NOMES, ESCALAS} from './musica.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -97,6 +98,12 @@ function comemorar(eventos, aprovado) {
 			atraso += 900;
 		} else if (e.tipo === 'dominado') setTimeout(() => toast('★', 'Drill dominado', e.drill.titulo), (atraso += 700));
 		else if (e.tipo === 'escudo') setTimeout(() => toast('🛡', 'Escudo ganho', 'Protege um dia perdido da sequência'), (atraso += 700));
+		else if (e.tipo === 'meta') setTimeout(() => {
+			A.somUI('nivel');
+			toast('📆', 'Meta da semana batida', `${e.meta} XP. Próxima semana a meta recomeça.`);
+			confete(120);
+		}, (atraso += 900));
+		else if (e.tipo === 'desafio') setTimeout(() => toast('☀', 'Desafio do dia feito', `Sequência de desafios: ${e.seq} ${e.seq === 1 ? 'dia' : 'dias'}`), (atraso += 700));
 		else if (e.tipo === 'nivelJogo') setTimeout(() => toast('⬆', `Nível ${e.nivel} no ouvido harmônico`, 'Perguntas mais difíceis a partir da próxima rodada'), (atraso += 700));
 		else if (e.tipo === 'proxMusica') setTimeout(() => toast('🎧', e.nivelNovo ? `Nível ${e.musica.nivel} aberto` : 'Próxima música liberada', `Música da vez: ${e.musica.titulo}`), (atraso += 900));
 		else if (e.tipo === 'dia') setTimeout(() => toast('🔥', 'Treino do dia completo', `Sequência: ${E.sequencia()} dias · +100 XP`), (atraso += 700));
@@ -115,14 +122,14 @@ function comemorar(eventos, aprovado) {
 }
 
 // ---------- roteador ----------
-const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, ferramentas: telaFerramentas, perfil: telaPerfil};
+const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, relatorio: telaRelatorio, ferramentas: telaFerramentas, perfil: telaPerfil};
 function ir() {
 	limpar();
 	const [caminho, q = ''] = (location.hash.slice(1) || 'hoje').split('?');
 	const [nome, arg] = caminho.split('/');
 	const params = new URLSearchParams(q);
 	(rotas[nome] ?? telaHoje)(arg, params);
-	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', musica: 'ouvido', harmonia: 'ouvido'}[nome] ?? nome;
+	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', relatorio: 'hoje', musica: 'ouvido', harmonia: 'ouvido'}[nome] ?? nome;
 	$$('nav a').forEach((a) => a.classList.toggle('ativo', a.getAttribute('href') === `#${aba}`));
 	window.scrollTo(0, 0);
 }
@@ -209,6 +216,7 @@ function telaHoje() {
 		</div>
 		<button class="principal grande" id="comecar">${f.pct >= 1 ? 'Ver resumo do dia' : f.feitos ? 'Continuar treino' : 'Começar treino'}</button>
 	</div>
+	${cartaoTreinador()}
 	<div class="semana">${semana}</div>
 	${E.estado.config.latencia == null ? `<a class="aviso" href="#ferramentas/calibrar"><b>Calibre antes do primeiro take (30 s).</b> Sem isso o app mede a regularidade, mas não sabe se você está adiantado ou atrasado.</a>` : ''}
 	<h2>Etapas</h2>
@@ -228,8 +236,8 @@ function cartaoMissao(i, plano, prox) {
 		return `<a class="missao entra ${feito ? 'feito' : ''}" href="#desafio"><div class="icone">⚑</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${esc(i.texto.slice(0, 70))}${i.texto.length > 70 ? '…' : ''}</h3></div><div class="lado"><span class="xp-tag">+30</span></div></a>`;
 	}
 	if (i.tipo === 'harmonia') {
-		const g = Hm.JOGOS[i.jogo];
-		return `<a class="missao trilhaB entra ${feito ? 'feito' : ''}" href="${linkItem(i, false)}"><div class="icone num" style="font-size:13px">${g.icone}</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${g.nome}</h3><div class="meta-linha">nível ${E.progressoHarmonia(i.jogo).nivel} · ${g.perguntas} perguntas</div></div><div class="lado"><span class="xp-tag">+${xpPrevisto(i)}</span></div></a>`;
+		const g = Hm.JOGOS[i.jogo] ?? Hm.MODOS[i.jogo];
+		return `<a class="missao trilhaB entra ${feito ? 'feito' : ''}" href="${linkItem(i, false)}"><div class="icone num" style="font-size:13px">${g.icone}</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${g.nome}</h3><div class="meta-linha">${Hm.MODOS[i.jogo] ? `sequência de ${J.sequenciaDesafio()} dias` : `rating ${E.progressoHarmonia(i.jogo).rating}`} · ${g.perguntas} perguntas</div></div><div class="lado"><span class="xp-tag">+${xpPrevisto(i)}</span></div></a>`;
 	}
 	if (i.tipo === 'musica') {
 		const mu = E.repertorio.musicas.find((x) => x.id === i.musica);
@@ -753,7 +761,55 @@ function telaFim() {
 	animar();
 }
 
-// ---------- Ouvido: repertório e harmonia funcional ----------
+// ---------- Treinador: cartão do dia e relatório da semana ----------
+function cartaoTreinador() {
+	const linhas = T.mensagemDoDia();
+	const m = T.metaSemanal();
+	return `<div class="treinador entra">
+		<div class="topo-t"><span class="peq">TREINADOR</span><a class="peq" href="#relatorio">relatório da semana ›</a></div>
+		${linhas.map((l) => `<${l.link ? `a href="${l.link}"` : 'div'} class="linha-t ${l.alerta ? 'alerta' : ''}"><span class="ic-t">${l.ic}</span><span>${esc(l.txt)}${l.link ? ' <b class="seta-t">›</b>' : ''}</span></${l.link ? 'a' : 'div'}>`).join('')}
+		<div class="meta-t"><span class="peq">Meta da semana</span><div class="barrinha"><div style="width:${m.frac * 100}%"></div></div><span class="peq num">${m.feito}/${m.meta} XP</span></div>
+	</div>`;
+}
+function telaRelatorio() {
+	const r = T.relatorio();
+	const a = r.analise;
+	const f1 = T.fmt1;
+	const comp = (agora, antes, menorMelhor, un = '') => (agora == null ? '–' : `${f1(agora)}${un}${antes != null ? ` <span class="${(menorMelhor ? agora < antes : agora > antes) ? 'ok' : 'erro'}">(${agora === antes ? '=' : (menorMelhor ? agora < antes : agora > antes) ? '▲' : '▼'} ${f1(antes)}${un})</span>` : ''}`);
+	const nomeJogo = (k) => Hm.JOGOS[k]?.nome ?? k;
+	const ini = new Date(`${r.ini}T12:00`).toLocaleDateString('pt-BR', {day: 'numeric', month: 'short'});
+	const foco = T.mensagemDoDia().filter((l) => !/Sequência|seguidos|Treino de hoje/.test(l.txt));
+	tela.innerHTML = `<a class="voltar" href="#hoje">‹ Hoje</a>
+	<span class="etiqueta">Semana desde ${ini}</span><h1>Relatório</h1>
+	<div class="heroi entra">
+		<div class="linha-heroi"><div class="anel-dia">${anel(r.meta.frac, {tam: 92, esp: 8})}<b>${Math.round(r.meta.frac * 100)}%</b><small>meta</small></div>
+		<div><h3>${r.meta.feito} de ${r.meta.meta} XP</h3><p class="sub">${r.meta.falta ? `Faltam ${r.meta.falta} XP${r.meta.diasRestantes ? ` em ${r.meta.diasRestantes} ${r.meta.diasRestantes === 1 ? 'dia' : 'dias'}` : ''}.` : 'Meta batida.'}</p></div></div>
+	</div>
+	<div class="medidas"><div><span>Minutos</span><b>${r.minutos}</b></div><div><span>Dias</span><b>${r.dias}/7</b></div><div><span>Takes</span><b>${r.takes}</b></div></div>
+	<h2>Números da semana (contra a anterior)</h2>
+	<div class="cartao recordes">
+		<div><span>Takes aprovados</span><b class="num">${comp(r.aprov, r.aprovAnt, false, '%')}</b></div>
+		<div><span>Regularidade média</span><b class="num">${r.dv != null ? `±${comp(r.dv, r.dvAnt, true, ' ms')}` : '–'}</b></div>
+		<div><span>Pressa/atraso médio</span><b class="num">${a.md1 != null ? `${a.md1 > 0 ? '+' : ''}${f1(a.md1)} ms` : 'sem calibração'}</b></div>
+		<div><span>Variação de volume</span><b class="num">${a.dn1 != null ? `±${f1(a.dn1)} dB` : '–'}</b></div>
+		${a.torta ? `<div><span>Semicolcheia torta</span><b class="num">${esc(a.torta.pos)} ${a.torta.ms > 0 ? '+' : ''}${f1(a.torta.ms)} ms</b></div>` : ''}
+		${a.maisReprova ? `<div><span>O que mais reprova</span><b>${esc(a.maisReprova[0])}</b></div>` : ''}
+	</div>
+	${r.dominados.length || r.musicas || a.ganhoMaior ? `<h2>Conquistado</h2><div class="cartao recordes">
+		${r.dominados.map((t) => `<div><span>★ Dominado</span><b>${esc(t)}</b></div>`).join('')}
+		${r.musicas ? `<div><span>🎧 Músicas tiradas</span><b>${r.musicas}</b></div>` : ''}
+		${a.ganhoMaior ? `<div><span>📈 Maior ganho</span><b>+${a.ganhoMaior.ganho} BPM · ${esc(a.ganhoMaior.titulo)}</b></div>` : ''}
+	</div>` : ''}
+	${r.ratings.length ? `<h2>Ouvido harmônico</h2><div class="cartao recordes">${r.ratings.map((x) => `<div><span>${esc(nomeJogo(x.jogo))}</span><b class="num">${x.rating} · ${esc(Hm.nomeFaixa(x.rating))}</b></div>`).join('')}</div>` : ''}
+	<h2>Foco para os próximos dias</h2>
+	<div class="treinador">${foco.length ? foco.map((l) => `<${l.link ? `a href="${l.link}"` : 'div'} class="linha-t"><span class="ic-t">${l.ic}</span><span>${esc(l.txt)}${l.link ? ' <b class="seta-t">›</b>' : ''}</span></${l.link ? 'a' : 'div'}>`).join('') : '<div class="linha-t"><span class="ic-t">📏</span><span>Grave mais takes para eu enxergar tendências.</span></div>'}</div>
+	<p class="peq">Para uma análise completa com o Claude: Perfil › Exportar, salve em <code>entrada/</code> e peça <b>revisar</b>.</p>
+	<div class="botoes"><button id="exp-rel">Exportar agora</button><a class="botao principal" href="#hoje">Treinar</a></div>`;
+	$('#exp-rel').onclick = () => baixar(`baixo-progresso-${E.hoje()}.json`, E.exportar(), 'application/json');
+	animar();
+}
+
+
 function telaOuvido() {
 	const rep = E.repertorio;
 	const mv = E.musicaDaVez();
@@ -783,13 +839,44 @@ function telaOuvido() {
 		<a class="botao principal grande" href="#musica/${mv.id}">Tirar esta música · +${60 * mv.nivel} XP</a>
 	</div>` : '<div class="heroi"><h3>Repertório completo.</h3></div>'}
 	<h2>Harmonia funcional</h2>
-	<div class="ladrilhos">${Object.entries(Hm.JOGOS).map(([k, g]) => {
-		const h = E.progressoHarmonia(k);
-		return `<a class="ladrilho entra" href="#harmonia/${k}"><span class="ic num">${g.icone}</span><div><b>${g.nome}</b><small>nível ${h.nivel}${h.rodadas ? ` · melhor ${h.melhor}%` : ''}</small></div></a>`;
-	}).join('')}</div>
-	<h2>Repertório</h2>
+	${(() => {
+		const G = E.harmoniaGeral();
+		const feito = G.desafios[E.hoje()];
+		const seqD = J.sequenciaDesafio();
+		const piores = J.errosHarmonia().slice(0, 2);
+		return `<a class="cartao desafio-dia ${feito != null ? 'feito' : ''} entra" href="#harmonia/desafio">
+			<div><p class="peq">DESAFIO DO DIA${seqD ? ` · ${seqD} ${seqD === 1 ? 'DIA' : 'DIAS SEGUIDOS'}` : ''}</p><h3>${feito != null ? `Feito: ${feito}%` : '8 perguntas, as mesmas para hoje'}</h3></div><span class="xp-tag">${feito != null ? '✓' : '+40'}</span></a>
+		<div class="ladrilhos">${Object.entries(Hm.JOGOS).map(([k, g]) => {
+			const h = E.progressoHarmonia(k);
+			return `<a class="ladrilho entra" href="#harmonia/${k}"><span class="ic num">${g.icone}</span><div><b>${g.nome}</b><small>${h.jogadas ? `${h.rating} · ${Hm.nomeFaixa(h.rating)}` : 'começar'}</small></div></a>`;
+		}).join('')}</div>
+		<div class="ladrilhos">${['rush', 'survive', 'erros'].map((k) => {
+			const mo = Hm.MODOS[k];
+			const sub = k === 'rush' ? `recorde ${G.rushRecorde ?? 0}` : k === 'survive' ? `recorde ${G.surviveRecorde ?? 0}` : piores.length ? piores.map((e) => nomeRotulo(e.rotulo)).join(', ') : 'aparece quando houver erros';
+			return `<a class="ladrilho destaque entra" href="#harmonia/${k}"><span class="ic num">${mo.icone}</span><div><b>${mo.nome}</b><small>${esc(sub)}</small></div></a>`;
+		}).join('')}</div>
+		<details class="cartao ajustes-ouvido"><summary>⚙ Ajustes do ouvido</summary>
+			<div class="form">
+				<label>Timbre <select id="h-timbre">${[['auto', 'automático (varia com o nível)'], ['piano', 'piano'], ['rhodes', 'Rhodes'], ['banda', 'banda (bateria + Rhodes + baixo)']].map(([v, n]) => `<option value="${v}" ${G.timbre === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+				<label class="largo"><span><input type="checkbox" id="h-orientar" ${G.sempreOrientar ? 'checked' : ''}> Sempre tocar o orientador de tom (I IV V I)</span></label>
+				<label class="largo"><span><input type="checkbox" id="h-baixo" ${G.responderNoBaixo ? 'checked' : ''}> Responder tocando no baixo (completar, graus, inversões)</span></label>
+			</div></details>`;
+	})()}	<h2>Repertório</h2>
 	<p class="peq">${esc(rep.regras.split('. Vídeos')[0])}.</p>
 	${niveis}`;
+	const G = E.harmoniaGeral();
+	$('#h-timbre').onchange = (e) => {
+		G.timbre = e.target.value;
+		E.salvar();
+	};
+	$('#h-orientar').onchange = (e) => {
+		G.sempreOrientar = e.target.checked;
+		E.salvar();
+	};
+	$('#h-baixo').onchange = (e) => {
+		G.responderNoBaixo = e.target.checked;
+		E.salvar();
+	};
 }
 
 let ytPronto = null;
@@ -959,131 +1046,231 @@ function telaMusica(id, q) {
 	$$('#seguir').forEach((bt) => (bt.onclick = seguirTreino));
 }
 
-function telaHarmonia(jogo, q) {
-	const J0 = Hm.JOGOS[jogo];
-	if (!J0) return (location.hash = '#ouvido');
-	const h = E.progressoHarmonia(jogo);
+// Um motor para os seis jogos e os quatro modos (desafio do dia, Rush, Survive, seus erros).
+const corF = (f) => (f ? `f-${f}` : '');
+function jogoParaErro(rotulos) {
+	const r = rotulos.length ? rotulos[Math.floor(Math.random() * Math.min(3, rotulos.length))] : '';
+	if (r.startsWith('cad:')) return 'cadencia';
+	if (r.startsWith('inv:')) return 'inversao';
+	if (r.startsWith('funcao:')) return 'funcao';
+	return Math.random() < 0.6 ? 'completar' : 'graus';
+}
+function nomeRotulo(r) {
+	if (r.startsWith('cad:')) return Hm.CADENCIAS[r.slice(4)]?.nome ?? r;
+	if (r.startsWith('inv:')) return {f: 'baixo na fundamental', 3: 'terça no baixo', 5: 'quinta no baixo', 7: 'sétima no baixo', p: 'pedal'}[r.slice(4)] ?? r;
+	if (r.startsWith('funcao:')) return `função do ${r.slice(7)}`;
+	return `grau ${r}`;
+}
+function telaHarmonia(id, q) {
+	const ehModo = !!Hm.MODOS[id];
+	const cfg = Hm.JOGOS[id] ?? Hm.MODOS[id];
+	if (!cfg) return (location.hash = '#ouvido');
+	const G = E.harmoniaGeral();
 	const sessao = q.has('s');
-	const total = J0.perguntas;
-	let i = 0, acertos = 0, p = null, resp = [], fimEscuta = null;
+	const hoje = E.hoje();
+	const total = cfg.perguntas ?? null;
+	const focoErros = id === 'erros' ? J.errosHarmonia().slice(0, 6).map((e) => e.rotulo) : null;
+	let i = 0, acertos = 0, vidas = cfg.vidas ?? null, p = null, resp = [], fimEscuta = null, tomAtual = null, mesmoTom = 0, surdoAte = 0, fimRush = null, acabou = false;
+	const jogosUsados = new Set();
+	Hm.usarSemente(id === 'desafio' ? `desafio-${hoje}` : null);
+	parar.push(() => Hm.usarSemente(null));
+	if (id === 'desafio' && G.desafios[hoje] != null) {
+		tela.innerHTML = `<a class="voltar" href="#ouvido">‹ Ouvido</a><span class="etiqueta B">Desafio do dia</span><h1>Feito hoje</h1>
+		<div class="heroi"><h3>${G.desafios[hoje]}% de acerto</h3><p class="sub">Sequência de desafios: ${J.sequenciaDesafio()} dias. Volte amanhã para um desafio novo.</p></div>
+		<div class="botoes"><a class="botao" href="#harmonia/rush">⚡ Rush</a><a class="botao principal" href="#ouvido">Outros jogos</a></div>
+		${sessao ? '<button class="principal grande" id="seguir">Próxima etapa ›</button>' : ''}`;
+		$$('#seguir').forEach((bt) => (bt.onclick = seguirTreino));
+		return;
+	}
+	const hJogo = Hm.JOGOS[id] ? E.progressoHarmonia(id) : null;
 	tela.innerHTML = `${sessao ? `<div class="barra-sessao"><span>Treino</span><a href="#hoje">Sair</a></div>` : '<a class="voltar" href="#ouvido">‹ Ouvido</a>'}
-	<span class="etiqueta B">Ouvido harmônico · nível ${h.nivel}</span><h1>${J0.nome}</h1><p class="sub">${J0.desc}</p>
+	<span class="etiqueta B">${ehModo ? 'Ouvido harmônico · modo' : `Rating ${hJogo.rating} · ${Hm.nomeFaixa(hJogo.rating)}`}</span><h1>${cfg.nome}</h1><p class="sub">${cfg.desc}</p>
 	<div class="carregando" id="carga" hidden><div></div></div>
-	<div class="pontos-rodada" id="pontos">${Array.from({length: total}, () => '<i></i>').join('')}</div>
+	<div class="placar-modo" id="placar"></div>
 	<div id="perg"></div>`;
-	const ponto = (ok) => {
-		const el = $$('#pontos i')[i];
-		if (el) el.className = ok ? 'f' : 'e';
+	const placar = () => {
+		const el = $('#placar');
+		if (!el) return;
+		if (id === 'rush') el.innerHTML = `<span class="cronometro" id="relogio">3:00</span><span class="cronometro">${acertos} ✓</span>`;
+		else if (id === 'survive') el.innerHTML = `<span class="vidas">${'♥'.repeat(vidas)}<i>${'♥'.repeat(cfg.vidas - vidas)}</i></span><span class="cronometro">${acertos} ✓</span>`;
+		else el.innerHTML = `<div class="pontos-rodada">${Array.from({length: total}, (_, k) => `<i class="${k < i ? (resultados[k] ? 'f' : 'e') : ''}"></i>`).join('')}</div>`;
 	};
-	// enquanto a pergunta toca, o microfone é ignorado (senão ele ouve o próprio piano)
-	let surdoAte = 0;
+	const resultados = [];
+	const timbre = (rating) => (G.timbre !== 'auto' ? G.timbre : rating < 1500 ? 'piano' : ['piano', 'rhodes', 'banda'][Math.floor(Math.random() * 3)]);
+	let timbreAtual = 'piano';
 	const tocar = (so) => {
 		if (!p) return;
-		surdoAte = Hm.tocar(p, {nivel: h.nivel, so}) + 0.35;
+		surdoAte = Hm.tocar(p, {so, timbre: timbreAtual, orientar: so === 'orientar' ? true : p.orientar}) + 0.35;
+	};
+	const orientar = () => {
+		if (!p) return;
+		surdoAte = Hm.tocar({...p, alvo: []}, {timbre: timbreAtual, orientar: true}) + 0.35;
 	};
 	const desenhar = () => {
 		resp = [];
-		p = Hm.pergunta(jogo, h.nivel);
-		const multi = jogo === 'graus' || jogo === 'baixo';
+		const jogo = Hm.JOGOS[id] ? id : id === 'rush' ? Hm.jogoMisto(true) : id === 'erros' ? jogoParaErro(focoErros) : Hm.jogoMisto(false);
+		jogosUsados.add(jogo);
+		const h = E.progressoHarmonia(jogo);
+		const rating = id === 'survive' ? h.rating - 150 + acertos * 45 : id === 'rush' ? Math.min(h.rating, 1350) + acertos * 12 : h.rating;
+		const manter = rating < 1200 ? 4 : rating < 1600 ? 2 : 1;
+		if (mesmoTom >= manter) tomAtual = null;
+		p = Hm.pergunta(jogo, {rating, tom: tomAtual, foco: focoErros});
+		const trocou = p.tom !== tomAtual;
+		tomAtual = p.tom;
+		mesmoTom = trocou ? 1 : mesmoTom + 1;
+		p.jogo = jogo;
+		p.orientar = trocou || G.sempreOrientar || jogo === 'funcao';
+		timbreAtual = timbre(rating);
+		const noBaixo = Hm.JOGOS[jogo].soBaixo || (G.responderNoBaixo && Hm.JOGOS[jogo].baixo);
+		const previa = rating < 1300 && p.previa && !noBaixo;
+		const seqVisivel = jogo === 'completar'
+			? `<div class="progressao">${p.seqCompleta.map((g, k) => (p.slots.includes(k) ? `<div class="chip-grau vazio" data-s="${p.slots.indexOf(k)}">?</div>` : `<div class="chip-grau ${corF(p.opcoes.find((o) => o.id === g)?.f)}">${esc(g)}</div>`)).join('')}</div>`
+			: jogo === 'graus' || jogo === 'baixo' ? `<div class="progressao"><div class="chip-grau f-T">${p.modo === 'menor' ? 'i' : 'I'}</div>${p.slots.map((_, k) => `<div class="chip-grau vazio" data-s="${k}">?</div>`).join('')}</div>` : '';
 		$('#perg').innerHTML = `<div class="cartao centro">
-			<p class="peq">Pergunta ${i + 1} de ${total} · ${jogo === 'funcao' && h.nivel < 3 ? 'primeiro o tom (I IV V I), depois o acorde' : 'primeiro o I, depois a pergunta'}</p>
-			<div class="botoes"><button class="principal" id="ouvir">▶ Ouvir</button><button id="so-alvo">↻ Só a pergunta</button></div>
-			${multi ? `<div class="slots">${p.alvo.map(() => '<div class="slot">?</div>').join('')}</div>` : ''}
+			<p class="peq">${ehModo ? `${Hm.JOGOS[jogo].nome} · ` : ''}${p.estilo ? `${esc(p.estilo)} · ` : ''}tom de ${p.tom}${p.modo === 'menor' ? ' menor' : ''}${timbreAtual !== 'piano' ? ` · ${timbreAtual}` : ''}${trocou && i ? ' · <b>tom novo</b>' : ''}</p>
+			<div class="botoes"><button class="principal" id="ouvir">▶ Ouvir</button><button id="so-alvo">↻ Só a pergunta</button><button id="orientar" title="Orientador de tom: I IV V I">🎯 Tom</button></div>
+			${seqVisivel}
 		</div>
-		${jogo === 'baixo' ? '<div class="botoes"><button class="principal grande" id="escutar">🎙 Tocar as raízes no baixo</button></div><p class="status-take" id="ouvindo"></p>'
-			: `<div class="opcoes">${p.opcoes.map((o) => `<button class="opcao" data-o="${o.id}">${esc(o.nome)}</button>`).join('')}</div>`}
+		${noBaixo ? `<div class="botoes"><button class="principal grande" id="escutar">🎙 Responder no baixo</button></div><p class="status-take" id="ouvindo">${jogo === 'inversao' ? 'Toque a nota que está no baixo.' : 'Toque a raiz de cada acorde que falta, na ordem.'}</p>`
+			: `<div class="opcoes ${p.opcoes.length > 6 ? 'muitas' : ''}">${p.opcoes.map((o) => `<button class="opcao ${corF(o.f)}" data-o="${esc(o.id)}">${esc(o.nome)}${previa ? `<span class="previa" data-p="${esc(o.id)}" title="ouvir">▶</span>` : ''}</button>`).join('')}</div>`}
 		<div id="retorno"></div>`;
 		$('#ouvir').onclick = () => tocar('tudo');
 		$('#so-alvo').onclick = () => tocar('alvo');
-		$$('[data-o]').forEach((bt) => (bt.onclick = () => responder(bt.dataset.o)));
-		if (jogo === 'baixo') $('#escutar').onclick = escutarRaizes;
+		$('#orientar').onclick = orientar;
+		$$('[data-o]').forEach((bt) => (bt.onclick = (e) => {
+			if (e.target.dataset.p) return;
+			responder(bt.dataset.o);
+		}));
+		$$('[data-p]').forEach((sp) => (sp.onclick = (e) => {
+			e.stopPropagation();
+			surdoAte = Hm.tocarAcordes(p.previa(sp.dataset.p), {timbre: timbreAtual}) + 0.35;
+		}));
+		if (noBaixo) $('#escutar').onclick = escutarBaixo;
+		placar();
 		setTimeout(() => tocar('tudo'), 250);
 	};
-	const responder = (id) => {
-		if (resp.length >= p.alvo.length || (jogo !== 'graus' && resp.length)) return;
-		if (jogo === 'graus') {
-			resp.push(id);
-			const s = $$('.slot')[resp.length - 1];
-			s.textContent = id;
-			s.classList.add('preenchido');
-			if (resp.length < p.alvo.length) return;
-		} else resp = [id];
+	const responder = (op) => {
+		if (acabou || resp.length >= p.slots.length) return;
+		resp.push(op);
+		const s = $(`[data-s="${resp.length - 1}"]`);
+		if (s) {
+			s.textContent = op;
+			s.classList.remove('vazio');
+			s.classList.add('preenchido', corF(p.opcoes.find((o) => o.id === op)?.f));
+		}
+		if (resp.length < p.slots.length) return;
 		avaliar();
 	};
-	const escutarRaizes = async () => {
+	const escutarBaixo = async () => {
 		const bt = $('#escutar');
 		bt.disabled = true;
+		const esperado = p.baixoEsperado ?? p.slots.map((k) => p.alvo[k].baixo);
 		let ultimo = null, estavel = 0, aceito = null;
 		try {
 			fimEscuta = await escutar((midi) => {
-				if (midi == null || resp.length >= p.alvo.length || A.agora() < surdoAte) return;
+				if (midi == null || acabou || resp.length >= esperado.length || A.agora() < surdoAte) return;
 				const r = Math.round(midi);
 				estavel = r === ultimo ? estavel + 1 : 0;
 				ultimo = r;
-				// a nota anterior ainda soando não conta: a próxima raiz tem de ser outra nota
 				if (estavel !== 3 || r === aceito) return;
 				aceito = r;
 				const k = resp.length;
-				const certo = ((r % 12) + 12) % 12 === p.alvo[k].baixo;
+				const certo = ((r % 12) + 12) % 12 === esperado[k];
 				resp.push(certo ? p.certa[k] : `x${r}`);
-				const s = $$('.slot')[k];
-				s.textContent = certo ? p.alvo[k].nome : `${nomePc(r)}?`;
-				s.classList.add(certo ? 'certo' : 'errado');
+				const s = $(`[data-s="${k}"]`);
+				if (s) {
+					s.textContent = certo ? p.certa[k] : `${nomePc(r)}?`;
+					s.classList.remove('vazio');
+					s.classList.add(certo ? 'certo' : 'errado');
+				}
 				A.somUI(certo ? 'xp' : 'tique');
 				estavel = -6;
-				if (resp.length >= p.alvo.length) {
+				if (resp.length >= esperado.length) {
 					fimEscuta?.();
 					fimEscuta = null;
 					avaliar();
 				}
 			});
-			$('#ouvindo').textContent = 'Ouvindo… toque a raiz de cada acorde, uma por vez, e deixe soar.';
+			$('#ouvindo').textContent = 'Ouvindo… deixe cada nota soar até aparecer na casa.';
 		} catch {
 			$('#ouvindo').textContent = 'Microfone negado.';
 			bt.disabled = false;
 		}
 	};
 	const avaliar = () => {
-		const certas = Array.isArray(p.certa) ? p.certa : [p.certa];
-		const ok = certas.every((c, k) => resp[k] === c);
+		const ok = p.certa.every((c, k) => resp[k] === c);
+		const delta = J.respostaHarmonia(p.jogo, p, ok);
+		resultados[i] = ok;
 		if (ok) acertos++;
-		ponto(ok);
+		else if (vidas != null) vidas--;
 		A.somUI(ok ? 'xp' : 'tique');
 		$$('[data-o]').forEach((bt) => {
 			bt.disabled = true;
-			if (!Array.isArray(p.certa) && bt.dataset.o === p.certa) bt.classList.add('certa');
-			else if (!ok && bt.dataset.o === resp[0] && jogo !== 'graus') bt.classList.add('errada');
+			if (p.slots.length === 1 && bt.dataset.o === p.certa[0]) bt.classList.add('certa');
+			else if (!ok && p.slots.length === 1 && bt.dataset.o === resp[0]) bt.classList.add('errada');
 		});
-		if (jogo === 'graus') $$('.slot').forEach((s, k) => s.classList.add(resp[k] === certas[k] ? 'certo' : 'errado'));
-		const nomeCerto = jogo === 'cadencia' ? Hm.CADENCIAS[p.certa].nome : jogo === 'funcao' ? Hm.FUNCOES[p.certa] : certas.join(' → ');
-		$('#retorno').innerHTML = `<div class="metrica ${ok ? 'ok' : 'nok'}" style="margin-top:12px"><div class="topo-m"><span>${ok ? '✓ Certo' : `✗ Era ${esc(nomeCerto)}`}</span></div><small>${esc(p.explica)}</small></div>
-			<div class="botoes"><button id="de-novo">↻ Ouvir de novo</button><button class="principal" id="proxima">${i + 1 < total ? 'Próxima ›' : 'Ver resultado'}</button></div>`;
+		$$('[data-s]').forEach((s) => {
+			const k = Number(s.dataset.s);
+			if (!s.classList.contains('certo') && !s.classList.contains('errado')) s.classList.add(resp[k] === p.certa[k] ? 'certo' : 'errado');
+		});
+		const nomeCerto = p.jogo === 'cadencia' ? Hm.CADENCIAS[p.certa[0]].nome : p.jogo === 'funcao' ? Hm.FUNCOES[p.certa[0]] : p.jogo === 'inversao' ? p.opcoes.find((o) => o.id === p.certa[0])?.nome : p.certa.join(' · ');
+		i++;
+		placar();
+		const fimJogo = (total && i >= total) || (vidas != null && vidas <= 0);
+		const rapido = id === 'rush';
+		$('#retorno').innerHTML = `<div class="metrica ${ok ? 'ok' : 'nok'}" style="margin-top:12px"><div class="topo-m"><span>${ok ? '✓ Certo' : `✗ Era ${esc(nomeCerto)}`}</span><b class="peq">${delta >= 0 ? '+' : ''}${delta} rating</b></div>${rapido && ok ? '' : `<small>${esc(p.explica)}</small>`}</div>
+			${rapido ? '' : `<div class="botoes"><button id="de-novo">↻ Ouvir de novo</button><button class="principal" id="proxima">${fimJogo ? 'Ver resultado' : 'Próxima ›'}</button></div>`}`;
+		if (rapido) {
+			setTimeout(() => !acabou && desenhar(), ok ? 650 : 1800);
+			return;
+		}
 		$('#de-novo').onclick = () => tocar('tudo');
-		$('#proxima').onclick = () => {
-			i++;
-			if (i < total) desenhar();
-			else terminar();
-		};
+		$('#proxima').onclick = () => (fimJogo ? terminar() : desenhar());
 	};
 	const terminar = () => {
-		const nivelAntes = h.nivel;
-		const ev = J.aposHarmonia(jogo, acertos, total);
-		const pct = Math.round((100 * acertos) / total);
-		$('#perg').innerHTML = `<div class="placar-take ${pct >= 80 ? 'aprovado' : 'reprovado'}">
-			<div class="anel">${anel(acertos / total, {tam: 120, esp: 10, cor: pct >= 80 ? 'url(#gVerde)' : '#ff6b6b'})}<b data-conta="${pct}">0</b></div>
-			<div><span class="carimbo">${acertos}/${total}</span><p style="margin-top:10px">${h.nivel > nivelAntes ? `Subiu para o nível ${h.nivel}.` : pct >= 90 ? 'Mais uma rodada assim e sobe de nível.' : 'Sobe de nível com 90% em duas rodadas seguidas.'}</p>
-			<div class="ganhos"><span>+${ev.filter((e) => e.tipo === 'xp').reduce((s, e) => s + e.xp, 0)} XP</span></div></div></div>
-			<div class="botoes"><button id="outra">Mais uma rodada</button>${sessao ? '<button class="principal" id="seguir">Próxima etapa ›</button>' : ''}</div>`;
-		$('#outra').onclick = () => telaHarmonia(jogo, q);
+		if (acabou) return;
+		acabou = true;
+		fimEscuta?.();
+		clearInterval(fimRush);
+		const n = id === 'rush' || id === 'survive' ? i : total;
+		const jogo = Hm.JOGOS[id] ? id : null;
+		const ev = J.fimHarmonia(id, {acertos, total: n, jogo});
+		const pct = n ? Math.round((100 * acertos) / n) : 0;
+		const xp = ev.filter((e) => e.tipo === 'xp').reduce((s, e) => s + e.xp, 0);
+		const ratings = [...jogosUsados].map((j) => `${Hm.JOGOS[j].nome} ${E.progressoHarmonia(j).rating}`).join(' · ');
+		const rec = id === 'rush' ? G.rushRecorde : id === 'survive' ? G.surviveRecorde : null;
+		const piores = J.errosHarmonia().slice(0, 3);
+		$('#placar').innerHTML = '';
+		$('#perg').innerHTML = `<div class="placar-take ${pct >= 80 || (rec != null && acertos >= rec) ? 'aprovado' : 'reprovado'}">
+			<div class="anel">${anel(n ? acertos / n : 0, {tam: 120, esp: 10, cor: pct >= 80 ? 'url(#gVerde)' : '#ff6b6b'})}<b data-conta="${rec != null ? acertos : pct}">0</b></div>
+			<div><span class="carimbo">${rec != null ? `${acertos} acertos` : `${acertos}/${n}`}</span>
+			<p style="margin-top:10px">${rec != null ? `Recorde: ${rec}.` : id === 'desafio' ? `Sequência de desafios: ${J.sequenciaDesafio()} dias.` : ''} ${ratings}</p>
+			<div class="ganhos"><span>+${xp} XP</span></div></div></div>
+			${piores.length ? `<div class="info"><b>O que mais pega:</b> ${piores.map((e) => `${esc(nomeRotulo(e.rotulo))} (${Math.round(e.taxa * 100)}% de erro)`).join(' · ')}. <a href="#harmonia/erros">Treinar isso</a></div>` : ''}
+			<div class="botoes"><button id="outra">${id === 'desafio' ? 'Rush' : 'Mais uma'}</button>${sessao ? '<button class="principal" id="seguir">Próxima etapa ›</button>' : '<a class="botao principal" href="#ouvido">Outros jogos</a>'}</div>`;
+		$('#outra').onclick = () => (id === 'desafio' ? (location.hash = '#harmonia/rush') : telaHarmonia(id, q));
 		$$('#seguir').forEach((bt) => (bt.onclick = seguirTreino));
 		animar($('#perg'));
-		comemorar(ev, pct >= 80);
+		comemorar(ev, pct >= 80 || ev.some((e) => e.tipo === 'recorde'));
 	};
-	parar.push(() => fimEscuta?.());
+	parar.push(() => {
+		acabou = true;
+		fimEscuta?.();
+		clearInterval(fimRush);
+	});
 	const c = $('#carga');
 	c.hidden = false;
 	A.preparar(Hm.GRUPOS, (f, t) => c.firstElementChild && (c.firstElementChild.style.width = `${(100 * f) / t}%`)).then(() => {
 		c.hidden = true;
+		if (id === 'rush') {
+			const fim = performance.now() + cfg.tempo * 1000;
+			fimRush = setInterval(() => {
+				const s = Math.max(0, (fim - performance.now()) / 1000);
+				const el = $('#relogio');
+				if (el) el.textContent = `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+				if (s <= 0) terminar();
+			}, 200);
+		}
 		desenhar();
 	});
 }
@@ -1587,6 +1774,7 @@ function telaPerfil() {
 			<label>Horário do lembrete <input type="time" id="cl" value="${c.lembrete}"></label>
 			<label class="largo">Dias <span class="dias">${dias.map((d, i) => `<label><input type="checkbox" data-dia="${i}" ${c.dias.includes(i) ? 'checked' : ''}>${d}</label>`).join('')}</span></label>
 			<label>Afinação <select id="ca"><option value="EADG" ${c.afinacao === 'EADG' ? 'selected' : ''}>4 cordas (EADG)</option><option value="BEADG" ${c.afinacao === 'BEADG' ? 'selected' : ''}>5 cordas (BEADG)</option></select></label>
+			<label>Meta semanal <select id="cmeta">${[0, 900, 1400, 1800, 2400, 3200].map((v) => `<option value="${v}" ${(c.metaSemanal ?? 0) === v ? 'selected' : ''}>${v ? `${v} XP` : 'automática'}</option>`).join('')}</select></label>
 			<label>Som do clique <select id="ck"><option value="claves" ${c.somClick !== 'madeira' ? 'selected' : ''}>claves</option><option value="madeira" ${c.somClick === 'madeira' ? 'selected' : ''}>woodblock</option></select></label>
 		</div>
 		<div class="botoes"><button class="principal" id="ics">📅 Lembrete no calendário</button></div>
@@ -1603,6 +1791,7 @@ function telaPerfil() {
 		c.dias = $$('[data-dia]').filter((x) => x.checked).map((x) => Number(x.dataset.dia));
 		c.afinacao = $('#ca').value;
 		c.somClick = $('#ck').value;
+		c.metaSemanal = Number($('#cmeta').value) || undefined;
 		A.preferencias.click = c.somClick;
 		delete E.estado.planos[E.hoje()];
 		E.salvar();

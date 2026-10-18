@@ -364,3 +364,35 @@ textarea { font: 14px ui-monospace, "SF Mono", Menlo, Consolas, monospace; width
 .slot.preenchido { border-style: solid; color: var(--texto); }
 .slot.certo { border: 1px solid var(--ok); color: var(--ok); background: rgba(61, 220, 151, 0.1); }
 .slot.errado { border: 1px solid var(--nok); color: var(--nok); background: rgba(255, 107, 107, 0.08); }
+/* cores por função harmônica: tônica dourada, subdominante violeta, dominante coral */
+:root { --fT: #f5b84a; --fSD: #9c8cff; --fD: #ff7a6b; }
+.opcao.f-T, .chip-grau.f-T { box-shadow: inset 4px 0 0 var(--fT); }
+.opcao.f-SD, .chip-grau.f-SD { box-shadow: inset 4px 0 0 var(--fSD); }
+.opcao.f-D, .chip-grau.f-D { box-shadow: inset 4px 0 0 var(--fD); }
+.opcoes.muitas { grid-template-columns: repeat(3, 1fr); }
+.opcao { position: relative; }
+.opcao .previa { position: absolute; right: 6px; top: 6px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; background: var(--cartao3); color: var(--suave); }
+.progressao { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 14px 0 4px; }
+.chip-grau { min-width: 62px; height: 54px; padding: 0 10px; border-radius: 14px; display: grid; place-items: center; font-family: var(--titulo); font-size: 19px; font-weight: 600; background: var(--cartao2); border: 1px solid var(--linha); }
+.chip-grau.vazio { border-style: dashed; color: var(--suave); }
+.chip-grau.certo { border-color: var(--ok); color: var(--ok); background: rgba(61, 220, 151, 0.1); }
+.chip-grau.errado { border-color: var(--nok); color: var(--nok); background: rgba(255, 107, 107, 0.08); }
+.placar-modo { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; min-height: 30px; }
+.placar-modo .pontos-rodada { width: 100%; margin: 0; }
+.vidas { font-size: 22px; color: var(--nok); letter-spacing: 4px; }
+.vidas i { font-style: normal; color: var(--cartao3); }
+.desafio-dia { display: flex; justify-content: space-between; align-items: center; gap: 12px; color: var(--texto); margin-bottom: 10px; border-color: rgba(156, 140, 255, 0.35); background: linear-gradient(135deg, rgba(156, 140, 255, 0.16), var(--cartao)); }
+.desafio-dia.feito { opacity: 0.7; }
+.ajustes-ouvido summary { cursor: pointer; list-style: none; font-weight: 600; }
+.ajustes-ouvido summary::-webkit-details-marker { display: none; }
+/* treinador */
+.treinador { background: linear-gradient(160deg, rgba(156, 140, 255, 0.12), var(--cartao) 60%); border: 1px solid rgba(156, 140, 255, 0.28); border-radius: var(--raio); padding: 14px 16px; margin: 14px 0 6px; }
+.treinador .topo-t { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.treinador .topo-t .peq:first-child { letter-spacing: 0.14em; color: var(--trilhaB); font-weight: 600; }
+.linha-t { display: grid; grid-template-columns: 26px 1fr; gap: 8px; padding: 8px 0; font-size: 14.5px; line-height: 1.45; color: var(--texto); border-top: 1px solid var(--linha); }
+.treinador .linha-t:first-of-type { border-top: 0; }
+.seta-t { color: var(--ouro); }
+.linha-t.alerta { color: var(--fogo); }
+.ic-t { font-size: 16px; text-align: center; }
+.meta-t { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--linha); }
+.meta-t .barrinha { margin: 0; }

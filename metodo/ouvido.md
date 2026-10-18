@@ -20,7 +20,30 @@ Para trocar ou acrescentar músicas: ache o vídeo oficial, anote `yt` (id de 11
 exatamente como o YouTube mostra, e rode `node scripts/conferir-repertorio.mjs` (confere que o vídeo
 existe, toca incorporado e é do canal anotado) e `node scripts/validar.mjs`. Ids nunca mudam.
 
-## Harmonia funcional (`app/js/harmonia.js`)
+## Harmonia funcional (`app/js/harmonia.js`), versão 2
+
+Inspirado no estudo do Chord Crush (Hooktheory): progressões com buracos, orientador de tom,
+rating Elo, Rush, Survive, treino dos erros, desafio diário, timbres variados, prévia das opções e
+cores por função. O diferencial do Radix é responder **tocando no baixo** (microfone) e o foco em
+inversões e pedal, que é onde o baixista decide a harmonia.
+
+- **Rating (Elo) por jogo**, começa em 1000. Cada pergunta tem dificuldade própria (faixa de
+  vocabulário, acordes escondidos, tom menor). Faixas: Fundamentos (<1150: I IV V vi, 5 tons, tom
+  fixo por 4 perguntas), Campo completo (<1400: + ii iii, tétrades), Secundárias (<1650: V/V V/vi
+  vii°, 12 tons), Empréstimo e menor (<1900: V/ii V/IV iv ♭VII ♭VI, tom menor), Jazz e modos
+  (♭II7 ♭III, dórico). A pergunta às vezes vem uma faixa abaixo (revisão) ou acima (puxa).
+- **Jogos:** Completar (30 fórmulas de estilo: pop, doo-wop, rock, jazz, gospel, choro, samba,
+  andaluz, backdoor, SubV, dórico), Função, Cadências (7 tipos), Graus, Inversões (fundamental, 3ª, 5ª,
+  7ª, pedal), Raiz no baixo. Completar, Graus e Inversões aceitam resposta pelo baixo (ajuste).
+- **Modos:** Desafio do dia (8 perguntas iguais para o dia, sequência própria), Rush (3 min),
+  Survive (3 vidas, dificuldade sobe a cada acerto), Seus erros (rótulos com mais erro, mínimo 3
+  tentativas).
+- **Orientador de tom** (I IV V I): toca quando o tom muda, sempre no jogo de função, ou sempre se
+  o ajuste estiver ligado; botão 🎯 a qualquer momento.
+- **Timbre:** automático (piano até 1500; depois sorteia piano, Rhodes ou banda), ou fixo.
+- **Prévia:** abaixo de 1300 de rating, cada opção tem ▶ para ouvir antes de responder.
+
+## Harmonia funcional, versão 1 (histórico)
 
 Quatro jogos, três níveis cada, piano e baixo gravados, tom sorteado a cada pergunta.
 
@@ -38,5 +61,5 @@ Quatro jogos, três níveis cada, piano e baixo gravados, tom sorteado a cada pe
 
 ## No plano do dia
 
-- A partir de 30 min: um dia leitura/ditado, no outro ouvido harmônico (o jogo gira entre os quatro).
+- A partir de 30 min: um dia leitura/ditado, no outro o desafio harmônico do dia.
 - Tirar de ouvido: todo dia a partir de 60 min; em dias alternados a partir de 45 min.

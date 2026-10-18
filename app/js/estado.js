@@ -81,7 +81,28 @@ export function musicaDaVez() {
 }
 
 // ---------- ouvido harmônico ----------
-export const progressoHarmonia = (jogo) => (estado.harmonia ??= {})[jogo] ??= {nivel: 1, rodadas: 0, acertos: 0, total: 0, melhor: 0, seguidasBoas: 0};
+// rating (Elo) por jogo; quem vinha do sistema de níveis entra no rating equivalente
+export function progressoHarmonia(jogo) {
+	const h = ((estado.harmonia ??= {})[jogo] ??= {rating: 1000, jogadas: 0, rodadas: 0, acertos: 0, total: 0, melhor: 0});
+	if (h.rating == null) h.rating = 1000 + ((h.nivel ?? 1) - 1) * 250;
+	h.jogadas ??= h.total ?? 0;
+	return h;
+}
+// configurações e memória do ouvido: erros por rótulo, desafios feitos, recordes, timbre
+export const harmoniaGeral = () => {
+	const g = (estado.harmoniaGeral ??= {});
+	g.erros ??= {};
+	g.desafios ??= {};
+	g.timbre ??= 'auto';
+	g.sempreOrientar ??= false;
+	g.responderNoBaixo ??= false;
+	return g;
+};
+export function novoRatingHarmonia(r, d, acertou, jogadas) {
+	const K = jogadas < 20 ? 48 : 24;
+	const esp = 1 / (1 + Math.pow(10, (d - r) / 400));
+	return Math.round(r + K * ((acertou ? 1 : 0) - esp));
+}
 export const todosDrills = () => programa.modulos.flatMap((m) => m.drills.map((d) => ({...d, modulo: m})));
 export const drillPorId = (id) => todosDrills().find((d) => d.id === id);
 export const groovePorId = (id) => grooves.find((g) => g.id === id);
@@ -109,12 +130,30 @@ export function moduloAtivo(trilha) {
 	return programa.modulos.find((m) => m.trilha === trilha && !moduloConcluido(m)) ?? null;
 }
 
+// Medições compactas de um take, para o treinador do app e para o /revisar no Claude.
+const um = (v) => (v == null || Number.isNaN(v) ? null : Math.round(v * 10) / 10);
+export function metricas(res) {
+	return {
+		dv: um(res.tempo?.desvio), // regularidade (ms)
+		md: res.itens?.some((i) => i.nome === 'Pressa/atraso') ? um(res.tempo?.media) : null, // + atrasado, só com latência confiável
+		dr: um(res.tempo?.deriva),
+		pp: (res.tempo?.porPosicao ?? []).map((x) => [x.pos, um(x.media)]),
+		dn: um(res.dinamica?.desvio),
+		fa: um(res.dinamica?.fantasma),
+		ac: um(res.notas?.acerto),
+		af: um(res.notas?.afinacao),
+		si: um(res.som?.silencio),
+		ar: um(res.som?.articulacao),
+		rep: (res.itens ?? []).filter((i) => !i.ok && !i.info).map((i) => i.nome),
+	};
+}
+
 // Registra um take avaliado e ajusta o BPM do drill.
 export function registrarTake(d, bpm, res) {
 	const p = progresso(d);
 	const data = hoje();
 	p.tentativas++;
-	p.historico.push({data, bpm, nota: res.nota, aprovado: res.aprovado});
+	p.historico.push({data, bpm, nota: res.nota, aprovado: res.aprovado, met: metricas(res)});
 	if (p.historico.length > 200) p.historico.splice(0, p.historico.length - 200);
 	p.ultimo = {data, bpm, nota: res.nota, aprovado: res.aprovado, dicas: res.dicas.slice(0, 3)};
 	let mensagem;
@@ -190,8 +229,7 @@ export function planoDoDia(data = hoje()) {
 			const nivel = leitura.find((d) => !dominado(d)) ?? leitura[0];
 			if (nivel && !usados.has(nivel.id)) itens.push({tipo: 'drill', id: nivel.id, papel: nivel.gerar.tipo === 'ditado' ? 'Ouvido do dia' : 'Leitura do dia', minutos: 5});
 		} else {
-			const jogos = ['funcao', 'cadencia', 'graus', 'baixo'];
-			itens.push({tipo: 'harmonia', id: 'harmonia', jogo: jogos[Math.floor(diaN / 2) % jogos.length], papel: 'Ouvido harmônico', minutos: 5});
+			itens.push({tipo: 'harmonia', id: 'harmonia', jogo: 'desafio', papel: 'Desafio harmônico do dia', minutos: 5});
 		}
 	}
 	// tirar de ouvido: todo dia a partir de 60 min; em dias alternados a partir de 45 min

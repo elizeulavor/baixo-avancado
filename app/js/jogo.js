@@ -57,9 +57,16 @@ export const CONQUISTAS = [
 	{id: 'primeira-musica', nome: 'Primeira transcrição', desc: 'Tirar a primeira música de ouvido', icone: '🎧', xp: 100, ok: () => Object.values(E.estado.repertorio ?? {}).some((m) => m.feito)},
 	{id: 'repertorio10', nome: 'Repertório', desc: '10 músicas tiradas de ouvido', icone: '📀', xp: 500, ok: () => Object.values(E.estado.repertorio ?? {}).filter((m) => m.feito).length >= 10},
 	{id: 'repertorio30', nome: 'Ouvido de estúdio', desc: 'As 30 músicas do repertório', icone: '🏅', xp: 2500, ok: () => Object.values(E.estado.repertorio ?? {}).filter((m) => m.feito).length >= 30},
-	{id: 'rodada-perfeita', nome: 'Rodada perfeita', desc: 'Acertar tudo numa rodada de ouvido harmônico', icone: '💎', xp: 120, ok: () => Object.values(E.estado.harmonia ?? {}).some((h) => h.perfeitas > 0)},
+	{id: 'rodada-perfeita', nome: 'Rodada perfeita', desc: 'Acertar tudo numa rodada de ouvido harmônico', icone: '💎', xp: 120, ok: () => (E.harmoniaGeral().perfeitas ?? 0) > 0},
 	{id: 'cadencias100', nome: 'Ouvido funcional', desc: '100 cadências reconhecidas', icone: '🔑', xp: 400, ok: () => (E.estado.harmonia?.cadencia?.acertos ?? 0) >= 100},
-	{id: 'raiz-certa', nome: 'Raiz certeira', desc: 'Nível 3 no jogo da raiz no baixo', icone: '🎯', xp: 300, ok: () => (E.estado.harmonia?.baixo?.nivel ?? 1) >= 3},
+	{id: 'raiz-certa', nome: 'Raiz certeira', desc: 'Rating 1400 no jogo da raiz no baixo', icone: '🎯', xp: 300, ok: () => (E.estado.harmonia?.baixo?.rating ?? 0) >= 1400},
+	{id: 'ouvido-avancado', nome: 'Ouvido avançado', desc: 'Rating 1650 em qualquer jogo de harmonia', icone: '🎼', xp: 400, ok: () => Object.values(E.estado.harmonia ?? {}).some((h) => (h.rating ?? 0) >= 1650)},
+	{id: 'ouvido-mestre', nome: 'Ouvido de mestre', desc: 'Rating 1900 em qualquer jogo de harmonia', icone: '🧠', xp: 1200, ok: () => Object.values(E.estado.harmonia ?? {}).some((h) => (h.rating ?? 0) >= 1900)},
+	{id: 'desafio7', nome: 'Sete desafios', desc: '7 desafios do dia seguidos', icone: '☀', xp: 250, ok: () => sequenciaDesafio() >= 7},
+	{id: 'rush20', nome: 'Relâmpago', desc: '20 acertos num Rush', icone: '⚡', xp: 300, ok: () => (E.harmoniaGeral().rushRecorde ?? 0) >= 20},
+	{id: 'survive15', nome: 'Sobrevivente', desc: '15 acertos num Survive', icone: '♥', xp: 300, ok: () => (E.harmoniaGeral().surviveRecorde ?? 0) >= 15},
+	{id: 'inversoes', nome: 'Ouvido de baixista', desc: 'Rating 1500 em inversões', icone: '⤵', xp: 350, ok: () => (E.estado.harmonia?.inversao?.rating ?? 0) >= 1500},
+	{id: 'meta-semanal', nome: 'Semana cheia', desc: 'Bater a meta semanal de XP', icone: '📆', xp: 150, ok: () => !!estadoJogo().metasBatidas?.length},
 	{id: 'recordista', nome: 'Recordista', desc: '25 recordes pessoais de BPM', icone: '📈', xp: 300, ok: () => (estadoJogo().contaRecordes ?? 0) >= 25},
 ];
 
@@ -72,6 +79,17 @@ function ganhar(xp, motivo, eventos) {
 	eventos.push({tipo: 'xp', xp: Math.round(xp), motivo});
 	const depois = nivel(j.xp);
 	if (depois.n > antes) eventos.push({tipo: 'nivel', nivel: depois.n, titulo: depois.titulo, novoTitulo: nivel(xpParaNivel(antes)).titulo !== depois.titulo});
+	// meta semanal (semana começa na segunda); comemorada uma vez por semana
+	const d = new Date();
+	d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+	const ini = E.hoje(d);
+	const semana = Object.entries(j.xpDia).filter(([k]) => k >= ini).reduce((s, [, v]) => s + v, 0);
+	const meta = E.estado.config.metaSemanal ?? 280 * Math.max(3, E.estado.config.dias.length);
+	j.metasBatidas ??= [];
+	if (semana >= meta && !j.metasBatidas.includes(ini)) {
+		j.metasBatidas.push(ini);
+		eventos.push({tipo: 'meta', meta});
+	}
 }
 function checarConquistas(r, ctx, eventos) {
 	const j = estadoJogo();
@@ -178,7 +196,9 @@ export function protegerSequencia() {
 function ouvidoHarm() {
 	const hs = Object.values(E.estado.harmonia ?? {});
 	if (!hs.length) return 0;
-	return hs.reduce((s, h) => s + (h.total ? (h.acertos / h.total) * (h.nivel / 3) : 0), 0) / 4 * 100;
+	// rating 900 = 0, 2000 = 100, média dos jogos jogados
+	const jogados = hs.filter((h) => h.jogadas);
+	return jogados.length ? Math.max(0, Math.min(100, jogados.reduce((s, h) => s + (h.rating - 900) / 11, 0) / jogados.length)) : 0;
 }
 
 // ---------- radar de habilidades (0 a 100) ----------
@@ -269,23 +289,66 @@ export function aposBraco(pontos) {
 }
 export const xpHoje = () => estadoJogo().xpDia?.[E.hoje()] ?? 0;
 
-// Fim de uma rodada de ouvido harmônico: 4 XP por acerto, bônus de rodada perfeita, nível sobe com
-// 90% em duas rodadas seguidas (máximo 3).
-export function aposHarmonia(jogo, acertos, total) {
+// ---------- ouvido harmônico ----------
+// Cada resposta mexe no rating (Elo) do jogo e na memória de erros por rótulo (grau, cadência,
+// inversão). Devolve a variação do rating para a tela mostrar.
+export function respostaHarmonia(jogo, p, acertou) {
 	const h = E.progressoHarmonia(jogo);
+	const antes = h.rating;
+	h.rating = Math.max(600, E.novoRatingHarmonia(h.rating, p.dificuldade, acertou, h.jogadas));
+	h.jogadas++;
+	h.acertos += acertou ? 1 : 0;
+	h.total++;
+	h.melhorRating = Math.max(h.melhorRating ?? 0, h.rating);
+	const g = E.harmoniaGeral();
+	for (const r of p.rotulos) {
+		const e = (g.erros[r] ??= {e: 0, a: 0});
+		if (acertou) e.a++;
+		else e.e++;
+	}
+	E.salvar();
+	return h.rating - antes;
+}
+// rótulos que mais erra (com pelo menos 3 tentativas), do pior para o melhor
+export function errosHarmonia() {
+	return Object.entries(E.harmoniaGeral().erros)
+		.filter(([, v]) => v.e + v.a >= 3 && v.e > 0)
+		.map(([rotulo, v]) => ({rotulo, taxa: v.e / (v.e + v.a), e: v.e, a: v.a}))
+		.sort((x, y) => y.taxa - x.taxa || y.e - x.e);
+}
+// Fim de rodada (jogo ou modo): XP, recordes, sequência do desafio, plano do dia, conquistas.
+export function fimHarmonia(id, {acertos, total, jogo}) {
 	const eventos = [];
-	h.rodadas++;
-	h.acertos += acertos;
-	h.total += total;
-	const pct = acertos / total;
-	h.melhor = Math.max(h.melhor, Math.round(pct * 100));
-	if (pct === 1) h.perfeitas = (h.perfeitas ?? 0) + 1;
-	h.seguidasBoas = pct >= 0.9 ? h.seguidasBoas + 1 : 0;
-	ganhar(acertos * 4 * h.nivel + (pct === 1 ? 30 : 0), pct === 1 ? 'Rodada perfeita' : 'Ouvido harmônico', eventos);
-	if (h.seguidasBoas >= 2 && h.nivel < 3) {
-		h.nivel++;
-		h.seguidasBoas = 0;
-		eventos.push({tipo: 'nivelJogo', nivel: h.nivel});
+	const g = E.harmoniaGeral();
+	const pct = total ? acertos / total : 0;
+	if (id === 'rush') {
+		if (acertos > (g.rushRecorde ?? 0)) {
+			if (g.rushRecorde) eventos.push({tipo: 'recorde', texto: `Recorde no Rush: ${acertos} (antes ${g.rushRecorde})`});
+			g.rushRecorde = acertos;
+		}
+		ganhar(acertos * 6, 'Rush', eventos);
+	} else if (id === 'survive') {
+		if (acertos > (g.surviveRecorde ?? 0)) {
+			if (g.surviveRecorde) eventos.push({tipo: 'recorde', texto: `Recorde no Survive: ${acertos} (antes ${g.surviveRecorde})`});
+			g.surviveRecorde = acertos;
+		}
+		ganhar(acertos * 6, 'Survive', eventos);
+	} else {
+		if (pct === 1 && total >= 5) g.perfeitas = (g.perfeitas ?? 0) + 1;
+		ganhar(acertos * 5 + (pct === 1 ? 30 : 0), pct === 1 ? 'Rodada perfeita' : 'Ouvido harmônico', eventos);
+		if (id === 'desafio') {
+			const hoje = E.hoje();
+			if (g.desafios[hoje] == null) {
+				g.desafios[hoje] = Math.round(pct * 100);
+				ganhar(40, 'Desafio do dia', eventos);
+				eventos.push({tipo: 'desafio', seq: sequenciaDesafio()});
+			}
+		}
+		if (jogo) {
+			const h = E.progressoHarmonia(jogo);
+			h.rodadas++;
+			h.melhor = Math.max(h.melhor ?? 0, Math.round(pct * 100));
+		}
 	}
 	E.marcarFeito('harmonia');
 	checarConquistas(null, null, eventos);
@@ -293,6 +356,17 @@ export function aposHarmonia(jogo, acertos, total) {
 	estadoJogo().eventos = [...eventos, ...estadoJogo().eventos].slice(0, 80);
 	E.salvar();
 	return eventos;
+}
+export function sequenciaDesafio() {
+	const ds = E.harmoniaGeral().desafios;
+	let n = 0;
+	const d = new Date();
+	if (ds[E.hoje(d)] == null) d.setDate(d.getDate() - 1); // 0% também conta como feito
+	while (ds[E.hoje(d)] != null) {
+		n++;
+		d.setDate(d.getDate() - 1);
+	}
+	return n;
 }
 
 // Repertório: tarefa marcada vale pouco; música tirada vale pelo nível.

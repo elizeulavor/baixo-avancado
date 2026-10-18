@@ -94,15 +94,16 @@ for (const m of rep.musicas) {
 for (const nv of rep.niveis) if (rep.musicas.filter((m) => m.nivel === nv.n).length < 3) erros.push(`repertório: nível ${nv.n} com menos de 3 músicas (não abriria o seguinte)`);
 // harmonia: gera perguntas de todos os jogos e níveis sem erro
 const H = await import('../app/js/harmonia.js');
-for (const jogo of Object.keys(H.JOGOS)) for (const nv of [1, 2, 3]) {
+for (const jogo of Object.keys(H.JOGOS)) for (const rating of [900, 1200, 1500, 1800, 2100]) {
 	try {
-		for (let k = 0; k < 200; k++) {
-			const p = H.pergunta(jogo, nv);
-			const certas = Array.isArray(p.certa) ? p.certa : [p.certa];
-			if (jogo !== 'baixo' && !certas.every((c) => p.opcoes.some((o) => o.id === c))) throw new Error(`resposta certa fora das opções (${certas})`);
+		for (let k = 0; k < 150; k++) {
+			const p = H.pergunta(jogo, {rating});
+			if (!p.slots.length || p.certa.length !== p.slots.length) throw new Error('slots e respostas não batem');
+			if (!H.JOGOS[jogo].soBaixo && !p.certa.every((c) => p.opcoes.some((o) => o.id === c))) throw new Error(`resposta certa fora das opções (${p.certa})`);
+			if (!(p.dificuldade > 0) || p.alvo.some((a) => !a.nome)) throw new Error('pergunta incompleta');
 		}
 	} catch (e) {
-		erros.push(`harmonia ${jogo} nível ${nv}: ${e.message}`);
+		erros.push(`harmonia ${jogo} rating ${rating}: ${e.message}`);
 	}
 }
 
