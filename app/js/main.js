@@ -6,6 +6,8 @@ import * as A from './audio.js';
 import * as J from './jogo.js';
 import {avaliar, medirLatencia, refinarLatencia, alturaAoVivo, detectarAtaques} from './analise.js';
 import {renderTab} from './tab.js';
+import {renderPartitura, notaSolta} from './partitura.js';
+import * as Lt from './leitura.js';
 import * as Hm from './harmonia.js';
 import * as T from './treinador.js';
 import * as G from './groove-ui.js';
@@ -410,8 +412,11 @@ function telaDrill(id, q) {
 	const modProva = provaId ? E.programa.modulos.find((m) => m.id === provaId) : null;
 	const p = E.progresso(d);
 	let bpm = modProva ? J.bpmProva(d) : q.has('meta') ? d.bpm.meta : p.bpm;
-	const {eventos, info, tempos} = E.montar(d);
+	const {eventos, info, tempos, tom: tomGerado, escala: escalaGerada} = E.montar(d);
 	let oculto = !!d.oculto;
+	const ehLeitura = d.gerar?.tipo === 'leitura';
+	let vista = Lt.vista(ehLeitura);
+	let olho = Lt.olhoFrente();
 	const crit = {...d.criterios};
 	const chips = [
 		`tempo ±${crit.tempoDesvio ?? 14} ms`,
@@ -436,12 +441,15 @@ function telaDrill(id, q) {
 	${d.instrucao ? `<p class="sub">${esc(d.instrucao)}</p>` : ''}
 	${info ? `<div class="info">${esc(info)}</div>` : ''}
 	${d.progressao ? `<div class="info">Acordes: ${esc(d.progressao)}</div>` : ''}
+	${ehLeitura ? `<a class="cartao link-relampago" href="#ferramentas/leitura"><span>𝄢</span><div><b>Leitura relâmpago</b><small>Nota a nota, com o tempo de leitura medido. Aquecimento ideal antes deste drill.</small></div><span>›</span></a>` : ''}
 	<div class="chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</div>
 	<div class="painel-bpm">
 		<button class="redondo" id="menos" ${modProva ? 'disabled' : ''}>−</button>
 		<div class="bpm"><b id="bpm">${bpm}</b><span>BPM · meta ${d.bpm.meta}${E.dominado(d) ? ' · ★' : ''}</span><div class="meta-bpm"><div style="width:${Math.max(4, Math.min(100, fracBpm * 100))}%"></div></div></div>
 		<button class="redondo" id="mais" ${modProva ? 'disabled' : ''}>+</button>
 	</div>
+	<div class="vista-notacao"><div class="segmento mini" id="vista">${[['partitura', 'Partitura'], ['ambas', 'Ambas'], ['tab', 'Tab']].map(([k, n]) => `<button data-v="${k}" class="${vista === k ? 'ativo' : ''}">${n}</button>`).join('')}</div>
+		<label class="mini-chave" id="olho-rot" ${vista === 'tab' ? 'hidden' : ''}><input type="checkbox" id="olho" ${olho ? 'checked' : ''}> olho à frente</label></div>
 	<div id="tab" class="tab-caixa"></div>
 	<div class="carregando" id="carga" hidden><div></div></div>
 	<div class="linha-saida">${chipSaida()}<span class="peq" id="txt-saida">${textoSaida()}</span></div>
@@ -466,11 +474,28 @@ function telaDrill(id, q) {
 			};
 			return renderTab(eventos, {afin: E.estado.config.afinacao, tempos, largura: Math.min(700, tela.clientWidth - 12)}).layout;
 		}
-		const r = renderTab(eventos, {afin: E.estado.config.afinacao, tempos, largura: Math.min(700, tela.clientWidth - 12)});
-		$('#tab').innerHTML = r.svg;
+		const largura = Math.min(700, tela.clientWidth - 12);
+		const tab = () => renderTab(eventos, {afin: E.estado.config.afinacao, tempos, largura});
+		// armadura: o tom do gerador (leitura) ou o tom/escala declarados no drill; linha escrita sem tom = Dó
+		const pt = () => renderPartitura(eventos, {tempos, largura, compasso: d.compasso, tom: tomGerado ?? d.gerar?.tom, escala: escalaGerada ?? d.gerar?.escala ?? 'maior'});
+		if (vista === 'tab') {
+			const r = tab();
+			$('#tab').innerHTML = r.svg;
+			return r.layout;
+		}
+		const r = pt();
+		// ambas: a partitura comanda o cursor; a tab vem embaixo, sem cursor próprio
+		$('#tab').innerHTML = vista === 'ambas' ? `${r.svg}<div class="sep-notacao"></div>${tab().svg.replace(/<line id="cursor"[^>]*\/>/, '')}` : r.svg;
 		return r.layout;
 	};
 	let layout = desenhar();
+	$$('#vista button').forEach((b) => (b.onclick = () => {
+		vista = Lt.vista(ehLeitura, b.dataset.v);
+		$$('#vista button').forEach((x) => x.classList.toggle('ativo', x === b));
+		$('#olho-rot').hidden = vista === 'tab';
+		layout = desenhar();
+	}));
+	$('#olho').onchange = (e) => (olho = Lt.olhoFrente(e.target.checked));
 	const mudarBpm = (dv) => {
 		bpm = Math.max(30, Math.min(300, bpm + dv));
 		$('#bpm').textContent = bpm;
@@ -488,8 +513,11 @@ function telaDrill(id, q) {
 			if (t > total * voltas) {
 				el.setAttribute('x1', -10);
 				el.setAttribute('x2', -10);
+				if (olho) Lt.esconderCompassos(-1);
 				return;
 			}
+			// olho à frente: o compasso some 1 tempo antes de o cursor chegar; quem não leu antes, para
+			if (olho && vista !== 'tab' && t > -1) Lt.esconderCompassos(Math.floor(((t + 1) % total) / tempos), Math.floor(total / tempos - 1e-6));
 			if (t >= 0) {
 				const pos = layout.pos(t % total);
 				el.setAttribute('x1', pos.x);
@@ -500,7 +528,7 @@ function telaDrill(id, q) {
 			raf = requestAnimationFrame(passo);
 		};
 		raf = requestAnimationFrame(passo);
-		parar.push(() => cancelAnimationFrame(raf));
+		parar.push(() => (cancelAnimationFrame(raf), Lt.esconderCompassos(-1)));
 	};
 	// sons reais do modelo: carrega com barra na primeira vez
 	const carregar = async () => {
@@ -1599,6 +1627,7 @@ function telaFerramentas(sub) {
 	const lista = {
 		metronomo: ['⏱', 'Metrônomo', 'Clique no 2 e 4, sumindo, 7/8, treino de velocidade', ferrMetronomo],
 		groove: ['🥁', 'Groove', '20 estilos com bateria, percussão e Rhodes reais', ferrGroove],
+		leitura: ['𝄢', 'Leitura relâmpago', 'A nota na pauta, você toca: o app mede quanto você demora para ler', ferrLeitura],
 		braco: ['🗺', 'Jogo do braço', 'Ache a nota no braço contra o relógio', ferrBraco],
 		musica: ['🎧', 'Estudo de música', 'Tire de ouvido: loop A-B e velocidade sem mudar o tom', ferrMusica],
 		afinador: ['🎚', 'Afinador', 'Cromático, pelo microfone', ferrAfinador],
@@ -1607,7 +1636,7 @@ function telaFerramentas(sub) {
 	};
 	if (!lista[sub]) {
 		tela.innerHTML = `<div class="topo"><div><h1>Ferramentas</h1></div></div>
-		<div class="ladrilhos">${Object.entries(lista).map(([k, [ic, nome, desc]]) => `<a class="ladrilho entra ${k === 'braco' ? 'destaque' : ''}" href="#ferramentas/${k}"><span class="ic">${ic}</span><div><b>${nome}</b><small>${desc}</small></div></a>`).join('')}</div>`;
+		<div class="ladrilhos">${Object.entries(lista).map(([k, [ic, nome, desc]]) => `<a class="ladrilho entra ${k === 'leitura' ? 'destaque' : ''}" href="#ferramentas/${k}"><span class="ic">${ic}</span><div><b>${nome}</b><small>${desc}</small></div></a>`).join('')}</div>`;
 		return;
 	}
 	const [, nome, desc] = lista[sub];
@@ -1811,6 +1840,124 @@ function ferrAfinador(el) {
 
 // Jogo do braço: a nota aparece, você toca. 60 segundos. Nível 2 inclui sustenidos e bemóis e
 // pode exigir uma corda específica.
+// Leitura relâmpago: a nota aparece na pauta (clave de fá), o aluno toca, o microfone confere.
+// Mede o tempo de leitura de cada nota; as lentas e as erradas voltam mais.
+function ferrLeitura(el) {
+	const L = Lt.estadoLeitura();
+	let nivel = 1;
+	try {
+		nivel = Number(localStorage.getItem('radix-nivel-leitura')) || 1;
+	} catch {}
+	const desenhar = () => {
+		const n = Lt.NIVEIS.find((x) => x.id === nivel);
+		el.innerHTML = `<div class="niveis-leitura">${Lt.NIVEIS.map((x) => `<button data-n="${x.id}" class="${x.id === nivel ? 'ativo' : ''}"><b>${x.id}</b><small>${esc(x.nome)}</small>${L.recordes[x.id] ? `<i>${L.recordes[x.id]}/min</i>` : ''}</button>`).join('')}</div>
+		<p class="sub" style="margin-top:8px">${esc(n.desc)}.</p>
+		<div class="cartao palco-leitura"><div id="tom-rodada" class="peq"></div><div id="pauta-alvo">${notaSolta(52, {}).svg}</div>
+			<div class="placar-leitura"><span class="cronometro" id="tempo">60</span><span id="retorno" class="retorno"></span><span class="cronometro" id="pontos">0</span></div></div>
+		<div class="botoes"><button class="principal grande" id="jogar">▶ Ler (60 s)</button></div>
+		<label class="mini-chave"><input type="checkbox" id="qq-oitava"> aceitar qualquer oitava (se o microfone confundir o grave)</label>
+		<p class="peq">Notação de baixo: soa uma oitava abaixo do escrito. A corda E solta é o Mi na 1ª linha suplementar de baixo. O app só aceita a nota na oitava escrita: é aí que mora a leitura de verdade (posição no braço).</p>
+		<h2>Mapa da sua leitura</h2>
+		<div class="tab-caixa mapa-caixa">${Lt.mapaSvg(nivel, nivel === 4 ? 1 : 0)}</div>
+		<p class="peq"><span class="cor-rapida">●</span> até 1,2 s <span class="cor-media">●</span> até 2 s <span class="cor-lenta">●</span> mais lenta <span class="cor-erro">●</span> errou <span class="cor-nada">●</span> não vista. As lentas e erradas aparecem mais vezes.</p>`;
+		$$('.niveis-leitura button').forEach((b) => (b.onclick = () => {
+			nivel = Number(b.dataset.n);
+			try {
+				localStorage.setItem('radix-nivel-leitura', nivel);
+			} catch {}
+			desenhar();
+		}));
+		$('#jogar').onclick = jogar;
+	};
+	const jogar = async () => {
+		await carregarCom(A.GRUPOS.ui);
+		const arm = nivel === 4 ? Lt.armaduraSorteada() : 0;
+		const qqOitava = $('#qq-oitava').checked;
+		$('#tom-rodada').textContent = nivel === 4 ? `Armadura: ${Lt.nomeTom(arm)}` : '';
+		let alvo = null, mostradoEm = 0, certas = 0, erros = 0, somaMs = 0;
+		let ultimo = null, estavel = 0, errouEsta = false, avisouOitava = false, anterior = null;
+		const pc = (m) => ((m % 12) + 12) % 12;
+		let ativo = true;
+		const mostrar = () => {
+			if (!ativo) return;
+			alvo = Lt.sortear(nivel, arm, alvo);
+			errouEsta = avisouOitava = false;
+			$('#pauta-alvo').innerHTML = notaSolta(Lt.midiEscrito(alvo), {arm, forcar: alvo}).svg;
+			$('#retorno').textContent = '';
+			$('#retorno').className = 'retorno';
+			mostradoEm = performance.now();
+		};
+		let fim;
+		try {
+			fim = await escutar((m) => {
+				if (m == null || !alvo) return;
+				const r = Math.round(m);
+				estavel = r === ultimo ? estavel + 1 : 0;
+				ultimo = r;
+				const dt = performance.now() - mostradoEm;
+				const som = Lt.somAlvo(alvo);
+				const certo = qqOitava ? pc(r) === pc(som) : r === som;
+				if (estavel >= 2 && certo) {
+					certas++;
+					somaMs += dt;
+					Lt.registrar(alvo, dt, true);
+					$('#pontos').textContent = certas;
+					$('#retorno').textContent = `${(dt / 1000).toFixed(1)} s`;
+					$('#retorno').className = `retorno ${dt <= 1200 ? 'rapida' : dt <= 2000 ? 'media' : 'lenta'}`;
+					$('#pauta-alvo .pt-alvo')?.classList.add('acertou');
+					A.somUI('xp');
+					anterior = som;
+					estavel = -3;
+					alvo = null;
+					setTimeout(mostrar, 280);
+					return;
+				}
+				// a nota anterior ainda soando não conta como erro; só depois de 0,4 s e estável
+				if (estavel >= 3 && dt > 400 && !certo && (anterior == null || pc(r) !== pc(anterior))) {
+					if (pc(r) === pc(som)) {
+						if (!avisouOitava) $('#retorno').textContent = r < som ? 'oitava abaixo: suba' : 'oitava acima: desça';
+						avisouOitava = true;
+					} else if (!errouEsta) {
+						errouEsta = true;
+						erros++;
+						Lt.registrar(alvo, 0, false);
+						$('#retorno').textContent = `tocou ${nomeMidi(r + 12).replace(/\d+$/, '')}`;
+						$('#retorno').className = 'retorno erro';
+						A.somUI('erro');
+					}
+				}
+			});
+		} catch {
+			$('#retorno').textContent = 'Microfone negado.';
+			return;
+		}
+		$('#jogar').disabled = true;
+		$$('.niveis-leitura button').forEach((b) => (b.disabled = true));
+		mostrar();
+		const t0 = performance.now();
+		const rel = setInterval(() => {
+			const resta = Math.max(0, 60 - (performance.now() - t0) / 1000);
+			$('#tempo').textContent = Math.ceil(resta);
+			if (resta > 0) return;
+			clearInterval(rel);
+			fim();
+			ativo = false;
+			alvo = null;
+			const msMedio = certas ? somaMs / certas : 0;
+			const r = Lt.fimRodada(nivel, {certas, erros, msMedio});
+			const ev = J.aposLeitura(nivel, certas, r.recorde);
+			const lentas = Lt.maisLentas(nivel, arm);
+			desenhar();
+			$('#pauta-alvo').innerHTML = `<div class="fim-leitura"><b>${certas}</b><span>notas por minuto</span>
+				<div class="medidas"><div><span>Leitura média</span><b>${certas ? (msMedio / 1000).toFixed(2).replace('.', ',') : '–'} s</b></div><div><span>Erros</span><b>${erros}</b></div><div><span>Recorde</span><b>${Lt.estadoLeitura().recordes[nivel] ?? 0}</b></div></div>
+				${lentas.length ? `<p class="peq">Mais lentas: ${lentas.map((x) => `${Lt.nomeNota(x.a)} (${(x.h.ms / 1000).toFixed(1).replace('.', ',')} s${x.h.erros >= 1 ? ', errou' : ''})`).join(' · ')}. Elas voltam mais na próxima rodada.</p>` : ''}</div>`;
+			comemorar(ev, r.recorde);
+		}, 200);
+		parar.push(() => (clearInterval(rel), (ativo = false)));
+	};
+	desenhar();
+}
+
 function ferrBraco(el) {
 	const j = J.estadoJogo();
 	const afin = AFINACOES[E.estado.config.afinacao];

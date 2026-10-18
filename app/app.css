@@ -584,3 +584,69 @@ button.mini { padding: 5px 10px; font-size: 12px; border-radius: 10px; margin-le
 .ad-lado:last-child .ad-rot { color: var(--ouro); }
 .ad-num { font-size: 13px; } .ad-num b { font-family: var(--titulo); }
 .ad-lado small { color: var(--apagado); font-size: 11px; }
+
+/* ---------- Partitura (clave de fá) ---------- */
+svg.partitura { display: block; font-family: var(--corpo); }
+.partitura .pt-linha { stroke: #8f887c; stroke-width: 1; }
+.partitura .pt-sup { stroke: #4a4640; stroke-width: 1.2; }
+.partitura .pt-barra { stroke: #4a4640; stroke-width: 1.2; }
+.partitura .pt-barra-fim { stroke: #17171a; stroke-width: 3.2; }
+.partitura .pt-clave { fill: #17171a; stroke: #17171a; stroke-width: 2.4; stroke-linecap: round; }
+.partitura .pt-clave circle { stroke: none; }
+.partitura .pt-acid { fill: #17171a; font-size: 15px; font-family: "Segoe UI Symbol", "Noto Sans Symbols", "DejaVu Sans", var(--corpo); }
+.partitura .pt-acid.grande { font-size: 21px; }
+.partitura .pt-acid.mini { font-size: 11px; }
+.partitura .pt-formula { fill: #17171a; font: 800 17px var(--titulo); text-anchor: middle; }
+.partitura .pt-num { fill: #8a8378; font-size: 8px; }
+.partitura .pt-cabeca { fill: #17171a; }
+.partitura .pt-cabeca-aberta { fill: #f6f2ea; stroke: #17171a; stroke-width: 1.7; }
+.partitura .pt-x { stroke: #17171a; stroke-width: 1.8; stroke-linecap: round; }
+.partitura .pt-haste { stroke: #17171a; stroke-width: 1.2; }
+.partitura .pt-viga { stroke: #17171a; stroke-width: 3.6; }
+.partitura .pt-bandeira { fill: none; stroke: #17171a; stroke-width: 1.6; stroke-linecap: round; }
+.partitura .pt-ponto, .partitura .pt-pausa { fill: #17171a; }
+.partitura .pt-pausa-traco { fill: none; stroke: #17171a; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.partitura .pt-tercina { fill: #6f6a62; font-size: 9px; font-style: italic; }
+.partitura .pt-acento { fill: #d9541e; font-size: 11px; font-weight: 700; }
+.partitura .pt-tec { fill: #6f6a62; font-size: 8.5px; font-weight: 700; }
+.partitura .pt-c { transition: opacity .25s; }
+.partitura .pt-c.pt-sumiu { opacity: 0; }
+.partitura .cursor { stroke: var(--fogo); stroke-width: 2; }
+.partitura .pt-alvo { transition: fill .15s; }
+.partitura .pt-alvo.acertou { fill: #1fa56c; }
+.sep-notacao { height: 1px; background: #ddd5c6; margin: 6px 8px; }
+.vista-notacao { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 14px 0 8px; }
+.segmento.mini { margin: 0; flex: 0 1 260px; }
+.segmento.mini button { padding: 7px 8px; font-size: 13px; min-height: 0; }
+.link-relampago { display: flex; align-items: center; gap: 12px; margin: 10px 0; color: var(--texto); }
+.link-relampago > span:first-child { font-size: 26px; color: var(--ouro); }
+.link-relampago div { flex: 1; } .link-relampago small { display: block; color: var(--suave); }
+.niveis-leitura { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.niveis-leitura button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; min-height: 0; }
+.niveis-leitura button b { font: 700 18px var(--titulo); }
+.niveis-leitura button small { font-size: 10px; line-height: 1.15; color: var(--suave); }
+.niveis-leitura button i { font-style: normal; font-size: 10px; color: var(--ouro); }
+.niveis-leitura button.ativo { border-color: var(--ouro); background: rgba(245, 184, 74, .12); }
+.palco-leitura { background: #f6f2ea; color: #1b1b1f; margin-top: 12px; }
+.palco-leitura #tom-rodada { color: #6f6a62; text-align: center; min-height: 16px; font-weight: 600; }
+.palco-leitura .nota-solta { max-width: 300px; margin: 0 auto; }
+.placar-leitura { display: flex; justify-content: space-between; align-items: center; }
+.placar-leitura .cronometro { color: #1b1b1f; }
+.retorno { font: 700 18px var(--titulo); color: #6f6a62; }
+.retorno.rapida { color: #1fa56c; } .retorno.media { color: #c48a12; } .retorno.lenta, .retorno.erro { color: #d9412b; }
+.fim-leitura { text-align: center; padding: 10px 0; }
+.fim-leitura > b { display: block; font: 800 54px var(--titulo); line-height: 1; }
+.fim-leitura > span { color: #6f6a62; }
+.fim-leitura .medidas { margin-top: 12px; }
+.fim-leitura .peq { color: #4a4640; margin-top: 10px; }
+.mapa-leitura .mapa-rapida { fill: #1fa56c; } .mapa-leitura .mapa-media { fill: #e0a21c; } .mapa-leitura .mapa-lenta { fill: #e0602b; }
+.mapa-leitura .mapa-erro { fill: #c0392b; stroke: #7a1d12; stroke-width: 1.4; } .mapa-leitura .mapa-nada { fill: none; stroke: #a8a196; stroke-width: 1.2; }
+.cor-rapida { color: #1fa56c; } .cor-media { color: #e0a21c; } .cor-lenta { color: #e0602b; } .cor-erro { color: #c0392b; } .cor-nada { color: #a8a196; }
+.partitura .pt-acid-f { fill: none; stroke: #17171a; stroke-width: 1.2; stroke-linecap: butt; }
+.partitura .pt-acid-f .g { stroke-width: 2.3; }
+.partitura path.pt-acid-f { stroke-width: 1.4; stroke-linejoin: round; }
+.partitura .pt-bandeira { fill: #17171a; stroke: #17171a; stroke-width: .8; }
+.mapa-caixa { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mapa-caixa .mapa-leitura { max-width: none; }
+.fim-leitura .medidas div { background: #ebe4d6; border-color: #ddd5c6; }
+.fim-leitura .medidas span { color: #6f6a62; } .fim-leitura .medidas b { color: #1b1b1f; }

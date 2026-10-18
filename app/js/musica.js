@@ -471,7 +471,7 @@ export function eventosDoDrill(drill, afinNome = 'EADG', semente) {
 		walking: (x, a) => gerarWalking(x, a, tempos)};
 	if (g.tipo === 'leitura' || g.tipo === 'ditado') {
 		const r = gerarLeitura(g, afin, tempos);
-		return {eventos: fecharCompasso(r.eventos, tempos), info: `${r.tom} ${r.escala}`};
+		return {eventos: fecharCompasso(r.eventos, tempos), info: `${r.tom} ${r.escala}`, tom: r.tom, escala: r.escala};
 	}
 	const fn = fns[g.tipo];
 	if (!fn) throw new Error(`gerador desconhecido: ${g.tipo}`);

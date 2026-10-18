@@ -55,3 +55,7 @@ Cada linha: data, o que aconteceu, a regra que ficou.
 - 2026-10-18: no teste do Raio-X sem latência calibrada, um atraso constante de ~44 ms pintou
   tudo de vermelho com regularidade de ±6 ms. Regra: sem latência confiável, qualquer visual de
   tempo se centra na média do take (a avaliação já fazia isso nos números).
+- 2026-10-18: desenho do sustenido com `toFixed` somou texto com número ("43" + "1.40") e virou
+  traço gigante. Regra: em coordenada de SVG, só número (Math.round), nunca toFixed antes de somar.
+- 2026-10-18: no jogo de leitura, acerto no último quarto de segundo agendava a próxima nota por
+  cima da tela de resultado. Regra: todo setTimeout de rodada confere se a rodada ainda está ativa.

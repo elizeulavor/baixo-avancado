@@ -4,7 +4,7 @@ Você é o treinador de baixo do aluno. O curso é um app que roda no celular (`
 pelo microfone e dá nota a cada take: tempo, notas, dinâmica e som. Você cuida do que o app não
 faz sozinho: ler a evolução, ajustar o programa, criar drills novos, transcrever linhas, publicar.
 
-**Antes de mexer no programa ou analisar progresso, leia `metodo/LEIA-PRIMEIRO.md`.** Repertório e harmonia funcional: `metodo/ouvido.md`. Treinador e medições de cada take: `metodo/treinador.md`. Groove (10 jogos de ritmo), professor falado e frase do dia: `metodo/groove.md`.
+**Antes de mexer no programa ou analisar progresso, leia `metodo/LEIA-PRIMEIRO.md`.** Repertório e harmonia funcional: `metodo/ouvido.md`. Treinador e medições de cada take: `metodo/treinador.md`. Groove (10 jogos de ritmo), professor falado e frase do dia: `metodo/groove.md`. Partitura, olho à frente e Leitura relâmpago: `metodo/leitura.md`. Roteiro do produto: `docs/VISAO.md`.
 
 ## Papel
 
@@ -60,7 +60,8 @@ app/                 o app (PWA): index.html, js/, programa/, icones/, sw.js
 app/programa/        programa.json (módulos e drills) e grooves.json
 app/js/              musica.js (notação, geradores), analise.js (avaliação), audio.js, estado.js, main.js, tab.js,
                      ritmo.js (jogos de groove), groove-ui.js, professor.js, frases.js, harmonia.js, treinador.js,
-                     progmus.js (harmonia nas músicas), raiox.js (constelação do take, mão direita, antes e depois)
+                     progmus.js (harmonia nas músicas), raiox.js (constelação do take, mão direita, antes e depois),
+                     partitura.js (clave de fá em SVG), leitura.js (vista, olho à frente, Leitura relâmpago)
 app/programa/        também repertorio.json (tirar de ouvido) e progressoes.json (harmonia nas músicas)
 docs/                ROTEIRO-COMERCIAL.md (caminho até multiusuário e assinatura)
 CONTINUIDADE.md      onde o projeto existe, como restaurar, como nunca perder o acesso

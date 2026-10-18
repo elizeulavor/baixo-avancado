@@ -297,6 +297,15 @@ export function aposBraco(pontos) {
 	E.salvar();
 	return eventos;
 }
+// Fim de uma rodada da Leitura relâmpago: 2 XP por nota certa, recorde por nível.
+export function aposLeitura(nivel, certas, recorde) {
+	const eventos = [];
+	if (recorde) eventos.push({tipo: 'recorde', texto: `Recorde de leitura (nível ${nivel}): ${certas} notas/min`});
+	if (certas) ganhar(certas * 2, 'Leitura relâmpago', eventos);
+	checarConquistas(null, null, eventos);
+	E.salvar();
+	return eventos;
+}
 export const xpHoje = () => estadoJogo().xpDia?.[E.hoje()] ?? 0;
 
 // ---------- ouvido harmônico ----------
