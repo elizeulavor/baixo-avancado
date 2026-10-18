@@ -332,3 +332,8 @@ details.ajustes summary::-webkit-details-marker { display: none; }
 @media (max-width: 380px) { .form { grid-template-columns: 1fr; } .medalhas { grid-template-columns: repeat(3, 1fr); } h1 { font-size: 26px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 .metrica.neutra .topo-m b { color: var(--suave); } .metrica.neutra .regua .val { background: var(--apagado); }
+
+/* assinatura Radix no topo */
+.marca-topo { display: flex; align-items: center; gap: 8px; color: var(--ouro); margin-bottom: 6px; }
+.marca-topo svg { width: 30px; height: 22px; }
+.marca-topo span { font-family: "Cormorant", serif; font-weight: 600; font-size: 17px; letter-spacing: 0.32em; background: linear-gradient(180deg, #f8e6b4, #c9933a); -webkit-background-clip: text; background-clip: text; color: transparent; }

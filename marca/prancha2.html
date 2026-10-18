@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Radix · 10 conceitos</title>
+<style>
+@font-face { font-family: "Cormorant"; src: url("Cormorant-600.woff2") format("woff2"); font-weight: 600; }
+@font-face { font-family: "Cormorant"; src: url("Cormorant-700.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: "Inter"; src: url("../app/fontes/Inter-500.woff2") format("woff2"); font-weight: 500; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #07080a; color: #f2efe8; font-family: Inter, system-ui, sans-serif; padding: 40px 48px 50px; width: 1200px; }
+h1 { font-family: Cormorant; font-weight: 600; font-size: 44px; margin: 0 0 4px; }
+.sub { color: #8d93a0; font-size: 15px; margin: 0 0 18px; }
+.grade { display: grid; grid-template-columns: 1fr 1fr; gap: 0 40px; }
+.conceito { display: grid; grid-template-columns: 170px 1fr; gap: 22px; align-items: center; padding: 22px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.icone { width: 170px; height: 170px; border-radius: 40px; background: radial-gradient(120% 120% at 20% 10%, #1d1a15, #0a0b0e 62%); box-shadow: 0 16px 40px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.06); display: grid; place-items: center; }
+.icone svg { width: 84%; height: 84%; }
+.linha { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.claro { width: 64px; height: 64px; border-radius: 16px; background: #f4efe6; display: grid; place-items: center; }
+.mini { width: 34px; height: 34px; border-radius: 9px; background: #121318; display: grid; place-items: center; }
+.marca { font-family: Cormorant; font-weight: 600; font-size: 34px; letter-spacing: 0.24em; background: linear-gradient(180deg, #f7e2ad, #c9933a); -webkit-background-clip: text; background-clip: text; color: transparent; margin-left: 6px; }
+.nome { font-family: Cormorant; font-weight: 700; font-size: 23px; margin: 2px 0 4px; }
+.ideia { color: #a9aeb8; font-size: 13.5px; line-height: 1.5; }
+.num { display: inline-block; width: 26px; height: 26px; border-radius: 50%; border: 1px solid #c9933a; color: #e9c98b; text-align: center; line-height: 24px; font-size: 12.5px; margin-right: 8px; font-family: Inter; vertical-align: 3px; }
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute" id="defs">
+	<defs>
+		<linearGradient id="ouro" gradientUnits="userSpaceOnUse" x1="120" y1="60" x2="320" y2="470"><stop offset="0" stop-color="#f8e6b4"/><stop offset="0.5" stop-color="#e2b864"/><stop offset="1" stop-color="#b47c2c"/></linearGradient>
+		<linearGradient id="ouroH" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="460" y2="0"><stop offset="0" stop-color="#c9933a"/><stop offset="1" stop-color="#f8e6b4"/></linearGradient>
+		<linearGradient id="some" gradientUnits="userSpaceOnUse" x1="0" y1="300" x2="0" y2="460"><stop offset="0" stop-color="#e2b864" stop-opacity=".9"/><stop offset="1" stop-color="#e2b864" stop-opacity="0"/></linearGradient>
+		<path id="arcoSelo" d="M 256 256 m -168 0 a 168 168 0 1 1 336 0"/>
+		<path id="arcoSeloB" d="M 256 256 m -150 0 a 150 150 0 0 0 300 0"/>
+	</defs>
+</svg>
+<h1>Radix · dez conceitos</h1>
+<p class="sub">Cada ideia nasce de algo que só um baixista reconhece. Ícone do app, versão em fundo claro, tamanho mínimo e assinatura.</p>
+<div class="grade" id="lista"></div>
+<script>
+const G = 'url(#ouro)', H = 'url(#ouroH)';
+const S = {};
+// 1. Série harmônica: a fundamental (radix) e os harmônicos 1/2, 1/3, 1/4
+S.serie = `<line x1="104" y1="150" x2="104" y2="362" stroke="${G}" stroke-width="10" stroke-linecap="round"/>
+	${[[176, 320, 34], [238, 160, 24], [288, 107, 17], [330, 80, 12]].map(([y, w, h]) => `<rect x="124" y="${y - h / 2}" width="${w}" height="${h}" rx="${h / 2}" fill="${H}"/>`).join('')}`;
+// 2. Corda vibrando no modo fundamental: o envelope da onda estacionária
+S.corda = `<g fill="none" stroke-linecap="round">
+	<path d="M70 256 Q 256 96 442 256" stroke="${G}" stroke-width="14"/>
+	<path d="M70 256 Q 256 416 442 256" stroke="${G}" stroke-width="14"/>
+	<path d="M70 256 Q 256 168 442 256" stroke="${H}" stroke-width="5" opacity=".55"/>
+	<path d="M70 256 Q 256 344 442 256" stroke="${H}" stroke-width="5" opacity=".55"/>
+	<path d="M70 256 L 442 256" stroke="${H}" stroke-width="7"/></g>
+	<circle cx="70" cy="256" r="16" fill="${G}"/><circle cx="442" cy="256" r="16" fill="${G}"/>`;
+// 3. Círculo das quintas: 12 tons, a tônica em destaque e a cadência V–I
+S.quintas = (() => {
+	let s = `<circle cx="256" cy="256" r="150" fill="none" stroke="${G}" stroke-width="3" opacity=".45"/>`;
+	for (let i = 0; i < 12; i++) {
+		const a = -Math.PI / 2 + (i * Math.PI) / 6, x = 256 + 150 * Math.cos(a), y = 256 + 150 * Math.sin(a);
+		s += i === 0 ? `<circle cx="${x}" cy="${y}" r="30" fill="${G}"/>` : i === 1 ? `<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="${G}" stroke-width="7"/>` : `<circle cx="${x}" cy="${y}" r="8" fill="${G}" opacity=".7"/>`;
+	}
+	// arco da cadência pelo lado de fora: da dominante (um passo no círculo) até a tônica, com ponta
+	const r2 = 194, aV = -Math.PI / 2 + Math.PI / 6 + 0.02, aI = -Math.PI / 2 + 0.13;
+	const P = (a) => `${(256 + r2 * Math.cos(a)).toFixed(1)} ${(256 + r2 * Math.sin(a)).toFixed(1)}`;
+	const ponta = (a) => { const x = 256 + r2 * Math.cos(a), y = 256 + r2 * Math.sin(a); return `M ${(x + 16).toFixed(1)} ${(y - 12).toFixed(1)} L ${x.toFixed(1)} ${y.toFixed(1)} L ${(x + 14).toFixed(1)} ${(y + 14).toFixed(1)}`; };
+	s += `<path d="M ${P(aV)} A ${r2} ${r2} 0 0 0 ${P(aI)}" fill="none" stroke="${H}" stroke-width="8" stroke-linecap="round"/>
+		<path d="${ponta(aI)}" fill="none" stroke="${G}" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+		<text x="256" y="298" text-anchor="middle" font-family="Cormorant" font-weight="700" font-size="128" fill="${G}">R</text>`;	return s;
+})();
+// 4. Impressão digital feita de cordas: o toque de cada baixista é único
+S.digital = (() => {
+	let s = '';
+	for (let i = 0; i < 7; i++) {
+		const rx = 34 + i * 26, ry = 48 + i * 30, w = 11 - i * 1.1;
+		const ab = 0.55 + i * 0.03;
+		s += `<path d="M ${256 + rx * Math.cos(Math.PI * ab)} ${236 + ry * Math.sin(Math.PI * ab)} A ${rx} ${ry} 0 1 1 ${256 + rx * Math.cos(Math.PI * (ab - 0.25))} ${236 + ry * Math.sin(Math.PI * (ab - 0.25))}" fill="none" stroke="${G}" stroke-width="${w.toFixed(1)}" stroke-linecap="round"/>`;
+	}
+	return s;
+})();
+// 5. Reflexo: o R em cima do palco; embaixo, o que sustenta: quatro cordas
+S.reflexo = `<text x="256" y="284" text-anchor="middle" font-family="Cormorant" font-weight="700" font-size="300" fill="${G}">R</text>
+	<line x1="92" y1="304" x2="420" y2="304" stroke="${H}" stroke-width="5" stroke-linecap="round"/>
+	${[[176, 9], [222, 7.5], [268, 6], [314, 4.5]].map(([x, w]) => `<line x1="${x}" y1="322" x2="${x}" y2="456" stroke="url(#some)" stroke-width="${w}" stroke-linecap="round"/>`).join('')}`;
+// 6. R de um traço só, cuja perna vira a onda da nota, sumindo
+S.onda = `<path d="M150 412 L150 108 C 236 92, 336 104, 336 184 C 336 252, 262 270, 196 262 L 246 300 C 280 330, 300 368, 330 368 C 352 368, 362 330, 384 330 C 402 330, 410 352, 426 352 C 438 352, 444 340, 456 340" fill="none" stroke="${G}" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>`;
+// 7. Selo de relojoaria: anel duplo, nome em volta, clave de fá no centro
+S.selo = `<circle cx="256" cy="256" r="214" fill="none" stroke="${G}" stroke-width="6"/><circle cx="256" cy="256" r="196" fill="none" stroke="${G}" stroke-width="2"/>
+	<text font-family="Cormorant" font-weight="700" font-size="50" fill="${G}"><textPath href="#arcoSelo" startOffset="154" textLength="220" lengthAdjust="spacing">RADIX</textPath></text>
+	<text font-family="Cormorant" font-weight="600" font-size="28" fill="${G}"><textPath href="#arcoSeloB" startOffset="148" textLength="176" lengthAdjust="spacing">· MMXXVI ·</textPath></text>
+	<g transform="translate(256 262) scale(.66) translate(-256 -256)" fill="none" stroke="${G}" stroke-linecap="round"><path d="M200 196 C 210 128, 336 110, 352 196 C 368 280, 290 330, 196 350" stroke-width="30"/></g>
+	<circle cx="${256 + (200 - 256) * .66}" cy="${262 + (198 - 256) * .66}" r="19" fill="${G}"/>
+	<circle cx="${256 + (408 - 256) * .66}" cy="${262 + (168 - 256) * .66}" r="11" fill="${G}"/><circle cx="${256 + (408 - 256) * .66}" cy="${262 + (232 - 256) * .66}" r="11" fill="${G}"/>`;
+// 8. Casa 12: dois trastes e os dois pontos da oitava, onde a nota volta à raiz
+S.casa = `<rect x="118" y="96" width="14" height="320" rx="7" fill="${H}"/><rect x="380" y="96" width="14" height="320" rx="7" fill="${H}"/>
+	${[150, 210, 270, 330].map((y, i) => `<line x1="80" y1="${y + 18}" x2="432" y2="${y + 18}" stroke="${H}" stroke-width="${7 - i * 1.2}" opacity=".55"/>`).join('')}
+	<circle cx="256" cy="198" r="34" fill="${G}"/><circle cx="256" cy="318" r="34" fill="${G}"/>`;
+// 9. Cravelha: a corda enrolada vira espiral e sai reta, o começo de todo som
+S.cravelha = (() => {
+	const pts = [];
+	for (let k = 0; k <= 300; k++) {
+		const a = (k / 300) * Math.PI * 5.2, r = 8 + k * 0.42;
+		pts.push([200 + r * Math.cos(a), 236 + r * Math.sin(a)]);
+	}
+	const [lx, ly] = pts.at(-1);
+	return `<path d="M ${pts.map((p) => p.map((v) => v.toFixed(1)).join(' ')).join(' L ')} L 470 ${ly.toFixed(1)}" fill="none" stroke="${G}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><circle cx="200" cy="236" r="12" fill="${G}"/>`;
+})();
+// 10. Sismógrafo: a linha calma, o golpe grave que desenha a raiz (√), e a vibração que fica
+S.sismo = `<path d="M48 266 L 120 266 L 140 252 L 160 280 L 180 266 L 200 266 L 236 392 L 296 108 L 318 300 L 340 220 L 360 288 L 382 240 L 402 276 L 420 254 L 440 268 L 464 264" fill="none" stroke="${G}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+const conceitos = [
+	['serie', 'Série harmônica', 'Toda nota grave carrega seus harmônicos: a fundamental e as frações 1/2, 1/3, 1/4. Radix é a fundamental, a nota-mãe. Física do som como assinatura, de uma elegância quase científica.'],
+	['corda', 'Corda em vibração', 'O desenho exato de uma corda vibrando no modo fundamental, presa nas duas pontas. Minimalista, hipnótico, e mostra o próprio som.'],
+	['quintas', 'Círculo das quintas', 'Os 12 tons, a tônica em ouro e a seta da cadência dominante-tônica chegando nela. A harmonia funcional do curso num emblema de astrolábio.'],
+	['digital', 'Impressão digital', 'Linhas de impressão digital que são cordas, da mais grossa à mais fina. O toque de cada baixista é único; o curso trabalha o seu.'],
+	['reflexo', 'Reflexo', 'O R em cima do palco; embaixo da linha, o que sustenta tudo: quatro cordas que descem e somem. O baixo é a parte que segura o que se vê.'],
+	['onda', 'Um traço só', 'O R desenhado sem tirar a caneta, e a perna vira a onda da nota, que vai diminuindo. Letra que vira som.'],
+	['selo', 'Selo', 'Selo de relojoaria: anel duplo, RADIX em volta, a clave de fá no centro, o ano em algarismos romanos. Precisão e tradição; luxo silencioso.'],
+	['casa', 'Casa 12', 'Os dois pontos da casa 12, que todo baixista reconhece: a oitava, onde a nota volta à raiz. Ultraminimalista e cheio de significado.'],
+	['cravelha', 'Cravelha', 'A corda enrolada na tarraxa vira uma espiral e sai reta: o ponto onde todo som começa. Movimento e origem.'],
+	['sismo', 'Sismógrafo', 'A linha calma, o golpe grave que desenha o símbolo da raiz (√), e a vibração que fica. O impacto do baixo medido como num sismógrafo.'],
+];
+const svg = (id) => `<svg viewBox="0 0 512 512">${S[id]}</svg>`;
+document.getElementById('lista').innerHTML = conceitos.map(([id, nome, ideia], k) => `
+<div class="conceito">
+	<div class="icone">${svg(id)}</div>
+	<div>
+		<div class="linha"><div class="claro">${svg(id).replace('<svg', '<svg width="50" height="50"')}</div><div class="mini">${svg(id).replace('<svg', '<svg width="26" height="26"')}</div><div class="marca">RADIX</div></div>
+		<div class="nome"><span class="num">${k + 1}</span>${nome}</div>
+		<div class="ideia">${ideia}</div>
+	</div>
+</div>`).join('');
+</script>
+</body></html>

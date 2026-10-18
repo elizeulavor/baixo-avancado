@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+	<!-- Radix · Sismógrafo: a linha calma, o golpe grave que desenha a raiz (√), e a vibração que fica -->
+	<defs>
+		<linearGradient id="ouro" gradientUnits="userSpaceOnUse" x1="120" y1="60" x2="320" y2="470">
+			<stop offset="0" stop-color="#f8e6b4"/><stop offset="0.5" stop-color="#e2b864"/><stop offset="1" stop-color="#b47c2c"/>
+		</linearGradient>
+	</defs>
+	<path d="M48 266 L 120 266 L 140 252 L 160 280 L 180 266 L 200 266 L 236 392 L 296 108 L 318 300 L 340 220 L 360 288 L 382 240 L 402 276 L 420 254 L 440 268 L 464 264" fill="none" stroke="url(#ouro)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -1,4 +1,4 @@
-# Baixo Avançado
+# Radix · baixo avançado
 
 Curso avançado de baixo que escuta você. Cada exercício tem critério numérico: o app grava pelo
 microfone com o metrônomo tocando e mede **tempo** (regularidade, pressa/atraso, semicolcheia
@@ -6,7 +6,7 @@ torta, deriva), **notas** (altura e afinação), **dinâmica** (volume igual, ac
 crescendo) e **som** (articulação, pausas limpas, clareza). Passou, o BPM sobe. Não passou, os
 números dizem por quê.
 
-App publicado: https://elizeulavor.github.io/baixo-avancado/
+App publicado: https://elizeulavor.github.io/baixo-avancado/ · logo e marca em `marca/` (o sismógrafo: linha calma, o golpe grave que desenha a raiz √, a vibração que fica).
 
 - 12 módulos, 69 drills, 2 trilhas em paralelo: mão, tempo e groove / harmonia e linguagem.
 - **Treino guiado**: um botão leva de etapa em etapa do plano do dia (20 a 90 min), com revisão

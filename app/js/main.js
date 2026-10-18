@@ -23,6 +23,8 @@ const limpar = () => {
 };
 
 // ---------- peças visuais ----------
+// o sismógrafo do logo: linha calma, o golpe grave que desenha a raiz (√), a vibração que fica
+const SIMBOLO = `<svg viewBox="40 96 432 308" aria-hidden="true"><path d="M48 266 L 120 266 L 140 252 L 160 280 L 180 266 L 200 266 L 236 392 L 296 108 L 318 300 L 340 220 L 360 288 L 382 240 L 402 276 L 420 254 L 440 268 L 464 264" fill="none" stroke="currentColor" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 function anel(frac, {tam = 44, esp = 4, cor = 'url(#gOuro)', fundo = true} = {}) {
 	const r = (tam - esp) / 2;
 	const c = 2 * Math.PI * r;
@@ -182,7 +184,7 @@ function telaHoje() {
 	}).join('');
 	tela.innerHTML = `
 	<div class="topo">
-		<div><div class="saudacao">${oi} · ${new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric', month: 'short'})}</div><h1>Hoje</h1></div>
+		<div><div class="marca-topo">${SIMBOLO}<span>RADIX</span></div><div class="saudacao">${oi} · ${new Date().toLocaleDateString('pt-BR', {weekday: 'long', day: 'numeric', month: 'short'})}</div><h1>Hoje</h1></div>
 		<div class="status">
 			<div class="pilula fogo ${seq ? '' : 'apagado'}"><span class="ic">🔥</span><b class="num">${seq}</b></div>
 			${j.escudos ? `<div class="pilula"><span class="ic">🛡</span><b class="num">${j.escudos}</b></div>` : ''}
@@ -1243,7 +1245,7 @@ function telaPerfil() {
 		<p class="peq">O progresso mora neste aparelho. Exporte de vez em quando; o arquivo também serve para o Claude analisar (pasta <code>entrada/</code>).</p>
 		<div class="botoes"><button id="exp">Exportar</button><label class="botao botao-arquivo">Importar<input type="file" id="imp" accept=".json,application/json"></label></div>
 		<div class="botoes"><button id="instalar" hidden>Instalar o app</button></div>
-		<p class="peq">Sons: gravações reais (Karoryfer, Versilian, Project16, jRhodes). Créditos em sons/CREDITOS.md.</p>
+		<p class="peq">Radix · baixo avançado. Sons: gravações reais (Karoryfer, Versilian, Project16, jRhodes); créditos em sons/CREDITOS.md.</p>
 	</details>`;
 	const salvarCfg = () => {
 		c.minutos = Number($('#cm').value);

@@ -17,7 +17,7 @@ const dist = path.join(raiz, 'dist');
 fs.rmSync(dist, {recursive: true, force: true});
 // arquivos que começam com _ são de teste (ex.: _moldura.html) e não vão para o app publicado
 fs.cpSync(path.join(raiz, 'app'), dist, {recursive: true, filter: (p) => !path.basename(p).startsWith('_')});
-const versao = `baixo-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12)}`;
+const versao = `radix-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12)}`;
 const sw = path.join(dist, 'sw.js');
 // lista completa do que o app usa, para funcionar offline desde a primeira visita
 const todos = [];

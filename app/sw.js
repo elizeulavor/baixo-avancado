@@ -1,6 +1,6 @@
 // Funciona sem internet: guarda o app (telas, sons, fontes) e serve do cache quando falta rede.
 // scripts/empacotar.mjs troca VERSAO e a lista abaixo pela lista completa de arquivos.
-const VERSAO = 'baixo-dev';
+const VERSAO = 'radix-dev';
 const ARQUIVOS = ['./', 'index.html', 'app.css', 'manifest.webmanifest', 'js/main.js']; // @lista
 
 self.addEventListener('install', (e) => {

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><title>Radix · logo</title>
+<style>
+@font-face { font-family: "Cormorant"; src: url("Cormorant-600.woff2") format("woff2"); font-weight: 600; }
+@font-face { font-family: "Cormorant"; src: url("Cormorant-700.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: "Inter"; src: url("../app/fontes/Inter-500.woff2") format("woff2"); font-weight: 500; }
+* { box-sizing: border-box; }
+body { margin: 0; background: #07080a; color: #f2efe8; font-family: Inter, system-ui, sans-serif; padding: 40px 48px 60px; width: 1200px; }
+h1 { font-family: Cormorant; font-weight: 600; font-size: 44px; margin: 0 0 4px; letter-spacing: 0.02em; }
+.sub { color: #8d93a0; font-size: 15px; margin: 0 0 28px; }
+.conceito { display: grid; grid-template-columns: 230px 150px 1fr; gap: 28px; align-items: center; padding: 28px 0; border-top: 1px solid rgba(255,255,255,.08); }
+.icone { width: 230px; height: 230px; border-radius: 52px; background: radial-gradient(120% 120% at 20% 10%, #1c1a16, #0a0b0e 60%); box-shadow: 0 20px 50px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.06); display: grid; place-items: center; }
+.icone svg { width: 82%; height: 82%; }
+.claro { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.claro .c { width: 130px; height: 130px; border-radius: 30px; background: #f4efe6; display: grid; place-items: center; }
+.claro .c svg { width: 80%; height: 80%; }
+.peq { display: flex; gap: 14px; align-items: center; }
+.peq div { background: #121318; border-radius: 12px; display: grid; place-items: center; }
+.assinatura { display: flex; align-items: center; gap: 22px; }
+.assinatura svg { width: 92px; height: 92px; }
+.marca { font-family: Cormorant; font-weight: 600; font-size: 74px; letter-spacing: 0.22em; line-height: 1; background: linear-gradient(180deg, #f7e2ad, #c9933a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.marca small { display: block; font-family: Inter; font-weight: 500; font-size: 12.5px; letter-spacing: 0.42em; color: #8d93a0; margin-top: 10px; -webkit-text-fill-color: #8d93a0; }
+.nome { font-family: Cormorant; font-weight: 700; font-size: 26px; margin: 18px 0 4px; }
+.ideia { color: #a9aeb8; font-size: 14.5px; line-height: 1.5; max-width: 560px; }
+.num { display: inline-block; width: 30px; height: 30px; border-radius: 50%; border: 1px solid #c9933a; color: #e9c98b; text-align: center; line-height: 28px; font-size: 14px; margin-right: 8px; }
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+	<defs>
+		<linearGradient id="ouro" gradientUnits="userSpaceOnUse" x1="120" y1="60" x2="300" y2="460"><stop offset="0" stop-color="#f7e2ad"/><stop offset="0.55" stop-color="#e2b864"/><stop offset="1" stop-color="#b9822f"/></linearGradient>
+		<linearGradient id="ouroH" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="460" y2="0"><stop offset="0" stop-color="#e2b864"/><stop offset="1" stop-color="#f7e2ad"/></linearGradient>
+	</defs>
+	<!-- 1. Radical: o símbolo da raiz (√, de radix) com a barra virando as quatro cordas -->
+	<symbol id="radical" viewBox="0 0 512 512">
+		<g transform="translate(-14 4)">
+			<g fill="none" stroke="url(#ouro)" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M92 300 L142 274" stroke-width="22"/>
+				<path d="M142 274 L208 402" stroke-width="32"/>
+				<path d="M208 402 L294 122" stroke-width="32"/>
+			</g>
+			<g stroke="url(#ouroH)" stroke-linecap="round" fill="none">
+				<path d="M294 122 L452 122" stroke-width="9"/>
+				<path d="M290.3 136 L452 136" stroke-width="7"/>
+				<path d="M286.6 150 L452 150" stroke-width="5.5"/>
+				<path d="M282.9 164 L452 164" stroke-width="4"/>
+			</g>
+		</g>
+	</symbol>
+	<!-- 2. Clave: um R cuja barriga é a clave de fá (a clave do baixo), com os dois pontos -->
+	<symbol id="clave" viewBox="0 0 512 512">
+		<g fill="none" stroke="url(#ouro)" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M156 108 L156 408" stroke-width="38"/>
+			<path d="M206 176 C 214 118, 330 100, 346 182 C 360 252, 296 290, 226 296" stroke-width="30"/>
+			<path d="M262 296 L360 408" stroke-width="36"/>
+		</g>
+		<circle cx="206" cy="178" r="27" fill="url(#ouro)"/>
+		<circle cx="404" cy="152" r="17" fill="url(#ouro)"/>
+		<circle cx="404" cy="222" r="17" fill="url(#ouro)"/>
+	</symbol>
+	<!-- 3. R com raízes: a perna do R desce e se abre em quatro raízes, como as quatro cordas -->
+	<symbol id="onda" viewBox="0 0 512 512">
+		<text x="244" y="322" text-anchor="middle" font-family="Cormorant" font-weight="700" font-size="330" fill="url(#ouro)">R</text>
+		<g fill="none" stroke="url(#ouro)" stroke-linecap="round">
+			<path d="M318 318 C 320 350, 314 382, 296 420 C 288 436, 286 448, 288 462" stroke-width="7"/>
+			<path d="M322 318 C 328 352, 330 386, 338 420 C 342 438, 348 450, 356 462" stroke-width="6"/>
+			<path d="M314 320 C 304 352, 282 376, 254 398 C 240 410, 232 424, 228 440" stroke-width="4.5"/>
+			<path d="M326 320 C 344 350, 372 372, 398 390 C 410 400, 418 412, 422 428" stroke-width="3.5"/>
+		</g>
+	</symbol>
+	<!-- 4. Monograma: R serifado sobre quatro cordas; a perna do R puxa a corda -->
+	<symbol id="mono" viewBox="0 0 512 512">
+		<g stroke="url(#ouroH)" stroke-linecap="round" fill="none" opacity=".9">
+			<path d="M64 352 L448 352" stroke-width="7"/>
+			<path d="M64 384 L300 384 Q 352 402 404 384 L448 384" stroke-width="6"/>
+			<path d="M64 416 L448 416" stroke-width="5"/>
+			<path d="M64 448 L448 448" stroke-width="4"/>
+		</g>
+		<text x="250" y="396" text-anchor="middle" font-family="Cormorant" font-weight="700" font-size="400" fill="url(#ouro)">R</text>
+	</symbol>
+</svg>
+
+<h1>Radix</h1>
+<p class="sub">Quatro conceitos de logo. Cada um mostrado como ícone do app, em fundo claro, em tamanho pequeno e com o nome.</p>
+
+<div id="lista"></div>
+<script>
+const conceitos = [
+	['radical', 'Radical', 'Radix quer dizer "raiz", e o símbolo da raiz na matemática (√) se chama radical, da mesma palavra. A barra de cima vira as quatro cordas do baixo, da mais grossa à mais fina. Inteligente e sofisticado; funciona muito bem pequeno.'],
+	['clave', 'Clave', 'Um R cuja curva é a clave de fá, a clave do baixo, com os dois pontos. Quem lê partitura reconhece na hora; quem não lê vê um R elegante.'],
+	['onda', 'R com raízes', 'R serifado cuja perna desce e se abre em quatro raízes, uma por corda. Radix ao pé da letra: a raiz, e o baixo como raiz da banda. Clássico com um gesto orgânico.'],
+	['mono', 'Monograma', 'R serifado clássico sobre as quatro cordas; a perna do R puxa uma delas. O mais tradicional: tipografia de luxo com um detalhe de baixista.'],
+];
+document.getElementById('lista').innerHTML = conceitos.map(([id, nome, ideia], k) => `
+<div class="conceito">
+	<div class="icone"><svg><use href="#${id}"/></svg></div>
+	<div class="claro"><div class="c"><svg><use href="#${id}"/></svg></div>
+		<div class="peq"><div style="width:64px;height:64px"><svg width="48" height="48"><use href="#${id}"/></svg></div><div style="width:34px;height:34px;border-radius:8px"><svg width="26" height="26"><use href="#${id}"/></svg></div></div></div>
+	<div>
+		<div class="assinatura"><svg><use href="#${id}"/></svg><div class="marca">RADIX<small>BAIXO AVANÇADO</small></div></div>
+		<div class="nome"><span class="num">${k + 1}</span>${nome}</div>
+		<div class="ideia">${ideia}</div>
+	</div>
+</div>`).join('');
+</script>
+</body></html>
