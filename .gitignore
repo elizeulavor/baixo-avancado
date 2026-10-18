@@ -1,0 +1,8 @@
+dist/
+dist.zip
+node_modules/
+# dados pessoais: backups, áudios e relatórios ficam só neste computador
+entrada/*
+!entrada/LEIA.md
+relatorios/
+.claude/settings.local.json

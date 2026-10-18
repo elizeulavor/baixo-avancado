@@ -1,0 +1,1 @@
+{"version":"0.0.1","configurations":[{"name":"baixo","runtimeExecutable":"node","runtimeArgs":["scripts/servidor.mjs","5173"],"port":5173}]}
