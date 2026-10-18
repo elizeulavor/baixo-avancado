@@ -1,0 +1,17 @@
+<!doctype html><meta charset="utf-8"><style>html,body{margin:0;background:#000}iframe{border:0;width:390px;display:block}</style>
+<iframe id="f"></iframe>
+<script>
+// só para capturas de teste: carrega um estado salvo (servidor local de teste) antes de abrir o app
+(async () => {
+	const p = new URLSearchParams(location.search);
+	if (p.has('estado')) {
+		try {
+			const e = await fetch('http://127.0.0.1:5174/estado').then((r) => r.text());
+			if (e) localStorage.setItem('baixo-avancado.v1', e);
+		} catch {}
+	}
+	const f = document.getElementById('f');
+	f.style.height = (p.get('h') || 844) + 'px';
+	f.src = 'index.html#' + (p.get('r') || 'hoje');
+})();
+</script>

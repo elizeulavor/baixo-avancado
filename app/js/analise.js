@@ -83,7 +83,7 @@ function envelope(x, jan, hop) {
 
 // ---------- ataques (onsets) por fluxo espectral ----------
 export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
-	const x = lp(sinal, 1600, sr); // tira o clique do metrônomo
+	const x = lp(sinal, 1600, sr); // tira o clique do metrônomo (claves, 2-3 kHz)
 	const N = 2048;
 	const hop = 256;
 	const nq = Math.floor((x.length - N) / hop);
@@ -120,6 +120,11 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 	const passoEnv = Math.round(sr * 0.0005);
 	const ataques = [];
 	const minDist = Math.round((0.05 * sr) / hop);
+	const minDist2 = Math.round((0.075 * sr) / hop);
+	// energia em janelas de 30 ms (mais longas que o período do E grave, 24 ms), no passo dos quadros
+	const envC = envelope(x, Math.round(sr * 0.03), hop);
+	const j30 = Math.round((0.03 * sr) / hop);
+	const prepA = preparaAltura(sinal, sr);
 	// picos locais; a escala de referência é o percentil 90 dos picos (o primeiro ataque depois do
 	// silêncio é enorme e não pode ditar o limiar das demais notas)
 	const picos = [];
@@ -137,44 +142,77 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 		if (v < limiar) continue;
 		const qe = Math.min(nq - 1, q + 4);
 		if (Math.max(energia[q], energia[qe]) < maxE * 0.012) continue; // abaixo de -38 dB: ruído
-		// fim de nota (abafar) também gera fluxo; ataque de verdade sobe a energia ou é bem forte
-		let antes = 0, depois = 0;
-		for (let j = 1; j <= 5; j++) {
-			antes += energia[Math.max(0, q - j - 2)];
-			depois += energia[Math.min(nq - 1, q + j)];
+		// Ataque de verdade sobe a energia em relação ao vale logo antes (ou é um pico espectral
+		// forte, como hammer-on). A sustentação de um baixo real oscila e gera fluxo sem subir; o fim
+		// de nota (abafar) gera fluxo com a energia caindo. Os dois não contam.
+		const c = q + Math.round(N / 2 / hop);
+		let antes = Infinity, depois = 0;
+		for (let j = Math.max(0, c - j30 - 6); j <= Math.max(0, c - j30); j++) antes = Math.min(antes, envC[j] ?? Infinity);
+		for (let j = c - 1; j < Math.min(envC.length, c + 4); j++) depois = Math.max(depois, envC[j] ?? 0);
+		if (!(depois > antes * 1.3) && v < ref * 0.6) {
+			// sem subida de energia: só é nota nova se a altura mudou (legato, hammer, troca de corda)
+			const tq = (q * hop + N / 2) / sr;
+			const a = alturaEm(prepA, tq - 0.1, tq + 0.005), b = alturaEm(prepA, tq - 0.012, tq + 0.11);
+			if (!a || !b || Math.abs(a.midi - b.midi) < 0.6) continue;
 		}
-		if (depois < antes * 0.55 && v < ref * 0.6) continue;
-		if (ataques.length && q - ataques[ataques.length - 1].q < minDist) {
-			if (v > ataques[ataques.length - 1].fluxo) ataques.pop();
+		const ultimo = ataques[ataques.length - 1];
+		if (ultimo && q - ultimo.q < minDist) {
+			if (v > ultimo.fluxo) ataques.pop();
 			else continue;
 		}
+		// baixo gravado tem dois picos: o toque do dedo e, ~40-80 ms depois, a corda abrindo. Pico
+		// mais fraco logo depois de um ataque, sem a energia subir de novo, é o mesmo ataque.
+		if (ultimo && q - ultimo.q < minDist2 && v < ultimo.fluxo * 1.2 && depois < antes * 1.4) continue;
 		ataques.push({q, fluxo: v});
 	}
-	// Refina no tempo com o transiente do ataque (banda 250-1600 Hz, onde a onda grave não
-	// ondula o envelope): início da subida mais íngreme perto do quadro.
+	// Refina no tempo: envelope liso (8 ms, banda 250-1600 Hz) em dB. O ataque é onde o sinal
+	// cruza 40% da subida entre o nível de antes e o pico. Em dB, um ataque sobre uma nota ainda
+	// soando aparece tanto quanto no silêncio; com 8 ms, os harmônicos reais não fazem o envelope
+	// ondular (com 2 ms ele oscilava ±15 dB e o ataque saía até 30 ms fora).
 	const out = [];
-	const k2 = Math.round((0.002 * sr) / passoEnv);
 	for (const a of ataques) {
 		const tq = (a.q * hop + N / 2) / sr;
-		const i0 = Math.max(0, Math.floor(((tq - 0.03) * sr) / passoEnv));
-		const i1 = Math.min(envT.length - 1 - k2, Math.floor(((tq + 0.02) * sr) / passoEnv));
-		let im = -1, sub = 0;
-		for (let i = i0; i <= i1; i++) {
-			const s = envT[i + k2] - envT[i];
-			if (s > sub) { sub = s; im = i; }
-		}
-		let t;
-		if (im < 0 || sub < envT[im] * 0.5) t = tq - 0.008; // ligado (hammer/slide): sem subida clara
-		else {
-			// volta até onde a subida começou
-			let io = im;
-			while (io > i0 && envT[io] - envT[io - 1] > sub / k2 * 0.15) io--;
-			t = (io * passoEnv) / sr;
-		}
+		const t = refinarFino(x, sr, tq) ?? tq - 0.008;
 		if (out.length && t - out[out.length - 1].t < 0.03) continue;
 		out.push({t, forca: a.fluxo / maxF, tq});
 	}
 	return {ataques: out, filtrado: x, fluxo, hop, N};
+}
+
+// Fluxo espectral fino (janela 1024, passo 64 = 1,5 ms) só em volta do ataque: mede a mudança do
+// espectro, que não ondula com os harmônicos como a amplitude. O ataque é o primeiro quadro, antes
+// do pico, em que o fluxo passa de metade do pico. Calibrado para dar 0 ms numa nota isolada.
+const FINO = {N: 2048, hop: 64, atraso: -0.021};
+const hannFino = new Float32Array(FINO.N).map((_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / FINO.N));
+function refinarFino(x, sr, tq, tMin = -Infinity) {
+	const {N, hop} = FINO;
+	const i0 = Math.round((Math.max(tq - 0.08, tMin) - FINO.atraso) * sr - N / 2), i1 = Math.round((tq + 0.05) * sr - N / 2);
+	if (i0 < 0 || i1 + N >= x.length) return null;
+	const kmax = Math.floor((1500 / sr) * N);
+	const re = new Float64Array(N), im = new Float64Array(N);
+	let ant = null;
+	const fl = [];
+	for (let o = i0; o <= i1; o += hop) {
+		for (let i = 0; i < N; i++) {
+			re[i] = x[o + i] * hannFino[i];
+			im[i] = 0;
+		}
+		fft(re, im);
+		const cur = new Float32Array(kmax);
+		let f = 0;
+		for (let k = 1; k < kmax; k++) {
+			cur[k] = Math.log1p(1000 * Math.hypot(re[k], im[k]));
+			if (ant) f += Math.max(0, cur[k] - ant[k]);
+		}
+		if (ant) fl.push({o, f});
+		ant = cur;
+	}
+	let ip = 0;
+	for (let k = 1; k < fl.length; k++) if (fl[k].f > fl[ip].f) ip = k;
+	if (!fl.length || fl[ip].f <= 0) return null;
+	let k = ip;
+	while (k > 0 && fl[k - 1].f > fl[ip].f * 0.5) k--;
+	return (fl[k].o + N / 2) / sr - FINO.atraso;
 }
 
 // ---------- altura (YIN) ----------
@@ -453,7 +491,8 @@ function sub(valor, limite) {
 	return Math.max(0, 70 - (70 * (valor - limite)) / limite);
 }
 
-export const CRITERIOS_PADRAO = {tempoDesvio: 12, tempoMedio: 10, notas: 95, faltas: 5};
+// tempo: a medição com baixo gravado tem ~9 ms de ruído próprio (testar-real.mjs); os limites já descontam isso
+export const CRITERIOS_PADRAO = {tempoDesvio: 14, tempoMedio: 12, notas: 95, faltas: 5};
 
 function julgar(r, crit, op) {
 	const c = {...CRITERIOS_PADRAO, ...crit};
@@ -478,7 +517,8 @@ function julgar(r, crit, op) {
 		const pf = (100 * r.contagem.faltando) / esp;
 		itens.push({nome: 'Notas faltando', valor: pf, limite: c.faltas, ok: pf <= c.faltas, nota: sub(pf, c.faltas), texto: `${r.contagem.faltando} de ${esp}`, unidade: '%'});
 		const px = (100 * r.contagem.extras) / esp;
-		itens.push({nome: 'Notas a mais', valor: px, limite: c.faltas * 2, ok: px <= c.faltas * 2, nota: sub(px, c.faltas * 2), texto: `${r.contagem.extras} ataques sem nota escrita`, unidade: '%'});
+		// informativo até validar com baixo de verdade: cordas soltas soando geram ataques duvidosos
+		itens.push({nome: 'Notas a mais', info: true, valor: px, limite: c.faltas * 2, ok: px <= c.faltas * 2, nota: null, texto: `informativo · ${r.contagem.extras} ataques sem nota escrita`, unidade: '%'});
 	}
 	const d = op.dinamica;
 	if (d?.tipo === 'uniforme' || (!d && r.dinamica.niveis.length > 6)) add('Dinâmica uniforme', r.dinamica.desvio, d?.max ?? 4, 'variação de volume entre notas iguais', 'dB');
@@ -501,9 +541,9 @@ function julgar(r, crit, op) {
 	if (c.legato != null && r.som.legato != null) {
 		itens.push({nome: 'Legato', valor: r.som.legato, limite: c.legato, ok: r.som.legato >= c.legato, nota: sub(Math.max(0, c.legato - r.som.legato), 100 - c.legato), texto: 'duração soando / espaço da nota', unidade: '%'});
 	}
-	const notas = itens.map((i) => i.nota).filter((v) => v != null);
+	const notas = itens.filter((i) => !i.info).map((i) => i.nota).filter((v) => v != null);
 	const nota = notas.length ? Math.round(media(notas)) : 0;
-	const aprovado = itens.length > 0 && itens.every((i) => i.ok);
+	const aprovado = itens.length > 0 && itens.filter((i) => !i.info).every((i) => i.ok);
 	return {...r, itens, nota, aprovado, dicas: dicas(r, itens, op)};
 }
 
@@ -582,3 +622,6 @@ export function alturaAoVivo(buf, sr) {
 	const r = yin(prep.y, 0, Math.floor(prep.y.length / 2), Math.floor(prep.srd / 450), Math.min(Math.floor(prep.y.length / 2) - 1, Math.ceil(prep.srd / 28)));
 	return r ? midiFreq(prep.srd / r.periodo) : null;
 }
+
+// para os testes
+export const _interno = {lp, hp, envelope};

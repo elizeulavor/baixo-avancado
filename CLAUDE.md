@@ -30,7 +30,7 @@ opinião, seja crítico. Respostas curtas.
 ## Inegociável
 
 1. **Depois de qualquer mudança em `app/programa/`, rode `node scripts/validar.mjs`.** Erro = não entregou.
-2. **Depois de mudar `app/js/analise.js`, rode `node scripts/testar-avaliacao.mjs`.** Todos `ok`.
+2. **Depois de mudar `app/js/analise.js`, rode `node scripts/testar-avaliacao.mjs` (sintético) e`n   `node scripts/testar-real.mjs` (baixo gravado).** Todos `ok`, e no real nenhuma piora de desvio ou de extras.
 3. **Não reproduza linhas de baixo de músicas protegidas.** Ensine a tirar de ouvido; o drill pode
    usar a linha que o aluno transcreveu para uso próprio, sem publicar.
 4. **Não invente números do aluno.** Toda conclusão sai do backup em `entrada/`. Sem backup, peça.
@@ -60,6 +60,8 @@ node scripts/iniciar.mjs             # prepara e sobe o app local
 node scripts/servidor.mjs [porta]    # só o servidor
 node scripts/validar.mjs             # confere o programa inteiro
 node scripts/testar-avaliacao.mjs    # confere a avaliação com um baixo sintético com erros conhecidos
+node scripts/testar-real.mjs         # o mesmo com gravações reais de baixo e clave (precisa do ffmpeg)
+node scripts/preparar-sons.mjs       # baixa e prepara os sons reais em app/sons/ (precisa do ffmpeg)
 node scripts/empacotar.mjs           # gera dist/ com nova versão do cache offline
 node scripts/publicar.mjs            # empacota e envia para o GitHub Pages (celular atualiza sozinho)
 ```

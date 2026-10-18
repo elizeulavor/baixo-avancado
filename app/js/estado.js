@@ -70,7 +70,9 @@ export function fracao(d) {
 	if (inicio === meta) return p.aprovacoesMeta.length / 2;
 	return Math.max(0, Math.min(0.95, (p.bpm - inicio) / (meta - inicio)));
 }
-export const moduloConcluido = (m) => m.drills.every(dominado);
+// concluído = todos os drills dominados E prova final aprovada (jogo.js)
+export const moduloConcluido = (m) => m.drills.every(dominado) && !!estado.jogo?.provas?.[m.id]?.passou;
+export const provaPendente = (m) => m.drills.every(dominado) && !estado.jogo?.provas?.[m.id]?.passou;
 export const progressoModulo = (m) => m.drills.reduce((s, d) => s + fracao(d), 0) / m.drills.length;
 export function moduloAtivo(trilha) {
 	return programa.modulos.find((m) => m.trilha === trilha && !moduloConcluido(m)) ?? null;
@@ -124,6 +126,10 @@ export function planoDoDia(data = hoje()) {
 	const usados = new Set(itens.map((i) => i.id));
 	for (const tr of ['A', 'B']) {
 		const m = moduloAtivo(tr);
+		if (m && provaPendente(m)) {
+			itens.push({tipo: 'prova', id: `prova:${m.id}`, modulo: m.id, papel: `Prova final ${tr}`, minutos: 10});
+			continue;
+		}
 		const d = escolher(pendentes(m).filter((x) => !usados.has(x.id)));
 		if (d) {
 			itens.push({tipo: 'drill', id: d.id, papel: `Principal ${tr}`, minutos: 10});
@@ -168,13 +174,14 @@ export function refazerPlano() {
 }
 export function marcarFeito(chave, valor = true) {
 	const p = planoDoDia();
-	const item = p.itens.find((i) => (i.tipo === 'drill' ? `drill:${i.id}` : i.id) === chave);
+	const item = p.itens.find((i) => chaveItem(i) === chave);
 	if (item) p.feitos[chave] = valor;
 	salvar();
 }
+export const chaveItem = (i) => (i.tipo === 'drill' ? `drill:${i.id}` : i.id);
 export function feitoNoPlano(plano) {
 	const total = plano.itens.length;
-	const feitos = plano.itens.filter((i) => plano.feitos[i.tipo === 'drill' ? `drill:${i.id}` : i.id]).length;
+	const feitos = plano.itens.filter((i) => plano.feitos[chaveItem(i)]).length;
 	return {total, feitos, pct: total ? feitos / total : 0};
 }
 export function sequencia() {

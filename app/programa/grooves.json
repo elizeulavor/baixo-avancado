@@ -1,65 +1,335 @@
 {
-  "legenda": "Um caractere por passo. X forte, x normal, g fraco, o aberto (chimbal/triângulo), . nada. ciclo = semínimas do padrão. pulso 1.5 = BPM em semínima pontuada.",
-  "grooves": [
-    {"id": "funk", "nome": "Funk", "ciclo": 4, "passos": 16, "bpm": 96, "progressao": "| E7 | E7 | A7 | E7 |",
-     "faixas": {"kick": "X.....x...x.....", "snare": "....X.......X..g", "hat": "x.x.x.x.x.x.x.x."},
-     "comp": "....x.....x.....", "baixo": "X.....x...x....."},
-    {"id": "rock", "nome": "Rock", "ciclo": 4, "passos": 16, "bpm": 120, "progressao": "| A | F | C | G |",
-     "faixas": {"kick": "X.......X.x.....", "snare": "....X.......X...", "hat": "x.x.x.x.x.x.x.x."},
-     "comp": "X.......X.......", "baixo": "X.x.X.x.X.x.X.x."},
-    {"id": "pop", "nome": "Pop", "ciclo": 4, "passos": 16, "bpm": 100, "progressao": "| C | G | Am | F |",
-     "faixas": {"kick": "X.....X.X.......", "snare": "....X.......X...", "hat": "x.x.x.x.x.x.x.x."},
-     "comp": "X.....x.X.....x.", "baixo": "X.....X.X.....X."},
-    {"id": "disco", "nome": "Disco", "ciclo": 4, "passos": 16, "bpm": 118, "progressao": "| Am7 | D7 |",
-     "faixas": {"kick": "X...X...X...X...", "snare": "....X.......X...", "hat": "..o...o...o...o."},
-     "comp": "..x...x...x...x.", "baixo": "X.x.X.x.X.x.X.x."},
-    {"id": "neosoul", "nome": "Neo-soul", "ciclo": 4, "passos": 16, "bpm": 84, "swing": 0.18, "progressao": "| Dm7 | G7 |",
-     "faixas": {"kick": "X......x..X.....", "snare": "....X.......X...", "hat": "x.xgx.xgx.xgx.xg"},
-     "comp": "X.........x.....", "baixo": "X......x..X....."},
-    {"id": "gospel", "nome": "Gospel", "ciclo": 4, "passos": 16, "bpm": 100, "progressao": "| Cmaj7 | Am7 | Dm7 | G7 |",
-     "faixas": {"kick": "X..x..x...X..x..", "snare": "....X.......X...", "clap": "....X.......X...", "hat": "xgxgxgxgxgxgxgxg"},
-     "comp": "X..x..x...X..x..", "baixo": "X..x..x...X..x.."},
-    {"id": "metal", "nome": "Metal", "ciclo": 4, "passos": 16, "bpm": 140, "progressao": "| Em | C | D | Em |",
-     "faixas": {"kick": "XxXxXxXxXxXxXxXx", "snare": "....X.......X...", "ride": "x.x.x.x.x.x.x.x."},
-     "baixo": "xxxxxxxxxxxxxxxx"},
-    {"id": "reggae", "nome": "Reggae (one drop)", "ciclo": 4, "passos": 16, "bpm": 76, "swing": 0.1, "progressao": "| Am | G |",
-     "faixas": {"kick": "........X.......", "rim": "........X.......", "hat": "x.x.x.x.x.x.x.x."},
-     "comp": "..x...x...x...x.", "baixo": "X.....x.....x..."},
-    {"id": "shuffle", "nome": "Shuffle", "ciclo": 4, "passos": 12, "bpm": 110, "progressao": "| A7 | D7 | A7 | E7 |",
-     "faixas": {"kick": "X.....X.....", "snare": "...X.....X..", "hat": "X.xX.xX.xX.x"},
-     "comp": "X..x..X..x..", "baixo": "X.xX.xX.xX.x"},
-    {"id": "jazz", "nome": "Jazz swing (em 4)", "ciclo": 4, "passos": 12, "bpm": 140, "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |",
-     "faixas": {"ride": "X..x.xX..x.x", "hat": "...x.....x..", "kick": "g..g..g..g.."},
-     "comp": "...x.....x..", "baixo": "X..x..X..x.."},
-    {"id": "jazz2", "nome": "Jazz em 2", "ciclo": 4, "passos": 12, "bpm": 120, "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |",
-     "faixas": {"ride": "X..x.xX..x.x", "hat": "...x.....x..", "kick": "g.....g....."},
-     "comp": "x.....x.....", "baixo": "X.....X....."},
-    {"id": "bossa", "nome": "Bossa nova", "ciclo": 8, "passos": 32, "bpm": 130, "progressao": "| Cmaj7 | A7 | Dm7 | G7 |",
-     "faixas": {"kick": "X.....x.X.....x.X.....x.X.....x.", "rim": "x..x..x...x..x....x..x..........", "hat": "x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x."},
-     "comp": "x..x..x...x..x....x..x..........", "baixo": "X.....x.X.....x.X.....x.X.....x."},
-    {"id": "samba", "nome": "Samba", "ciclo": 4, "passos": 16, "bpm": 90, "progressao": "| Dm7 | G7 | Cmaj7 | A7 |",
-     "faixas": {"surdo": "g...X...g...X...", "tamborim": "x.xx.x.xx.x.x.x.", "shaker": "XgxgXgxgXgxgXgxg"},
-     "comp": "..x...x...x..x..", "baixo": "X..x....X..x...."},
-    {"id": "partidoalto", "nome": "Partido alto", "ciclo": 4, "passos": 16, "bpm": 88, "progressao": "| Dm7 | G7 |",
-     "faixas": {"surdo": "g...X...g...X...", "rim": ".x..x.x..x..x.x.", "shaker": "XgxgXgxgXgxgXgxg"},
-     "comp": "x..x..x...x..x..", "baixo": "X..x...xX..x...x"},
-    {"id": "baiao", "nome": "Baião", "ciclo": 4, "passos": 16, "bpm": 100, "progressao": "| A7 | A7 | D7 | E7 |",
-     "faixas": {"zabumba": "X..x..x.X..x..x.", "rim": "..x...x...x...x.", "triangulo": "xxoxxxoxxxoxxxox"},
-     "comp": "X.....x.X.....x.", "baixo": "X..x..x.X..x..x."},
-    {"id": "xote", "nome": "Xote", "ciclo": 4, "passos": 16, "bpm": 84, "progressao": "| G | C | D7 | G |",
-     "faixas": {"zabumba": "X...x.x.X...x.x.", "triangulo": "xxoxxxoxxxoxxxox"},
-     "comp": "....x.......x...", "baixo": "X.....x.X.....x."},
-    {"id": "frevo", "nome": "Frevo", "ciclo": 4, "passos": 16, "bpm": 130, "progressao": "| Bb | F7 |",
-     "faixas": {"snare": "xgxgXgxgxgxgXgxg", "surdo": "X.......X......."},
-     "comp": "x...x...x...x...", "baixo": "x.x.x.x.x.x.x.x."},
-    {"id": "seisoito", "nome": "6/8", "ciclo": 3, "passos": 12, "pulso": 1.5, "compasso": "6/8", "bpm": 70, "progressao": "| Em | C |",
-     "faixas": {"kick": "X.....x.....", "snare": "......X.....", "hat": "x.x.x.x.x.x."},
-     "comp": "X.....x.....", "baixo": "X.....x....."},
-    {"id": "cinco", "nome": "5/4", "ciclo": 5, "passos": 20, "compasso": 5, "bpm": 110, "progressao": "| Ebm7 | Bbm7 |",
-     "faixas": {"kick": "X.......x...X.......", "snare": "....X.......X...X...", "hat": "x.x.x.x.x.x.x.x.x.x."},
-     "comp": "X.......x...X.......", "baixo": "X.......x...X......."},
-    {"id": "sete", "nome": "7/8 (2+2+3)", "ciclo": 3.5, "passos": 14, "compasso": "7/8", "bpm": 110, "progressao": "| Am | G |",
-     "faixas": {"kick": "X.......X.....", "snare": "....X.......X.", "hat": "x.x.x.x.x.x.x."},
-     "comp": "X...x...x.....", "baixo": "X...x...x....."}
-  ]
+ "legenda": "Um caractere por passo. X forte, x normal, g fraco, o aberto (chimbal/triângulo), . nada. ciclo = semínimas do padrão. pulso 1.5 = BPM em semínima pontuada. teclado: rhodes | piano. baixoAcustico: walking no baixo acústico.",
+ "grooves": [
+  {
+   "id": "funk",
+   "nome": "Funk",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 96,
+   "progressao": "| E7 | E7 | A7 | E7 |",
+   "faixas": {
+    "kick": "X.....x...x.....",
+    "snare": "....X.......X..g",
+    "hat": "x.x.x.x.x.x.x.x."
+   },
+   "comp": "....x.....x.....",
+   "baixo": "X.....x...x.....",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "rock",
+   "nome": "Rock",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 120,
+   "progressao": "| A | F | C | G |",
+   "faixas": {
+    "kick": "X.......X.x.....",
+    "snare": "....X.......X...",
+    "hat": "x.x.x.x.x.x.x.x.",
+    "crash": "X..............."
+   },
+   "comp": "X.......X.......",
+   "baixo": "X.x.X.x.X.x.X.x.",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "pop",
+   "nome": "Pop",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 100,
+   "progressao": "| C | G | Am | F |",
+   "faixas": {
+    "kick": "X.....X.X.......",
+    "snare": "....X.......X...",
+    "hat": "x.x.x.x.x.x.x.x."
+   },
+   "comp": "X.....x.X.....x.",
+   "baixo": "X.....X.X.....X.",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "disco",
+   "nome": "Disco",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 118,
+   "progressao": "| Am7 | D7 |",
+   "faixas": {
+    "kick": "X...X...X...X...",
+    "snare": "....X.......X...",
+    "hatAberto": "..x...x...x...x.",
+    "hat": "x...x...x...x..."
+   },
+   "comp": "..x...x...x...x.",
+   "baixo": "X.x.X.x.X.x.X.x.",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "neosoul",
+   "nome": "Neo-soul",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 84,
+   "swing": 0.18,
+   "progressao": "| Dm7 | G7 |",
+   "faixas": {
+    "kick": "X......x..X.....",
+    "snare": "....X.......X...",
+    "hat": "x.xgx.xgx.xgx.xg"
+   },
+   "comp": "X.........x.....",
+   "baixo": "X......x..X.....",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "gospel",
+   "nome": "Gospel",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 100,
+   "progressao": "| Cmaj7 | Am7 | Dm7 | G7 |",
+   "faixas": {
+    "kick": "X..x..x...X..x..",
+    "snare": "....X.......X...",
+    "clap": "....X.......X...",
+    "hat": "xgxgxgxgxgxgxgxg"
+   },
+   "comp": "X..x..x...X..x..",
+   "baixo": "X..x..x...X..x..",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "metal",
+   "nome": "Metal",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 140,
+   "progressao": "| Em | C | D | Em |",
+   "faixas": {
+    "kick": "XxXxXxXxXxXxXxXx",
+    "snare": "....X.......X...",
+    "ride": "x.x.x.x.x.x.x.x.",
+    "crash": "X..............."
+   },
+   "baixo": "xxxxxxxxxxxxxxxx",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "reggae",
+   "nome": "Reggae (one drop)",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 76,
+   "swing": 0.1,
+   "progressao": "| Am | G |",
+   "faixas": {
+    "kick": "........X.......",
+    "rim": "........X.......",
+    "hat": "x.x.x.x.x.x.x.x."
+   },
+   "comp": "..x...x...x...x.",
+   "baixo": "X.....x.....x...",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "shuffle",
+   "nome": "Shuffle",
+   "ciclo": 4,
+   "passos": 12,
+   "bpm": 110,
+   "progressao": "| A7 | D7 | A7 | E7 |",
+   "faixas": {
+    "kick": "X.....X.....",
+    "snare": "...X.....X..",
+    "hat": "X.xX.xX.xX.x"
+   },
+   "comp": "X..x..X..x..",
+   "baixo": "X.xX.xX.xX.x",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "jazz",
+   "nome": "Jazz swing (em 4)",
+   "ciclo": 4,
+   "passos": 12,
+   "bpm": 140,
+   "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |",
+   "faixas": {
+    "ride": "X..x.xX..x.x",
+    "hat": "...x.....x..",
+    "kick": "g..g..g..g.."
+   },
+   "comp": "...x.....x..",
+   "baixo": "X..x..X..x..",
+   "teclado": "piano",
+   "baixoAcustico": true
+  },
+  {
+   "id": "jazz2",
+   "nome": "Jazz em 2",
+   "ciclo": 4,
+   "passos": 12,
+   "bpm": 120,
+   "progressao": "| F7 | Bb7 | F7 | F7 | Bb7 | Bb7 | F7 | D7 | Gm7 | C7 | F7 D7 | Gm7 C7 |",
+   "faixas": {
+    "ride": "X..x.xX..x.x",
+    "hat": "...x.....x..",
+    "kick": "g.....g....."
+   },
+   "comp": "x.....x.....",
+   "baixo": "X.....X.....",
+   "teclado": "piano",
+   "baixoAcustico": true
+  },
+  {
+   "id": "bossa",
+   "nome": "Bossa nova",
+   "ciclo": 8,
+   "passos": 32,
+   "bpm": 130,
+   "progressao": "| Cmaj7 | A7 | Dm7 | G7 |",
+   "faixas": {
+    "kick": "X.....x.X.....x.X.....x.X.....x.",
+    "rim": "x..x..x...x..x....x..x..........",
+    "ganza": "x.x.x.x.x.x.x.x.x.x.x.x.x.x.x.x."
+   },
+   "comp": "x..x..x...x..x....x..x..........",
+   "baixo": "X.....x.X.....x.X.....x.X.....x.",
+   "teclado": "piano"
+  },
+  {
+   "id": "samba",
+   "nome": "Samba",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 90,
+   "progressao": "| Dm7 | G7 | Cmaj7 | A7 |",
+   "faixas": {
+    "surdo": "g...X...g...X...",
+    "tamborim": "x.xx.x.xx.x.x.x.",
+    "ganza": "XgxgXgxgXgxgXgxg",
+    "agogo": "X.x...x.X.x...x."
+   },
+   "comp": "..x...x...x..x..",
+   "baixo": "X..x....X..x....",
+   "teclado": "piano"
+  },
+  {
+   "id": "partidoalto",
+   "nome": "Partido alto",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 88,
+   "progressao": "| Dm7 | G7 |",
+   "faixas": {
+    "surdo": "g...X...g...X...",
+    "rim": ".x..x.x..x..x.x.",
+    "pandeiro": "XgxgXgxgXgxgXgxg"
+   },
+   "comp": "x..x..x...x..x..",
+   "baixo": "X..x...xX..x...x",
+   "teclado": "piano"
+  },
+  {
+   "id": "baiao",
+   "nome": "Baião",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 100,
+   "progressao": "| A7 | A7 | D7 | E7 |",
+   "faixas": {
+    "zabumba": "X..x..x.X..x..x.",
+    "rim": "..x...x...x...x.",
+    "triangulo": "xxoxxxoxxxoxxxox"
+   },
+   "comp": "X.....x.X.....x.",
+   "baixo": "X..x..x.X..x..x.",
+   "teclado": "piano"
+  },
+  {
+   "id": "xote",
+   "nome": "Xote",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 84,
+   "progressao": "| G | C | D7 | G |",
+   "faixas": {
+    "zabumba": "X...x.x.X...x.x.",
+    "triangulo": "xxoxxxoxxxoxxxox"
+   },
+   "comp": "....x.......x...",
+   "baixo": "X.....x.X.....x.",
+   "teclado": "piano"
+  },
+  {
+   "id": "frevo",
+   "nome": "Frevo",
+   "ciclo": 4,
+   "passos": 16,
+   "bpm": 130,
+   "progressao": "| Bb | F7 |",
+   "faixas": {
+    "snare": "xgxgXgxgxgxgXgxg",
+    "surdo": "X.......X......."
+   },
+   "comp": "x...x...x...x...",
+   "baixo": "x.x.x.x.x.x.x.x.",
+   "teclado": "piano"
+  },
+  {
+   "id": "seisoito",
+   "nome": "6/8",
+   "ciclo": 3,
+   "passos": 12,
+   "pulso": 1.5,
+   "compasso": "6/8",
+   "bpm": 70,
+   "progressao": "| Em | C |",
+   "faixas": {
+    "kick": "X.....x.....",
+    "snare": "......X.....",
+    "hat": "x.x.x.x.x.x."
+   },
+   "comp": "X.....x.....",
+   "baixo": "X.....x.....",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "cinco",
+   "nome": "5/4",
+   "ciclo": 5,
+   "passos": 20,
+   "compasso": 5,
+   "bpm": 110,
+   "progressao": "| Ebm7 | Bbm7 |",
+   "faixas": {
+    "kick": "X.......x...X.......",
+    "snare": "....X.......X...X...",
+    "hat": "x.x.x.x.x.x.x.x.x.x."
+   },
+   "comp": "X.......x...X.......",
+   "baixo": "X.......x...X.......",
+   "teclado": "rhodes"
+  },
+  {
+   "id": "sete",
+   "nome": "7/8 (2+2+3)",
+   "ciclo": 3.5,
+   "passos": 14,
+   "compasso": "7/8",
+   "bpm": 110,
+   "progressao": "| Am | G |",
+   "faixas": {
+    "kick": "X.......X.....",
+    "snare": "....X.......X.",
+    "hat": "x.x.x.x.x.x.x."
+   },
+   "comp": "X...x...x.....",
+   "baixo": "X...x...x.....",
+   "teclado": "rhodes"
+  }
+ ]
 }

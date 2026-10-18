@@ -15,10 +15,24 @@ if (v.status !== 0) {
 }
 const dist = path.join(raiz, 'dist');
 fs.rmSync(dist, {recursive: true, force: true});
-fs.cpSync(path.join(raiz, 'app'), dist, {recursive: true});
+// arquivos que começam com _ são de teste (ex.: _moldura.html) e não vão para o app publicado
+fs.cpSync(path.join(raiz, 'app'), dist, {recursive: true, filter: (p) => !path.basename(p).startsWith('_')});
 const versao = `baixo-${new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12)}`;
 const sw = path.join(dist, 'sw.js');
-fs.writeFileSync(sw, fs.readFileSync(sw, 'utf8').replace(/const VERSAO = '[^']+'/, `const VERSAO = '${versao}'`));
+// lista completa do que o app usa, para funcionar offline desde a primeira visita
+const todos = [];
+const andar = (d, rel = '') => {
+	for (const n of fs.readdirSync(d)) {
+		const p = path.join(d, n);
+		const r = rel ? `${rel}/${n}` : n;
+		if (fs.statSync(p).isDirectory()) andar(p, r);
+		else if (!/\.(md)$/.test(n) && n !== 'sw.js') todos.push(r);
+	}
+};
+andar(dist);
+fs.writeFileSync(sw, fs.readFileSync(sw, 'utf8')
+	.replace(/const VERSAO = '[^']+'/, `const VERSAO = '${versao}'`)
+	.replace(/const ARQUIVOS = \[[^\]]*\]; \/\/ @lista/, `const ARQUIVOS = ${JSON.stringify(['./', ...todos])};`));
 fs.writeFileSync(path.join(dist, '.nojekyll'), '');
 const zip = path.join(raiz, 'dist.zip');
 fs.rmSync(zip, {force: true});

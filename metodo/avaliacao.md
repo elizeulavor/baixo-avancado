@@ -13,7 +13,7 @@
 
 | Número | Como sai |
 |---|---|
-| Ataques | fluxo espectral (FFT 2048, passo 256, até 1,5 kHz); limiar relativo ao percentil 90 dos picos; refinado no início da subida mais íngreme do transiente (banda 250-1600 Hz) |
+| Ataques | fluxo espectral (FFT 2048, passo 256, até 1,5 kHz); limiar relativo ao percentil 90 dos picos; ataque fraco só vale se a energia de 30 ms subir 30% ou a altura mudar; refinado por fluxo fino (FFT 2048, passo 1,5 ms), calibrado para 0 ms numa nota isolada |
 | Regularidade | desvio-padrão (ms) do erro de cada ataque em relação ao tempo escrito |
 | Pressa/atraso | média do erro; positivo = atrasado |
 | Deriva | inclinação do erro ao longo do take (ms a cada 10 s): acelerando ou freando |
@@ -42,7 +42,9 @@ Cada critério vale 70 exatamente no limite, 100 no ideal e 0 no dobro do limite
 - Acompanhamento (groove) tocando no alto-falante entra no microfone e atrapalha. Para avaliar com
   groove, fone com fio.
 - Fone Bluetooth: 150-300 ms de atraso variável. Não serve para take avaliado.
-- Os limiares foram ajustados com baixo sintético (`scripts/testar-avaliacao.mjs`) e com o pipeline
+- Os limiares foram ajustados com baixo sintético (`scripts/testar-avaliacao.mjs`), com amostras de
+  baixo gravado (`scripts/testar-real.mjs`: notas e nota errada exatas, 0-3 ataques a mais, ~9 ms de
+  ruído na medição de tempo; por isso o limite padrão de regularidade é 14 ms) e com o pipeline
   completo no navegador. Ainda não com gravações reais de baixo em celulares diferentes: os
   primeiros takes reais são a validação. Se um número parecer errado, o aluno exporta o backup e
   descreve o take; ajuste e registre em `erros-e-licoes.md`.
