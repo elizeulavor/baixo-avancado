@@ -38,6 +38,7 @@ export const GRUPOS = {
 	click: ['click'],
 	modelo: ['click', 'baixo', 'baixoFantasma', 'baixoStaccato', 'slap', 'pop'],
 	groove: ['click', 'bateria', 'rhodes', 'piano', 'baixo', 'acustico'],
+	jogosGroove: ['bateria', 'baixo', 'rhodes', 'piano', 'acustico', 'ui'],
 	ui: ['ui'],
 };
 
@@ -55,34 +56,90 @@ export function click(t, nivel = 1) {
 // Cada faixa do groove aponta para amostras reais. O caractere do padrão dá a força.
 const VEL = {X: 1, x: 0.72, g: 0.4, o: 0.85};
 let alterna = 0;
+// destino da percussão: normalmente a saída; nos jogos de groove sem fone, o passa-altas
+let destInstr;
+const bt = (id, t, op) => S.tocar('bateria', id, t, {...op, destino: destInstr});
 export const INSTR = {
-	kick: (t, v) => S.tocar('bateria', 'kick', t, {vel: v, ganho: volumes.bateria}),
-	snare: (t, v) => S.tocar('bateria', 'snare', t, {vel: v, ganho: volumes.bateria}),
-	hat: (t, v) => S.tocar('bateria', 'hat', t, {vel: v, ganho: volumes.bateria * 0.7}),
-	hatAberto: (t, v) => S.tocar('bateria', 'hatAberto', t, {vel: v, ganho: volumes.bateria * 0.6, dur: 0.6}),
-	hatPedal: (t, v) => S.tocar('bateria', 'hatPedal', t, {vel: v, ganho: volumes.bateria * 0.7}),
-	ride: (t, v) => S.tocar('bateria', 'ride', t, {vel: v, ganho: volumes.bateria * 0.6}),
-	rideBell: (t, v) => S.tocar('bateria', 'rideBell', t, {vel: v, ganho: volumes.bateria * 0.5}),
-	crash: (t, v) => S.tocar('bateria', 'crash', t, {vel: v, ganho: volumes.bateria * 0.6}),
-	rim: (t, v) => S.tocar('bateria', 'rim', t, {vel: v, ganho: volumes.bateria}),
-	clap: (t, v) => S.tocar('bateria', 'clap', t, {vel: v, ganho: volumes.bateria * 0.8}),
-	shaker: (t, v) => S.tocar('bateria', (alterna++ % 2) ? 'shaker-2' : 'shaker-1', t, {vel: v, ganho: volumes.bateria * 0.6}),
-	ganza: (t, v) => S.tocar('bateria', 'ganza', t, {vel: v, ganho: volumes.bateria * 0.6}),
-	pandeiro: (t, v) => S.tocar('bateria', 'pandeiro', t, {vel: v, ganho: volumes.bateria * 0.6}),
-	surdo: (t, v) => S.tocar('bateria', v < 0.5 ? 'surdoAbafado' : 'surdo', t, {vel: v, ganho: volumes.bateria, taxa: 0.82}),
-	tamborim: (t, v) => S.tocar('bateria', 'tamborim', t, {vel: v, ganho: volumes.bateria * 0.7, taxa: 1.15}),
+	kick: (t, v) => bt('kick', t, {vel: v, ganho: volumes.bateria}),
+	snare: (t, v) => bt('snare', t, {vel: v, ganho: volumes.bateria}),
+	hat: (t, v) => bt('hat', t, {vel: v, ganho: volumes.bateria * 0.7}),
+	hatAberto: (t, v) => bt('hatAberto', t, {vel: v, ganho: volumes.bateria * 0.6, dur: 0.6}),
+	hatPedal: (t, v) => bt('hatPedal', t, {vel: v, ganho: volumes.bateria * 0.7}),
+	ride: (t, v) => bt('ride', t, {vel: v, ganho: volumes.bateria * 0.6}),
+	rideBell: (t, v) => bt('rideBell', t, {vel: v, ganho: volumes.bateria * 0.5}),
+	crash: (t, v) => bt('crash', t, {vel: v, ganho: volumes.bateria * 0.6}),
+	rim: (t, v) => bt('rim', t, {vel: v, ganho: volumes.bateria}),
+	clap: (t, v) => bt('clap', t, {vel: v, ganho: volumes.bateria * 0.8}),
+	shaker: (t, v) => bt((alterna++ % 2) ? 'shaker-2' : 'shaker-1', t, {vel: v, ganho: volumes.bateria * 0.6}),
+	ganza: (t, v) => bt('ganza', t, {vel: v, ganho: volumes.bateria * 0.6}),
+	pandeiro: (t, v) => bt('pandeiro', t, {vel: v, ganho: volumes.bateria * 0.6}),
+	surdo: (t, v) => bt(v < 0.5 ? 'surdoAbafado' : 'surdo', t, {vel: v, ganho: volumes.bateria, taxa: 0.82}),
+	tamborim: (t, v) => bt('tamborim', t, {vel: v, ganho: volumes.bateria * 0.7, taxa: 1.15}),
 	zabumba: (t, v) => {
-		S.tocar('bateria', 'kick', t, {vel: v, ganho: volumes.bateria});
-		S.tocar('bateria', 'tumba', t, {vel: v, ganho: volumes.bateria * 0.4, taxa: 0.7});
+		bt('kick', t, {vel: v, ganho: volumes.bateria});
+		bt('tumba', t, {vel: v, ganho: volumes.bateria * 0.4, taxa: 0.7});
 	},
-	triangulo: (t, v) => S.tocar('bateria', 'triangulo', t, {vel: v, ganho: volumes.bateria * 0.45}),
-	trianguloAberto: (t, v) => S.tocar('bateria', 'trianguloAberto', t, {vel: v, ganho: volumes.bateria * 0.45, dur: 0.5}),
-	agogo: (t, v) => S.tocar('bateria', v >= 0.8 ? 'agogoAlto' : 'agogoBaixo', t, {vel: 0.8, ganho: volumes.bateria * 0.45}),
-	cowbell: (t, v) => S.tocar('bateria', 'cowbell', t, {vel: v, ganho: volumes.bateria * 0.5}),
-	conga: (t, v) => S.tocar('bateria', v >= 0.9 ? 'congaTapa' : 'conga', t, {vel: v, ganho: volumes.bateria * 0.7}),
-	tumba: (t, v) => S.tocar('bateria', 'tumba', t, {vel: v, ganho: volumes.bateria * 0.7}),
-	tom: (t, v) => S.tocar('bateria', 'tom', t, {vel: v, ganho: volumes.bateria * 0.8}),
+	triangulo: (t, v) => bt('triangulo', t, {vel: v, ganho: volumes.bateria * 0.45}),
+	trianguloAberto: (t, v) => bt('trianguloAberto', t, {vel: v, ganho: volumes.bateria * 0.45, dur: 0.5}),
+	agogo: (t, v) => bt(v >= 0.8 ? 'agogoAlto' : 'agogoBaixo', t, {vel: 0.8, ganho: volumes.bateria * 0.45}),
+	cowbell: (t, v) => bt('cowbell', t, {vel: v, ganho: volumes.bateria * 0.5}),
+	conga: (t, v) => bt(v >= 0.9 ? 'congaTapa' : 'conga', t, {vel: v, ganho: volumes.bateria * 0.7}),
+	tumba: (t, v) => bt('tumba', t, {vel: v, ganho: volumes.bateria * 0.7}),
+	tom: (t, v) => bt('tom', t, {vel: v, ganho: volumes.bateria * 0.8}),
 };
+// percussão que o microfone não confunde com baixo (tudo acima de 4 kHz depois do passa-altas)
+export const AGUDOS = ['hat', 'hatAberto', 'hatPedal', 'ride', 'shaker', 'ganza', 'triangulo', 'pandeiro', 'tamborim'];
+let agudo = null;
+function saidaAguda() {
+	if (!agudo) {
+		const a = ctx.createBiquadFilter(), b = ctx.createBiquadFilter();
+		for (const f of [a, b]) {
+			f.type = 'highpass';
+			f.frequency.value = 4000;
+			f.Q.value = Math.SQRT1_2;
+		}
+		a.connect(b).connect(mestre);
+		agudo = a;
+	}
+	return agudo;
+}
+// Clique dos jogos de groove: chimbal fechado gravado, por um passa-altas de 4 kHz. Sem nada
+// abaixo de 4 kHz, a análise (que filtra acima de 1,6 kHz) não confunde o clique com a nota
+// (testar-groove: com claves ou chimbal sem filtro, a nota 20 ms depois do clique saía puxada).
+export function cliqueGroove(t, f = 1) {
+	audio();
+	S.tocar('bateria', f >= 1 ? 'hat-1' : 'hat-2', t, {vel: 0.5, ganho: volumes.click * (f >= 1 ? 1.5 : 0.6 + 0.8 * f), destino: saidaAguda()});
+}
+// Um ciclo do groove a partir de t (bpmQ em semínimas). soAgudos: sem fone, só a percussão aguda,
+// filtrada; com fone, a banda inteira (bateria e teclado).
+// desde/ate (tempo de contexto): só os passos dentro da janela (começar no meio do ciclo).
+export function cicloGroove(g, t, {bpmQ, soAgudos = false, progressao = null, ciclo = 0, desde = -Infinity, ate = Infinity}) {
+	audio();
+	const passoDur = (60 / bpmQ) * (g.ciclo / g.passos);
+	const prog = !soAgudos && progressao ? parseProgressao(progressao, temposPorCompasso(g.compasso)) : null;
+	const totalProg = prog ? prog.at(-1).inicio + prog.at(-1).dur : 0;
+	destInstr = soAgudos ? saidaAguda() : undefined;
+	for (let k = 0; k < g.passos; k++) {
+		let ts = t + k * passoDur;
+		if (g.swing && g.passos / g.ciclo === 4 && k % 2 === 1) ts += g.swing * passoDur;
+		if (ts < desde - 1e-4 || ts >= ate) continue;
+		for (const [faixa, padrao] of Object.entries(g.faixas)) {
+			if (soAgudos && !AGUDOS.includes(faixa)) continue;
+			const ch = padrao[k];
+			if (!ch || ch === '.') continue;
+			const nome = ch === 'o' && INSTR[`${faixa}Aberto`] ? `${faixa}Aberto` : faixa;
+			INSTR[nome]?.(ts, VEL[ch] ?? 0.7);
+		}
+		if (prog) {
+			const tempoAbs = ciclo * g.ciclo + (k * g.ciclo) / g.passos;
+			const p = acordeEm(prog, tempoAbs);
+			const ch = g.comp?.[k];
+			if (ch && ch !== '.') acorde(p.acorde, ts, passoDur * 3, VEL[ch] ?? 0.7, g.teclado);
+			else if (!g.comp && Math.abs((tempoAbs % totalProg) - p.inicio) < 1e-6) acorde(p.acorde, ts, 1.2, 0.8, g.teclado);
+		}
+	}
+	destInstr = undefined;
+}
 
 // Acorde no Rhodes (ou piano): vozes fechadas perto do dó central, com a raiz omitida (o baixo faz).
 export function acorde(ac, t, dur, v = 1, timbre = 'rhodes') {
@@ -300,7 +357,18 @@ export function gravar(stream) {
 	src.connect(node).connect(mudo).connect(ctx.destination);
 	const partes = [];
 	node.port.onmessage = (e) => partes.push(e.data);
+	const sr = ctx.sampleRate;
 	return {
+		// pedaço da gravação até agora, do instante de contexto t0 (s) ao fim: análise ao vivo
+		trecho: (t0 = 0) => {
+			const q0 = Math.round(t0 * sr);
+			const usar = partes.filter((p) => p.quadro + p.dados.length > q0);
+			if (!usar.length) return null;
+			const ini = usar[0].quadro, fim = usar.at(-1).quadro + usar.at(-1).dados.length;
+			const dados = new Float32Array(fim - ini);
+			for (const p of usar) dados.set(p.dados, p.quadro - ini);
+			return {dados, sr, inicioCtx: ini / sr};
+		},
 		parar: () => new Promise((ok) => {
 			setTimeout(() => {
 				src.disconnect();

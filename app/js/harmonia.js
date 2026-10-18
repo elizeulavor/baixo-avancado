@@ -1,8 +1,9 @@
 // Ouvido harmônico. Gera perguntas num tom (maior ou menor) e toca com piano, Rhodes ou banda
 // gravados. A dificuldade de cada pergunta vem da faixa de vocabulário (1 a 5), do número de acordes
 // escondidos e do andamento; o rating do aluno (tipo Elo) escolhe a faixa.
-import {parseAcorde, CICLO_QUARTAS, pcDe, rng as rngSemente} from './musica.js';
+import {parseAcorde, CICLO_QUARTAS, pcDe, rng as rngSemente, ACORDES, ESCALAS} from './musica.js';
 import * as A from './audio.js';
+import * as S from './sons.js';
 
 let R = Math.random;
 // semente: o desafio do dia é igual para todo mundo naquele dia
@@ -215,7 +216,98 @@ export function pergunta(tipo, ctx = {}) {
 			baixoEsperado: [baixo], explica: `${inv.nome}: ${nome.toLowerCase()} no baixo. ${id === 'p' ? 'Pedal: o baixo fica na tônica e o acorde muda em cima.' : id === 'f' ? 'Posição fundamental: o baixo toca a raiz.' : `Inversão: o baixo toca a ${nome.toLowerCase()} do acorde, a harmonia é a mesma mas soa menos estável.`}`,
 			previa: comBaixo};
 	}
+	if (tipo === 'qualidade') return perguntaQualidade(faixa, dif, ctx);
+	if (tipo === 'intervalo') return perguntaIntervalo(faixa, dif, ctx);
+	if (tipo === 'modo') return perguntaModo(faixa, dif, ctx);
 	throw new Error(`tipo desconhecido: ${tipo}`);
+}
+
+// ---------- qualidade, intervalos e modos (a base que o Próximo Play e o ChordProg treinam) ----------
+// Sem orientador de tom: o ouvido julga a cor do acorde, a distância ou a escala inteira.
+const QUALIDADES = [
+	['', 'Maior', 1, 'terça maior e quinta justa'], ['m', 'Menor', 1, 'terça menor e quinta justa'],
+	['dim', 'Diminuto', 2, 'duas terças menores'], ['aug', 'Aumentado', 2, 'duas terças maiores'], ['sus4', 'Sus4', 2, 'quarta no lugar da terça'],
+	['7', 'Dominante (7)', 2, 'maior com sétima menor'], ['maj7', 'Maior com 7M', 3, 'maior com sétima maior'], ['m7', 'Menor com 7', 3, 'menor com sétima menor'],
+	['m7b5', 'Meio-diminuto (m7♭5)', 3, 'diminuto com sétima menor'], ['dim7', 'Diminuto com 7 (°7)', 4, 'três terças menores'], ['mmaj7', 'Menor com 7M', 4, 'menor com sétima maior'],
+	['6', 'Maior com 6', 4, 'maior com sexta maior'], ['m6', 'Menor com 6', 5, 'menor com sexta maior'], ['7sus4', '7sus4', 5, 'sus4 com sétima menor'], ['7#5', '7(♯5)', 5, 'aumentado com sétima menor'],
+];
+const NOMES_PC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+function perguntaQualidade(faixa, dif, ctx) {
+	let pool = QUALIDADES.filter((q) => q[2] <= faixa);
+	if (pool.length > 7) pool = pool.filter((q) => q[2] >= faixa - 2 || R() < 0.4);
+	const foco = ctx.foco?.length ? pool.filter((q) => ctx.foco.includes(`qual:${q[0]}`)) : [];
+	const [id, nome, , explica] = sorteia(foco.length && R() < 0.5 ? foco : pool);
+	const raiz = 48 + Math.floor(R() * 8); // C3 a G3
+	const forma = faixa === 1 ? 'bloco' : sorteia(['bloco', 'arpejo', faixa >= 3 ? 'arpejo-desce' : 'bloco']);
+	const notas = ACORDES[id].map((i) => raiz + i);
+	const tocarProprio = ({timbre = 'piano'} = {}) => {
+		const ctx0 = A.audio();
+		const tecl = timbre === 'rhodes' || timbre === 'banda' ? 'rhodes' : 'piano';
+		let t = ctx0.currentTime + 0.1;
+		const ordem = forma === 'arpejo-desce' ? [...notas].reverse() : notas;
+		if (forma !== 'bloco') {
+			ordem.forEach((m, k) => S.nota(tecl, m, t + k * 0.32, {vel: 0.8, ganho: 0.5, dur: 1.6, soltar: 0.3}));
+			t += ordem.length * 0.32;
+		}
+		ordem.forEach((m) => S.nota(tecl, m, t, {vel: 0.8, ganho: 0.4, dur: 1.6, soltar: 0.3}));
+		return t + 1.9;
+	};
+	return {tipo: 'qualidade', tom: NOMES_PC[raiz % 12], modo: 'maior', orientador: [], alvo: [{nome: `${NOMES_PC[raiz % 12]}${id}`}], slots: [0], tempo: 1.6,
+		opcoes: pool.map(([k, n]) => ({id: k || 'M', nome: n})), certa: [id || 'M'], rotulos: [`qual:${id || 'M'}`], dificuldade: dif + pool.length * 8 + (forma === 'bloco' ? 0 : 30),
+		explica: `${NOMES_PC[raiz % 12]}${id}: ${explica}. Tocado ${forma === 'bloco' ? 'em bloco' : 'em arpejo e depois em bloco'}.`, tocarProprio, semTom: true,
+		previa: (op) => [parseAcorde(`${NOMES_PC[raiz % 12]}${op === 'M' ? '' : op}`)]};
+}
+const INTERVALOS = [
+	[3, 'Terça menor', 1], [4, 'Terça maior', 1], [5, 'Quarta justa', 1], [7, 'Quinta justa', 1], [12, 'Oitava', 1],
+	[2, 'Segunda maior', 2], [9, 'Sexta maior', 2], [10, 'Sétima menor', 2],
+	[1, 'Segunda menor', 3], [6, 'Trítono', 3], [8, 'Sexta menor', 3], [11, 'Sétima maior', 3],
+];
+function perguntaIntervalo(faixa, dif, ctx) {
+	const pool = INTERVALOS.filter((x) => x[2] <= Math.min(3, faixa));
+	const foco = ctx.foco?.length ? pool.filter((x) => ctx.foco.includes(`int:${x[0]}`)) : [];
+	const [st, nome] = sorteia(foco.length && R() < 0.5 ? foco : pool);
+	const desce = faixa >= 3 && R() < 0.4;
+	const harmonico = faixa >= 4 && R() < 0.35;
+	const raiz = desce ? 40 + Math.floor(R() * 8) : 28 + Math.floor(R() * 10); // E1 a C#2 (ou mais agudo, descendo)
+	const segunda = desce ? raiz - st : raiz + st;
+	const tocarProprio = () => {
+		const t = A.audio().currentTime + 0.1;
+		A.notaBaixo(raiz, t, harmonico ? 1.6 : 0.85, {acento: true});
+		A.notaBaixo(segunda, harmonico ? t : t + 0.95, 1.2, {acento: true});
+		return t + (harmonico ? 1.8 : 2.3);
+	};
+	return {tipo: 'intervalo', tom: NOMES_PC[raiz % 12], modo: 'maior', orientador: [], alvo: [{nome}], slots: [0], tempo: 1,
+		opcoes: pool.map(([k, n]) => ({id: String(k), nome: n})), certa: [String(st)], rotulos: [`int:${st}`], dificuldade: dif + (desce ? 60 : 0) + (harmonico ? 90 : 0) + pool.length * 5,
+		baixoEsperado: [((segunda % 12) + 12) % 12], tocarProprio, semTom: true,
+		explica: `${nome} ${harmonico ? 'harmônica' : desce ? 'descendente' : 'ascendente'}: ${NOMES_PC[raiz % 12]} → ${NOMES_PC[((segunda % 12) + 12) % 12]} (${st} semitons).`};
+}
+const MODOS_ESC = [
+	['maior', 'Jônio (maior)', 1, '7M e 3M: o maior de sempre'], ['menor', 'Eólio (menor natural)', 1, '3m, 6m e 7m'],
+	['dorico', 'Dórico', 2, 'menor com 6 maior'], ['mixolidio', 'Mixolídio', 2, 'maior com 7 menor'],
+	['lidio', 'Lídio', 3, 'maior com 4 aumentada'], ['frigio', 'Frígio', 3, 'menor com 2 menor'],
+	['locrio', 'Lócrio', 4, '2m e 5 diminuta'], ['menorHarmonica', 'Menor harmônica', 4, 'menor com 7 maior (salto de 1½ tom)'],
+	['menorMelodica', 'Menor melódica', 5, 'menor com 6 e 7 maiores'], ['lidioDominante', 'Lídio dominante', 5, '4 aumentada e 7 menor'], ['alterada', 'Alterada', 5, 'tudo alterado: 2m, 3m, 3M, 5 dim, 6m, 7m'],
+];
+function perguntaModo(faixa, dif, ctx) {
+	const pool = MODOS_ESC.filter((m) => m[2] <= faixa);
+	const foco = ctx.foco?.length ? pool.filter((m) => ctx.foco.includes(`modo:${m[0]}`)) : [];
+	const [id, nome, , cor] = sorteia(foco.length && R() < 0.5 ? foco : pool);
+	const raiz = 28 + Math.floor(R() * 10);
+	const desce = faixa >= 3 && R() < 0.3;
+	const esc = [...ESCALAS[id], 12];
+	const tocarProprio = ({timbre = 'piano'} = {}) => {
+		const ctx0 = A.audio();
+		const t = ctx0.currentTime + 0.1;
+		const tecl = timbre === 'rhodes' || timbre === 'banda' ? 'rhodes' : 'piano';
+		// pedal da tônica no teclado, a escala no baixo
+		S.nota(tecl, 48 + (raiz % 12), t, {vel: 0.6, ganho: 0.28, dur: esc.length * 0.36 + 0.6, soltar: 0.4});
+		const seq = desce ? [...esc].reverse() : esc;
+		seq.forEach((iv, k) => A.notaBaixo(raiz + iv, t + k * 0.36, 0.34, {}));
+		return t + seq.length * 0.36 + 0.8;
+	};
+	return {tipo: 'modo', tom: NOMES_PC[raiz % 12], modo: 'maior', orientador: [], alvo: [{nome}], slots: [0], tempo: 1,
+		opcoes: pool.map(([k, n]) => ({id: k, nome: n})), certa: [id], rotulos: [`modo:${id}`], dificuldade: dif + pool.length * 10 + (desce ? 40 : 0),
+		tocarProprio, semTom: true, explica: `${nome} a partir de ${NOMES_PC[raiz % 12]}: ${cor}.`};
 }
 
 // ---------- som ----------
@@ -224,6 +316,7 @@ const raizGrave = (pc) => 28 + ((pc - 4 + 12) % 12); // E1 a D#2
 
 // Toca orientador (se pedido) + pausa + alvo. timbre: piano | rhodes | banda. Devolve o fim.
 export function tocar(p, {so = 'tudo', timbre = 'piano', orientar = true} = {}) {
+	if (p.tocarProprio) return p.tocarProprio({timbre});
 	const ctx = A.audio();
 	const dA = p.tempo;
 	const dC = Math.min(0.75, dA * 0.6);
@@ -261,6 +354,9 @@ export const JOGOS = {
 	graus: {nome: 'Graus', desc: 'Três acordes depois da tônica: o grau de cada um, inclusive secundárias e empréstimos.', icone: 'ii V', perguntas: 8, baixo: true},
 	inversao: {nome: 'Inversões', desc: 'Que nota do acorde está no baixo: fundamental, terça, quinta, sétima ou pedal?', icone: 'C/E', perguntas: 10, baixo: true},
 	baixo: {nome: 'Raiz no baixo', desc: 'Três acordes; toque a raiz de cada um. Só no instrumento.', icone: '♪↓', perguntas: 5, soBaixo: true},
+	qualidade: {nome: 'Qualidade', desc: 'Maior, menor, diminuto, aumentado, sus, tétrades: a cor do acorde, em bloco ou em arpejo.', icone: 'm7♭5', perguntas: 10},
+	intervalo: {nome: 'Intervalos', desc: 'Duas notas no baixo: qual a distância? Responda no botão ou tocando a segunda nota.', icone: '3M', perguntas: 10, baixo: true},
+	modo: {nome: 'Escalas e modos', desc: 'A escala no baixo sobre o pedal da tônica: jônio, dórico, mixolídio, lídio, frígio e além.', icone: 'dór', perguntas: 8},
 };
 export const MODOS = {
 	desafio: {nome: 'Desafio do dia', desc: '8 perguntas misturadas, as mesmas para hoje. Mantém sua sequência de desafios.', icone: '☀', perguntas: 8},
@@ -269,4 +365,4 @@ export const MODOS = {
 	erros: {nome: 'Seus erros', desc: 'Rodada montada com os graus, cadências e inversões que você mais erra.', icone: '✗→✓', perguntas: 10},
 };
 // sorteio de jogo para os modos mistos (rápidos)
-export const jogoMisto = (rapido) => sorteia(rapido ? ['funcao', 'cadencia', 'inversao', 'funcao', 'cadencia'] : ['completar', 'funcao', 'cadencia', 'graus', 'inversao']);
+export const jogoMisto = (rapido) => sorteia(rapido ? ['funcao', 'cadencia', 'inversao', 'funcao', 'cadencia', 'qualidade', 'intervalo'] : ['completar', 'funcao', 'cadencia', 'graus', 'inversao', 'qualidade', 'intervalo', 'modo']);

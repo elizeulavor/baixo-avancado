@@ -43,6 +43,24 @@ inversões e pedal, que é onde o baixista decide a harmonia.
 - **Timbre:** automático (piano até 1500; depois sorteia piano, Rhodes ou banda), ou fixo.
 - **Prévia:** abaixo de 1300 de rating, cada opção tem ▶ para ouvir antes de responder.
 
+## Qualidade, intervalos e modos (2026-10-18)
+
+Vindos do estudo de dois apps de ouvido que o aluno usa: **Próximo Play PRO** (Erick França, Lence
+Academy: acordes isolados, inversões, progressões, empréstimo modal; sons de estúdio, pontos e
+ranking) e **ChordProg** (DevDa AS: intervalos, acordes em bloco e arpejados, escalas, progressões
+com 500+ clipes reais, estatísticas). O Radix já cobria inversões, progressões e empréstimo; faltava
+a base. Os três jogos usam o mesmo motor (rating, Rush, Survive, seus erros, desafio do dia):
+
+- **Qualidade**: maior e menor (faixa 1) até dim7, m(maj7), 6, m6, 7sus4, 7(♯5). Bloco ou arpejo
+  (subindo e descendo a partir da faixa 3), piano ou Rhodes. Prévia das opções abaixo de 1300.
+- **Intervalos**: no baixo gravado, da terça à sétima maior; descendente a partir da faixa 3,
+  harmônico a partir da 4. Responde no botão ou **tocando a segunda nota** (microfone).
+- **Escalas e modos**: a escala no baixo sobre o pedal da tônica no teclado. Jônio e eólio, depois
+  dórico e mixolídio, lídio e frígio, lócrio e menor harmônica, menor melódica, lídio dominante e
+  alterada.
+
+O que não veio: ranking (o app é de uma pessoa só) e dicionário de escalas (há no braço).
+
 ## Harmonia funcional, versão 1 (histórico)
 
 Quatro jogos, três níveis cada, piano e baixo gravados, tom sorteado a cada pergunta.

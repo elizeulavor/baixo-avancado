@@ -82,17 +82,26 @@ function envelope(x, jan, hop) {
 }
 
 // ---------- ataques (onsets) por fluxo espectral ----------
-export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
-	const x = lp(sinal, 1600, sr); // tira o clique do metrônomo (claves, 2-3 kHz)
+// desde (s): ataques antes disso não são refinados nem devolvidos (análise ao vivo em janelas: o
+// trecho anterior só serve de referência para o limiar).
+// estrito: só aceita ataque com a energia subindo (no groove não há legato sem ataque, e a
+// sustentação longa das notas graves gerava trocas de altura falsas).
+export function detectarAtaques(sinal, sr, {sensibilidade = 1, desde = -Infinity, estrito = false} = {}) {
+	const corte = (estrito && estrito.corte) || 1600;
+	const x = lp(sinal, corte, sr); // tira o clique do metrônomo (claves, 2-3 kHz)
 	const N = 2048;
 	const hop = 256;
 	const nq = Math.floor((x.length - N) / hop);
 	if (nq < 4) return {ataques: [], filtrado: x};
 	const hann = new Float32Array(N).map((_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / N));
-	const kmax = Math.floor((1500 / sr) * N);
+	const kmax = Math.floor((Math.min(1500, corte - 100) / sr) * N);
 	let ant = new Float32Array(kmax);
 	const fluxo = new Float32Array(nq);
 	const energia = new Float32Array(nq);
+	// largura do ataque: fração das faixas de 200 Hz a 1,5 kHz que subiram mais de 3 dB. Toque de
+	// dedo é largo (ruído do dedo e do traste); a sustentação que oscila mexe em poucos harmônicos.
+	const largo = new Float32Array(nq);
+	const kLo = Math.max(1, Math.round((200 / sr) * N));
 	const re = new Float64Array(N), im = new Float64Array(N);
 	for (let q = 0; q < nq; q++) {
 		const o = q * hop;
@@ -105,13 +114,15 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 		energia[q] = Math.sqrt(en / N);
 		fft(re, im);
 		const cur = new Float32Array(kmax);
-		let f = 0;
+		let f = 0, sobem = 0;
 		for (let k = 1; k < kmax; k++) {
 			cur[k] = Math.log1p(1000 * Math.hypot(re[k], im[k]));
 			const d = cur[k] - ant[k];
 			if (d > 0) f += d;
+			if (k >= kLo && d > 0.35) sobem++;
 		}
 		fluxo[q] = f;
+		largo[q] = sobem / Math.max(1, kmax - kLo);
 		ant = cur;
 	}
 	const maxF = Math.max(...fluxo);
@@ -134,6 +145,8 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 	}
 	const valores = picos.map((q) => fluxo[q]).sort((a, b) => a - b);
 	const ref = valores[Math.floor(valores.length * 0.9)] ?? maxF;
+	let semSubida = null; // último pico forte recusado só por não subir a energia
+	const ate35 = Math.round((0.035 * sr) / hop);
 	for (const q of picos) {
 		const v = fluxo[q];
 		const viz = [];
@@ -149,21 +162,49 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 		let antes = Infinity, depois = 0;
 		for (let j = Math.max(0, c - j30 - 6); j <= Math.max(0, c - j30); j++) antes = Math.min(antes, envC[j] ?? Infinity);
 		for (let j = c - 1; j < Math.min(envC.length, c + 4); j++) depois = Math.max(depois, envC[j] ?? 0);
+		const larg = Math.max(largo[q], largo[q - 1] ?? 0, largo[q + 1] ?? 0);
+		// groove: a energia sobe e o ataque é largo (a sustentação oscila ~2 dB em poucos harmônicos)
+		if (estrito && !((depois > antes * (estrito.sobe ?? 1.6) && larg >= (estrito.largo ?? 0)) || v >= ref * (estrito.fluxo ?? 99))) {
+			semSubida = {q, v, larg};
+			continue;
+		}
 		if (!(depois > antes * 1.3) && v < ref * 0.6) {
 			// sem subida de energia: só é nota nova se a altura mudou (legato, hammer, troca de corda)
 			const tq = (q * hop + N / 2) / sr;
 			const a = alturaEm(prepA, tq - 0.1, tq + 0.005), b = alturaEm(prepA, tq - 0.012, tq + 0.11);
-			if (!a || !b || Math.abs(a.midi - b.midi) < 0.6) continue;
+			if (!a || !b || Math.abs(a.midi - b.midi) < 0.6) {
+				semSubida = {q, v, larg};
+				continue;
+			}
 		}
 		const ultimo = ataques[ataques.length - 1];
+		// Só no groove (estrito), validado em testar-groove.mjs; os drills seguem a regra de sempre.
+		// E grave: o toque gera um pico de fluxo sem a energia de 30 ms subir ainda (a fundamental de
+		// 41 Hz demora a crescer), e a energia sobe ~25 ms depois, no pico da corda abrindo. O ataque
+		// é o primeiro pico.
+		const recuo = estrito && semSubida && q - semSubida.q <= ate35 && semSubida.v >= v * 0.4 && semSubida.larg >= (estrito.largo ?? 0) && (!ultimo || semSubida.q - ultimo.q >= minDist) ? semSubida : null;
+		semSubida = null;
+		if (recuo) {
+			ataques.push({q: recuo.q, fluxo: Math.max(v, recuo.v), sobe: depois / Math.max(antes, 1e-9), recuo: true, largo: recuo.larg});
+			continue;
+		}
 		if (ultimo && q - ultimo.q < minDist) {
-			if (v > ultimo.fluxo) ataques.pop();
-			else continue;
+			// pico mais forte até 35 ms depois de um ataque razoável é a corda abrindo (E grave com a
+			// nota anterior ainda soando): fica o primeiro, que é o toque
+			const colado = !!estrito && ((q - ultimo.q) * hop) / sr < 0.035 && ultimo.fluxo >= v * 0.4;
+			if (v > ultimo.fluxo && !colado) ataques.pop();
+			else {
+				if (colado) {
+					ultimo.fluxo = Math.max(ultimo.fluxo, v);
+					ultimo.recuo = true; // o refinamento não pode andar até o segundo pico
+				}
+				continue;
+			}
 		}
 		// baixo gravado tem dois picos: o toque do dedo e, ~40-80 ms depois, a corda abrindo. Pico
 		// mais fraco logo depois de um ataque, sem a energia subir de novo, é o mesmo ataque.
 		if (ultimo && q - ultimo.q < minDist2 && v < ultimo.fluxo * 1.2 && depois < antes * 1.4) continue;
-		ataques.push({q, fluxo: v});
+		ataques.push({q, fluxo: v, sobe: depois / Math.max(antes, 1e-9), largo: larg});
 	}
 	// Refina no tempo: envelope liso (8 ms, banda 250-1600 Hz) em dB. O ataque é onde o sinal
 	// cruza 40% da subida entre o nível de antes e o pico. Em dB, um ataque sobre uma nota ainda
@@ -172,9 +213,10 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 	const out = [];
 	for (const a of ataques) {
 		const tq = (a.q * hop + N / 2) / sr;
-		const t = refinarFino(x, sr, tq) ?? tq - 0.008;
+		if (tq < desde) continue;
+		const t = refinarFino(x, sr, tq, -Infinity, a.recuo ? 0 : 0.05) ?? tq - 0.008;
 		if (out.length && t - out[out.length - 1].t < 0.03) continue;
-		out.push({t, forca: a.fluxo / maxF, tq});
+		out.push({t, forca: a.fluxo / maxF, tq, sobe: a.sobe, largo: a.largo});
 	}
 	return {ataques: out, filtrado: x, fluxo, hop, N};
 }
@@ -182,11 +224,10 @@ export function detectarAtaques(sinal, sr, {sensibilidade = 1} = {}) {
 // Fluxo espectral fino (janela 1024, passo 64 = 1,5 ms) só em volta do ataque: mede a mudança do
 // espectro, que não ondula com os harmônicos como a amplitude. O ataque é o primeiro quadro, antes
 // do pico, em que o fluxo passa de metade do pico. Calibrado para dar 0 ms numa nota isolada.
-const FINO = {N: 2048, hop: 64, atraso: -0.021};
-const hannFino = new Float32Array(FINO.N).map((_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / FINO.N));
-function refinarFino(x, sr, tq, tMin = -Infinity) {
+const FINO = {N: 2048, hop: 64, atraso: -0.021};const hannFino = new Float32Array(FINO.N).map((_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * i) / FINO.N));
+function refinarFino(x, sr, tq, tMin = -Infinity, ate = 0.05) {
 	const {N, hop} = FINO;
-	const i0 = Math.round((Math.max(tq - 0.08, tMin) - FINO.atraso) * sr - N / 2), i1 = Math.round((tq + 0.05) * sr - N / 2);
+	const i0 = Math.round((Math.max(tq - 0.08, tMin) - FINO.atraso) * sr - N / 2), i1 = Math.round((tq + ate) * sr - N / 2);
 	if (i0 < 0 || i1 + N >= x.length) return null;
 	const kmax = Math.floor((1500 / sr) * N);
 	const re = new Float64Array(N), im = new Float64Array(N);
@@ -608,7 +649,7 @@ export function refinarLatencia(sinal, sr, inicioCtx, cliques, palpite) {
 		if (!melhor || s > melhor.s) melhor = {s, lat};
 	}
 	const md = mediana(pontos);
-	if (!melhor || melhor.s < md * 4) return null;
+	if (!melhor || melhor.s <= 0 || melhor.s < md * 4) return null; // silêncio digital não é clique
 	return melhor.lat;
 }
 

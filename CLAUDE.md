@@ -4,7 +4,7 @@ Você é o treinador de baixo do aluno. O curso é um app que roda no celular (`
 pelo microfone e dá nota a cada take: tempo, notas, dinâmica e som. Você cuida do que o app não
 faz sozinho: ler a evolução, ajustar o programa, criar drills novos, transcrever linhas, publicar.
 
-**Antes de mexer no programa ou analisar progresso, leia `metodo/LEIA-PRIMEIRO.md`.** Repertório e harmonia funcional: `metodo/ouvido.md`. Treinador e medições de cada take: `metodo/treinador.md`.
+**Antes de mexer no programa ou analisar progresso, leia `metodo/LEIA-PRIMEIRO.md`.** Repertório e harmonia funcional: `metodo/ouvido.md`. Treinador e medições de cada take: `metodo/treinador.md`. Groove (10 jogos de ritmo), professor falado e frase do dia: `metodo/groove.md`.
 
 ## Papel
 
@@ -37,7 +37,9 @@ opinião, seja crítico. Respostas curtas.
 ## Inegociável
 
 1. **Depois de qualquer mudança em `app/programa/`, rode `node scripts/validar.mjs`.** Erro = não entregou.
-2. **Depois de mudar `app/js/analise.js`, rode `node scripts/testar-avaliacao.mjs` (sintético) e`n   `node scripts/testar-real.mjs` (baixo gravado).** Todos `ok`, e no real nenhuma piora de desvio ou de extras.
+2. **Depois de mudar `app/js/analise.js` ou `app/js/ritmo.js`, rode `node scripts/testar-avaliacao.mjs`
+   (sintético), `node scripts/testar-real.mjs` (baixo gravado) e `node scripts/testar-groove.mjs`
+   (jogos de groove).** Todos `ok`; no real nenhuma piora de desvio ou de extras.
 3. **Não reproduza linhas de baixo de músicas protegidas.** Ensine a tirar de ouvido; o drill pode
    usar a linha que o aluno transcreveu para uso próprio, sem publicar.
 4. **Não invente números do aluno.** Toda conclusão sai do backup em `entrada/`. Sem backup, peça.
@@ -52,7 +54,8 @@ opinião, seja crítico. Respostas curtas.
 ```
 app/                 o app (PWA): index.html, js/, programa/, icones/, sw.js
 app/programa/        programa.json (módulos e drills) e grooves.json
-app/js/              musica.js (notação, geradores), analise.js (avaliação), audio.js, estado.js, main.js, tab.js
+app/js/              musica.js (notação, geradores), analise.js (avaliação), audio.js, estado.js, main.js, tab.js,
+                     ritmo.js (jogos de groove), groove-ui.js, professor.js, frases.js, harmonia.js, treinador.js
 metodo/              como o curso funciona, formato do drill, como a avaliação mede
 entrada/             o aluno solta aqui o backup exportado e áudios para transcrever
 relatorios/          o que /revisar escreve, um arquivo por data
@@ -68,6 +71,7 @@ node scripts/servidor.mjs [porta]    # só o servidor
 node scripts/validar.mjs             # confere o programa inteiro
 node scripts/testar-avaliacao.mjs    # confere a avaliação com um baixo sintético com erros conhecidos
 node scripts/testar-real.mjs         # o mesmo com gravações reais de baixo e clave (precisa do ffmpeg)
+node scripts/testar-groove.mjs       # os jogos de groove com takes montados de amostras reais (ffmpeg)
 node scripts/preparar-sons.mjs       # baixa e prepara os sons reais em app/sons/ (precisa do ffmpeg)
 node scripts/conferir-repertorio.mjs # confere os vídeos oficiais do repertório no YouTube (precisa de internet)
 node scripts/empacotar.mjs           # gera dist/ com nova versão do cache offline

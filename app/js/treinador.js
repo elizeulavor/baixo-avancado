@@ -75,7 +75,19 @@ export function analise() {
 	const modQuase = E.programa.modulos.find((m) => !E.moduloConcluido(m) && m.drills.filter((d) => !E.dominado(d)).length === 1);
 	const erroOuvido = J.errosHarmonia()[0] ?? null;
 	const dias14 = new Set(T.filter((t) => t.data >= desde).map((t) => t.data)).size;
-	return {nTakes: T.length, recentes: recentes.length, dv1, dv0, md1, dn1, torta, maisReprova, travado, ganhoMaior, quaseDominado, modProva, modQuase, erroOuvido, dias14};
+	return {nTakes: T.length, recentes: recentes.length, dv1, dv0, md1, dn1, torta, maisReprova, travado, ganhoMaior, quaseDominado, modProva, modQuase, erroOuvido, dias14, groove: analiseGroove()};
+}
+// Groove: tendência no silêncio (Relógio), no bolso e no swing, das últimas 5 rodadas de cada.
+export function analiseGroove() {
+	const G = E.grooveGeral().jogos;
+	const ult = (j) => (G[j]?.hist ?? []).slice(-5);
+	const rel = ult('relogio').map((h) => h.met?.volta).filter((v) => v != null);
+	const volta = rel.length >= 3 ? media(rel) : null;
+	const sw = ult('swing').map((h) => h.met?.razaoErro).filter((v) => v != null);
+	const swing = sw.length >= 3 ? media(sw) : null;
+	const bo = ult('bolso').map((h) => h.met?.foraBolso).filter((v) => v != null);
+	const bolso = bo.length >= 3 ? media(bo) : null;
+	return {volta, swing, bolso};
 }
 
 // ---------- mensagem do dia (até 3 linhas, cada uma com número) ----------
@@ -107,6 +119,9 @@ export function mensagemDoDia() {
 	else if (a.quaseDominado) linhas.push({ic: '★', txt: `"${a.quaseDominado.titulo}": falta 1 aprovação na meta, em outro dia, para dominar.`, link: `#drill/${a.quaseDominado.id}`});
 	else if (a.ganhoMaior) linhas.push({ic: '📈', txt: `Esta semana: +${a.ganhoMaior.ganho} BPM em "${a.ganhoMaior.titulo}" (agora ${a.ganhoMaior.agora}).`});
 	else if (a.dv1 != null && a.dv0 != null && a.dv0 - a.dv1 >= 1) linhas.push({ic: '📈', txt: `Regularidade melhorou de ±${f1(a.dv0)} para ±${f1(a.dv1)} ms.`});
+	else if (a.groove.volta != null && Math.abs(a.groove.volta) >= 10) linhas.push({ic: '⌛', txt: `No silêncio do Relógio você ${a.groove.volta < 0 ? 'corre' : 'arrasta'}: o clique volta e te acha ${f1(Math.abs(a.groove.volta))} ms ${a.groove.volta < 0 ? 'adiantado' : 'atrasado'} (últimas rodadas). ${a.groove.volta < 0 ? 'Pense na colcheia do 4 antes de cada 1.' : 'Sinta o 1 chegando, sem esperar por ele.'}`, link: '#groove/relogio'});
+	else if (a.groove.bolso != null && Math.abs(a.groove.bolso) >= 6) linhas.push({ic: '◐', txt: `No Bolso, sua média fica ${f1(Math.abs(a.groove.bolso))} ms ${a.groove.bolso > 0 ? 'atrás' : 'na frente'} do alvo pedido.`, link: '#groove/bolso'});
+	else if (a.groove.swing != null && Math.abs(a.groove.swing) >= 4) linhas.push({ic: '≈', txt: `Seu swing sai ${f1(Math.abs(a.groove.swing))} pontos ${a.groove.swing > 0 ? 'mais duro' : 'mais reto'} que o pedido.`, link: '#groove/swing'});
 	else if (a.erroOuvido) linhas.push({ic: '👂', txt: `No ouvido, o que mais pega é ${rotuloLegivel(a.erroOuvido.rotulo)} (${Math.round(a.erroOuvido.taxa * 100)}% de erro). Uma rodada de "Seus erros" resolve isso mais rápido.`, link: '#harmonia/erros'});
 	else linhas.push({ic: '📆', txt: `Meta da semana: ${meta.feito} de ${meta.meta} XP${meta.diasRestantes ? `, ${meta.diasRestantes} ${meta.diasRestantes === 1 ? 'dia' : 'dias'} pela frente` : ''}.`});
 	return linhas.slice(0, 3);
@@ -115,6 +130,9 @@ function rotuloLegivel(r) {
 	if (r.startsWith('cad:')) return `a cadência ${r.slice(4)}`;
 	if (r.startsWith('inv:')) return {f: 'a fundamental no baixo', 3: 'a terça no baixo', 5: 'a quinta no baixo', 7: 'a sétima no baixo', p: 'o pedal'}[r.slice(4)] ?? r;
 	if (r.startsWith('funcao:')) return `a função do ${r.slice(7)}`;
+	if (r.startsWith('qual:')) return `a qualidade ${r.slice(5) === 'M' ? 'maior' : r.slice(5)}`;
+	if (r.startsWith('int:')) return `o intervalo de ${r.slice(4)} semitons`;
+	if (r.startsWith('modo:')) return `o modo ${r.slice(5)}`;
 	return `o grau ${r}`;
 }
 

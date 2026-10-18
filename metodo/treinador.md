@@ -29,6 +29,23 @@ na segunda. Bater a meta dispara comemoração e a conquista "Semana cheia".
 do tempo, `dn` volume, `fa` ghosts, `ac` notas certas, `af` afinação, `si` pausas, `ar` articulação,
 `rep` critérios reprovados. São a base do treinador e do `/revisar`.
 
+## Groove (`estado.groove`)
+
+`jogos[jogo].estrelas[nível]` (0 a 3), `jogos[jogo].hist[]` = `{data, nivel, estrelas, met}` com
+`met` = `dv` regularidade, `md` média (só com latência), `cob` % de notas no lugar, `ex` notas a mais,
+`combo`, `volta` erro médio na volta do clique (Relógio, + atrasado), `deriva`, `noBolso` e
+`foraBolso` (Bolso: média contra o alvo), `razaoErro` (Swing), `bons` (Escada), `perfeitas`/`respostas`
+(Eco), `lat` latência usada (ms) e `conf` (latência confiável). Nos jogos de toque, `acertos`/`total`.
+`dias[data]` = groove do dia; `recordes.infinito` = Eco infinito.
+
+O treinador do app usa as 5 últimas rodadas: no silêncio corre ou arrasta (≥ 10 ms), escorrega do
+bolso (≥ 6 ms), swing mais duro ou mais reto que o pedido (≥ 4 pontos).
+
+## O professor
+
+O comentário depois de cada resultado (`app/js/professor.js`) segue o mesmo tom: o número que
+importa e o que fazer no próximo take. Detalhes em `metodo/groove.md`.
+
 ## Tom do tutor
 
 Objetivo e exigente, com número em cada frase. Elogio só como fato ("caiu de ±13 para ±10 ms").

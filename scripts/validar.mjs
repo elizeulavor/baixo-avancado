@@ -107,7 +107,45 @@ for (const jogo of Object.keys(H.JOGOS)) for (const rating of [900, 1200, 1500, 
 	}
 }
 
-console.log(`${programa.modulos.length} módulos, ${n} drills, ${grooves.grooves.length} grooves, ${rep.musicas.length} músicas, ${Object.keys(H.JOGOS).length} jogos de harmonia`);
+// groove: todo nível de todo jogo monta (com e sem fone), alvos dentro do compasso, janelas válidas
+const Rt = await import('../app/js/ritmo.js');
+let nNiveis = 0;
+for (const jogo of Rt.ORDEM) {
+	const J0 = Rt.JOGOS[jogo];
+	J0.niveis.forEach((nv, k) => {
+		nNiveis++;
+		const onde = `groove ${jogo} nível ${k + 1}`;
+		try {
+			if (J0.mic) for (const fone of [false, true]) {
+				const r = Rt.roteiro(jogo, k + 1, {grooves: grooves.grooves, fone});
+				if (!(r.barDur > 0) || r.total < 4) throw new Error('roteiro vazio');
+				const seg = r.total * r.barDur;
+				if (!fone && seg > 90) avisos.push(`${onde}: ${seg.toFixed(0)} s (longo)`);
+				for (let c = 0; c < r.total; c++) for (const a of r.compasso(c).alvos) {
+					if (a.b < -1e-6 || a.b >= r.tempos + 1e-6) throw new Error(`alvo fora do compasso (${a.b})`);
+					if (!(a.jan > 0.02)) throw new Error(`janela de casamento pequena demais (${a.jan})`);
+				}
+				if (!r.comps.some((c) => c.avaliar && c.alvos.length)) throw new Error('nenhum compasso avaliado');
+			}
+			else if (jogo === 'ondeum') for (let i = 0; i < 20; i++) {
+				const p = Rt.perguntaUm(k + 1, grooves.grooves);
+				if (p.uns.length < 4) throw new Error('menos de 4 "uns"');
+			}
+			else if (jogo === 'ditado') for (let i = 0; i < 20; i++) {
+				const p = Rt.perguntaDitado(k + 1);
+				if (p.opcoes.length < 3) throw new Error('menos de 3 opções');
+			}
+			else for (let i = 0; i < 6; i++) if (!Rt.perguntaAndamento(k + 1, grooves.grooves, Math.random, i).groove) throw new Error('sem groove para tocar');
+		} catch (e) {
+			erros.push(`${onde}: ${e.message}`);
+		}
+	});
+}
+const inf = Rt.roteiroInfinito({});
+for (let k = 0; k < 40; k++) if (!inf.compasso(k)) erros.push('eco infinito: compasso faltando');
+const {totalFrases} = await import('../app/js/frases.js');
+
+console.log(`${programa.modulos.length} módulos, ${n} drills, ${grooves.grooves.length} grooves, ${rep.musicas.length} músicas, ${Object.keys(H.JOGOS).length} jogos de harmonia, ${Rt.ORDEM.length} jogos de groove (${nNiveis} níveis), ${totalFrases()} frases do dia`);
 for (const a of avisos) console.log(`aviso  ${a}`);
 for (const e of erros) console.log(`ERRO   ${e}`);
 console.log(erros.length ? `\n${erros.length} erro(s).` : '\nPrograma válido.');

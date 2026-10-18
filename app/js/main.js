@@ -8,6 +8,9 @@ import {avaliar, medirLatencia, refinarLatencia, alturaAoVivo} from './analise.j
 import {renderTab} from './tab.js';
 import * as Hm from './harmonia.js';
 import * as T from './treinador.js';
+import * as G from './groove-ui.js';
+import * as P from './professor.js';
+import {fraseDoDia} from './frases.js';
 import {parseProgressao, parseLinha, conjuntoEscala, freqMidi, nomeMidi, nomePc, CORDAS, AFINACOES, gerarWalking, NOMES, ESCALAS} from './musica.js';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -122,14 +125,14 @@ function comemorar(eventos, aprovado) {
 }
 
 // ---------- roteador ----------
-const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, relatorio: telaRelatorio, ferramentas: telaFerramentas, perfil: telaPerfil};
+const rotas = {hoje: telaHoje, mapa: telaMapa, modulo: telaModulo, drill: telaDrill, prova: telaProva, desafio: telaDesafio, fim: telaFim, ouvido: telaOuvido, musica: telaMusica, harmonia: telaHarmonia, relatorio: telaRelatorio, ferramentas: telaFerramentas, perfil: telaPerfil, groove: (a, q) => G.telaGroove(a, q), gjogo: (a, q) => G.telaJogoGroove(a, q)};
 function ir() {
 	limpar();
 	const [caminho, q = ''] = (location.hash.slice(1) || 'hoje').split('?');
 	const [nome, arg] = caminho.split('/');
 	const params = new URLSearchParams(q);
 	(rotas[nome] ?? telaHoje)(arg, params);
-	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', relatorio: 'hoje', musica: 'ouvido', harmonia: 'ouvido'}[nome] ?? nome;
+	const aba = {drill: 'mapa', modulo: 'mapa', prova: 'mapa', desafio: 'hoje', fim: 'hoje', relatorio: 'hoje', musica: 'ouvido', harmonia: 'ouvido', gjogo: 'groove'}[nome] ?? nome;
 	$$('nav a').forEach((a) => a.classList.toggle('ativo', a.getAttribute('href') === `#${aba}`));
 	window.scrollTo(0, 0);
 }
@@ -139,7 +142,7 @@ window.addEventListener('hashchange', ir);
 let ultimaPausa = 0;
 setInterval(() => {
 	const r = location.hash.slice(1).split(/[/?]/)[0];
-	if (document.visibilityState !== 'visible' || !['drill', 'ferramentas', 'prova', 'desafio'].includes(r)) return;
+	if (document.visibilityState !== 'visible' || !['drill', 'ferramentas', 'prova', 'desafio', 'gjogo', 'harmonia', 'musica'].includes(r)) return;
 	E.adicionarMinutos(0.5);
 	const m = E.estado.sessoes[E.hoje()] ?? 0;
 	if (Math.floor(m / 30) > ultimaPausa && m >= 30) {
@@ -160,6 +163,7 @@ function linkItem(i, sessao = true) {
 	if (i.tipo === 'prova') return `#prova/${i.modulo}?${s}`;
 	if (i.tipo === 'harmonia') return `#harmonia/${i.jogo}?${s}`;
 	if (i.tipo === 'musica') return `#musica/${i.musica}?${s}`;
+	if (i.tipo === 'groove') return `#groove/dia?${s}`;
 	return `#desafio?${s}`;
 }
 function seguirTreino() {
@@ -170,6 +174,7 @@ function xpPrevisto(i) {
 	if (i.tipo === 'prova') return 500;
 	if (i.tipo === 'desafio') return 30;
 	if (i.tipo === 'harmonia') return 40;
+	if (i.tipo === 'groove') return 70;
 	if (i.tipo === 'musica') return 60 * (E.repertorio.musicas.find((m) => m.id === i.musica)?.nivel ?? 1);
 	const d = E.drillPorId(i.id);
 	return d ? Math.round(40 * (1 + E.fracao(d))) : 40;
@@ -186,6 +191,10 @@ function telaHoje() {
 	const hora = new Date().getHours();
 	const oi = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
 	const prox = proximoItem();
+	// dias desde o último dia com prática (a frase muda de registro na volta de uma pausa)
+	const ultimoDia = Object.entries(E.estado.sessoes).filter(([d, m]) => m >= 5 && d < E.hoje()).map(([d]) => d).sort().at(-1);
+	const parado = ultimoDia ? Math.round((new Date(`${E.hoje()}T12:00`) - new Date(`${ultimoDia}T12:00`)) / 864e5) - 1 : 0;
+	const frase = fraseDoDia(E.hoje(), {seq, parado});
 	const xpTotal = plano.itens.filter((i) => !plano.feitos[chave(i)]).reduce((s, i) => s + xpPrevisto(i), 0) + (j.diasPlano[E.hoje()] ? 0 : 100);
 	const semana = [...Array(7)].map((_, k) => {
 		const d = new Date();
@@ -205,6 +214,7 @@ function telaHoje() {
 			<a class="anel-nivel" href="#perfil" title="Nível ${nv.n}">${anel(nv.frac)}<b>${nv.n}</b></a>
 		</div>
 	</div>
+	<p class="frase-dia entra">“${esc(frase)}”</p>
 	<div class="heroi entra">
 		<div class="linha-heroi">
 			<div class="anel-dia">${anel(f.pct, {tam: 92, esp: 8})}<b>${Math.round(f.pct * 100)}%</b><small>${f.feitos}/${f.total}</small></div>
@@ -222,7 +232,11 @@ function telaHoje() {
 	<h2>Etapas</h2>
 	<div class="missoes">${plano.itens.map((i) => cartaoMissao(i, plano, prox)).join('')}</div>
 	<button class="fantasma-btn" id="refazer" style="width:100%">Sortear outro plano para hoje</button>`;
-	$('#comecar').onclick = () => (f.pct >= 1 ? (location.hash = '#fim') : seguirTreino());
+	$('#comecar').onclick = () => {
+		if (f.pct >= 1) return (location.hash = '#fim');
+		if (!f.feitos) P.dizer(P.inicioTreino(plano, seq), 'info');
+		seguirTreino();
+	};
 	$('#refazer').onclick = () => {
 		E.refazerPlano();
 		telaHoje();
@@ -238,6 +252,10 @@ function cartaoMissao(i, plano, prox) {
 	if (i.tipo === 'harmonia') {
 		const g = Hm.JOGOS[i.jogo] ?? Hm.MODOS[i.jogo];
 		return `<a class="missao trilhaB entra ${feito ? 'feito' : ''}" href="${linkItem(i, false)}"><div class="icone num" style="font-size:13px">${g.icone}</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>${g.nome}</h3><div class="meta-linha">${Hm.MODOS[i.jogo] ? `sequência de ${J.sequenciaDesafio()} dias` : `rating ${E.progressoHarmonia(i.jogo).rating}`} · ${g.perguntas} perguntas</div></div><div class="lado"><span class="xp-tag">+${xpPrevisto(i)}</span></div></a>`;
+	}
+	if (i.tipo === 'groove') {
+		const dia = E.grooveGeral().dias[E.hoje()];
+		return `<a class="missao trilhaG entra ${feito ? 'feito' : ''}" href="${linkItem(i, false)}"><div class="icone">🥁</div><div><div class="papel">${esc(i.papel)} · ${i.minutos} min</div><h3>Groove do dia</h3><div class="meta-linha">${dia?.feitos?.length ?? 0}/3 jogos · sequência ${J.sequenciaGroove()}</div></div><div class="lado"><span class="xp-tag">+${xpPrevisto(i)}</span></div></a>`;
 	}
 	if (i.tipo === 'musica') {
 		const mu = E.repertorio.musicas.find((x) => x.id === i.musica);
@@ -528,6 +546,8 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 		return;
 	}
 	parar.push(() => A.fecharMicrofone(stream));
+	P.microfone(true); // o professor não fala com o microfone aberto
+	parar.push(() => P.microfone(false));
 	const pararMedidor = medidorMic(stream);
 	parar.push(pararMedidor);
 	const voltas = d.voltas ?? 1;
@@ -557,6 +577,7 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 	A.fecharMicrofone(stream);
 	pararMedidor();
 	if (cancelado || !take) return;
+	P.microfone(false);
 	bt.classList.remove('ao-vivo');
 	$('#rotulo-gravar').textContent = '···';
 	st.textContent = 'Analisando tempo, notas, dinâmica e som…';
@@ -579,7 +600,9 @@ async function gravarTake(d, eventos, tempos, bpm, cursor, ctxTela) {
 		msgProva = pv.passou ? 'Prova concluída.' : res.aprovado ? `Etapa ${pv.etapa} de 3 aprovada.` : 'Reprovou: a prova recomeça da etapa 1.';
 		if (pv.passou || !res.aprovado) E.marcarFeito(`prova:${ctxTela.modProva.id}`);
 	}
-	ultimoResultado = {id: d.id, res, msg: msgProva ?? msg, takeId, eventos: ev, agora: true, lat, refinada, confiavel, bpmAntes};
+	const fala = P.aposTake(d, res, {bpm, eventos: ev});
+	if (msgProva) fala.txt = `${msgProva} ${fala.txt}`;
+	ultimoResultado = {id: d.id, res, msg: msgProva ?? msg, takeId, eventos: ev, agora: true, lat, refinada, confiavel, bpmAntes, fala};
 	ir();
 	comemorar(ev, res.aprovado);
 }
@@ -640,6 +663,7 @@ function mostrarResultado(r, d, {sessao, modProva}) {
 		${prova?.passou && sessao ? `<button class="principal" id="seguir">Próxima etapa ›</button>` : ''}
 		<button id="denovo">● Gravar de novo</button>
 	</div>
+	${r.fala && P.escrito() ? `<div class="prof-inline"><b>Professor</b> ${esc(r.fala.txt)}</div>` : ''}
 	<div class="metricas">${res.itens.map((i) => {
 		const inv = ['Notas certas', 'Acentos', 'Notas fantasma', 'Crescendo', 'Pausas limpas', 'Legato'].includes(i.nome);
 		const escala = Math.max(i.limite * 2, Math.abs(i.valor) * 1.1, 1);
@@ -671,6 +695,7 @@ function mostrarResultado(r, d, {sessao, modProva}) {
 	};
 	$('#denovo').onclick = () => $('#gravar').click();
 	$$('#seguir').forEach((b) => (b.onclick = seguirTreino));
+	if (r.fala && r.agora && !P.escrito()) setTimeout(() => P.dizer(r.fala.txt, r.fala.tom), 700);
 	animar(el);
 	setTimeout(() => el.scrollIntoView({behavior: 'smooth', block: 'start'}), 150);
 }
@@ -1053,12 +1078,18 @@ function jogoParaErro(rotulos) {
 	if (r.startsWith('cad:')) return 'cadencia';
 	if (r.startsWith('inv:')) return 'inversao';
 	if (r.startsWith('funcao:')) return 'funcao';
+	if (r.startsWith('qual:')) return 'qualidade';
+	if (r.startsWith('int:')) return 'intervalo';
+	if (r.startsWith('modo:')) return 'modo';
 	return Math.random() < 0.6 ? 'completar' : 'graus';
 }
 function nomeRotulo(r) {
 	if (r.startsWith('cad:')) return Hm.CADENCIAS[r.slice(4)]?.nome ?? r;
 	if (r.startsWith('inv:')) return {f: 'baixo na fundamental', 3: 'terça no baixo', 5: 'quinta no baixo', 7: 'sétima no baixo', p: 'pedal'}[r.slice(4)] ?? r;
 	if (r.startsWith('funcao:')) return `função do ${r.slice(7)}`;
+	if (r.startsWith('qual:')) return `acorde ${{M: 'maior', m: 'menor', dim: 'diminuto', aug: 'aumentado', 7: 'dominante', maj7: 'maior com 7M', m7: 'menor com 7', m7b5: 'meio-diminuto', dim7: 'diminuto com 7', mmaj7: 'menor com 7M'}[r.slice(5)] ?? r.slice(5)}`;
+	if (r.startsWith('int:')) return `intervalo de ${r.slice(4)} semitons`;
+	if (r.startsWith('modo:')) return `modo ${r.slice(5)}`;
 	return `grau ${r}`;
 }
 function telaHarmonia(id, q) {
@@ -1127,16 +1158,18 @@ function telaHarmonia(id, q) {
 			? `<div class="progressao">${p.seqCompleta.map((g, k) => (p.slots.includes(k) ? `<div class="chip-grau vazio" data-s="${p.slots.indexOf(k)}">?</div>` : `<div class="chip-grau ${corF(p.opcoes.find((o) => o.id === g)?.f)}">${esc(g)}</div>`)).join('')}</div>`
 			: jogo === 'graus' || jogo === 'baixo' ? `<div class="progressao"><div class="chip-grau f-T">${p.modo === 'menor' ? 'i' : 'I'}</div>${p.slots.map((_, k) => `<div class="chip-grau vazio" data-s="${k}">?</div>`).join('')}</div>` : '';
 		$('#perg').innerHTML = `<div class="cartao centro">
-			<p class="peq">${ehModo ? `${Hm.JOGOS[jogo].nome} · ` : ''}${p.estilo ? `${esc(p.estilo)} · ` : ''}tom de ${p.tom}${p.modo === 'menor' ? ' menor' : ''}${timbreAtual !== 'piano' ? ` · ${timbreAtual}` : ''}${trocou && i ? ' · <b>tom novo</b>' : ''}</p>
-			<div class="botoes"><button class="principal" id="ouvir">▶ Ouvir</button><button id="so-alvo">↻ Só a pergunta</button><button id="orientar" title="Orientador de tom: I IV V I">🎯 Tom</button></div>
+			<p class="peq">${ehModo ? `${Hm.JOGOS[jogo].nome} · ` : ''}${p.estilo ? `${esc(p.estilo)} · ` : ''}${p.semTom ? `a partir de ${p.tom}` : `tom de ${p.tom}${p.modo === 'menor' ? ' menor' : ''}`}${timbreAtual !== 'piano' ? ` · ${timbreAtual}` : ''}${trocou && i && !p.semTom ? ' · <b>tom novo</b>' : ''}</p>
+			<div class="botoes"><button class="principal" id="ouvir">▶ Ouvir</button>${p.semTom ? '' : '<button id="so-alvo">↻ Só a pergunta</button><button id="orientar" title="Orientador de tom: I IV V I">🎯 Tom</button>'}</div>
 			${seqVisivel}
 		</div>
 		${noBaixo ? `<div class="botoes"><button class="principal grande" id="escutar">🎙 Responder no baixo</button></div><p class="status-take" id="ouvindo">${jogo === 'inversao' ? 'Toque a nota que está no baixo.' : 'Toque a raiz de cada acorde que falta, na ordem.'}</p>`
 			: `<div class="opcoes ${p.opcoes.length > 6 ? 'muitas' : ''}">${p.opcoes.map((o) => `<button class="opcao ${corF(o.f)}" data-o="${esc(o.id)}">${esc(o.nome)}${previa ? `<span class="previa" data-p="${esc(o.id)}" title="ouvir">▶</span>` : ''}</button>`).join('')}</div>`}
 		<div id="retorno"></div>`;
 		$('#ouvir').onclick = () => tocar('tudo');
-		$('#so-alvo').onclick = () => tocar('alvo');
-		$('#orientar').onclick = orientar;
+		if (!p.semTom) {
+			$('#so-alvo').onclick = () => tocar('alvo');
+			$('#orientar').onclick = orientar;
+		}
 		$$('[data-o]').forEach((bt) => (bt.onclick = (e) => {
 			if (e.target.dataset.p) return;
 			responder(bt.dataset.o);
@@ -1213,7 +1246,7 @@ function telaHarmonia(id, q) {
 			const k = Number(s.dataset.s);
 			if (!s.classList.contains('certo') && !s.classList.contains('errado')) s.classList.add(resp[k] === p.certa[k] ? 'certo' : 'errado');
 		});
-		const nomeCerto = p.jogo === 'cadencia' ? Hm.CADENCIAS[p.certa[0]].nome : p.jogo === 'funcao' ? Hm.FUNCOES[p.certa[0]] : p.jogo === 'inversao' ? p.opcoes.find((o) => o.id === p.certa[0])?.nome : p.certa.join(' · ');
+		const nomeCerto = p.jogo === 'cadencia' ? Hm.CADENCIAS[p.certa[0]].nome : p.jogo === 'funcao' ? Hm.FUNCOES[p.certa[0]] : p.jogo === 'inversao' || p.semTom ? p.opcoes.find((o) => o.id === p.certa[0])?.nome : p.certa.join(' · ');
 		i++;
 		placar();
 		const fimJogo = (total && i >= total) || (vidas != null && vidas <= 0);
@@ -1240,12 +1273,15 @@ function telaHarmonia(id, q) {
 		const ratings = [...jogosUsados].map((j) => `${Hm.JOGOS[j].nome} ${E.progressoHarmonia(j).rating}`).join(' · ');
 		const rec = id === 'rush' ? G.rushRecorde : id === 'survive' ? G.surviveRecorde : null;
 		const piores = J.errosHarmonia().slice(0, 3);
+		const fala = P.aposHarmonia(id, {acertos, total: n, recorde: ev.some((e) => e.tipo === 'recorde'), piorRotulo: piores[0] ? nomeRotulo(piores[0].rotulo) : null});
+		if (!P.escrito()) setTimeout(() => P.dizer(fala.txt, fala.tom), 600);
 		$('#placar').innerHTML = '';
 		$('#perg').innerHTML = `<div class="placar-take ${pct >= 80 || (rec != null && acertos >= rec) ? 'aprovado' : 'reprovado'}">
 			<div class="anel">${anel(n ? acertos / n : 0, {tam: 120, esp: 10, cor: pct >= 80 ? 'url(#gVerde)' : '#ff6b6b'})}<b data-conta="${rec != null ? acertos : pct}">0</b></div>
 			<div><span class="carimbo">${rec != null ? `${acertos} acertos` : `${acertos}/${n}`}</span>
 			<p style="margin-top:10px">${rec != null ? `Recorde: ${rec}.` : id === 'desafio' ? `Sequência de desafios: ${J.sequenciaDesafio()} dias.` : ''} ${ratings}</p>
 			<div class="ganhos"><span>+${xp} XP</span></div></div></div>
+			${P.escrito() ? `<div class="prof-inline"><b>Professor</b> ${esc(fala.txt)}</div>` : ''}
 			${piores.length ? `<div class="info"><b>O que mais pega:</b> ${piores.map((e) => `${esc(nomeRotulo(e.rotulo))} (${Math.round(e.taxa * 100)}% de erro)`).join(' · ')}. <a href="#harmonia/erros">Treinar isso</a></div>` : ''}
 			<div class="botoes"><button id="outra">${id === 'desafio' ? 'Rush' : 'Mais uma'}</button>${sessao ? '<button class="principal" id="seguir">Próxima etapa ›</button>' : '<a class="botao principal" href="#ouvido">Outros jogos</a>'}</div>`;
 		$('#outra').onclick = () => (id === 'desafio' ? (location.hash = '#harmonia/rush') : telaHarmonia(id, q));
@@ -1448,10 +1484,12 @@ async function escutar(aoMidi) {
 		an.getFloatTimeDomainData(buf);
 		aoMidi(alturaAoVivo(buf, ctx.sampleRate));
 	}, 70);
+	P.microfone(true);
 	const fim = () => {
 		clearInterval(id);
 		src.disconnect();
 		A.fecharMicrofone(stream);
+		P.microfone(false);
 	};
 	parar.push(fim);
 	return fim;
@@ -1777,6 +1815,14 @@ function telaPerfil() {
 			<label>Meta semanal <select id="cmeta">${[0, 900, 1400, 1800, 2400, 3200].map((v) => `<option value="${v}" ${(c.metaSemanal ?? 0) === v ? 'selected' : ''}>${v ? `${v} XP` : 'automática'}</option>`).join('')}</select></label>
 			<label>Som do clique <select id="ck"><option value="claves" ${c.somClick !== 'madeira' ? 'selected' : ''}>claves</option><option value="madeira" ${c.somClick === 'madeira' ? 'selected' : ''}>woodblock</option></select></label>
 		</div>
+		<h2>Professor</h2>
+		<p class="peq">Depois de cada take, rodada de ouvido e jogo de groove, um comentário com o número que importa e o que fazer. Com o microfone aberto ele espera: a voz não entra na gravação.</p>
+		<div class="form">
+			<label>Feedback <select id="pmodo">${Object.entries(P.MODOS).map(([k, v]) => `<option value="${k}" ${P.modo() === k ? 'selected' : ''}>${v}</option>`).join('')}</select></label>
+			<label>Voz <select id="pvoz"><option value="">automática (a melhor do aparelho)</option>${P.listaVozes().map((v) => `<option ${c.vozProfessor === v.name ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></label>
+			<label>Velocidade da fala <select id="pvel">${[0.9, 1, 1.05, 1.15, 1.25].map((v) => `<option value="${v}" ${(c.velVoz ?? 1.05) === v ? 'selected' : ''}>${v === 1 ? 'normal' : `${v}×`}</option>`).join('')}</select></label>
+		</div>
+		<div class="botoes"><button id="ptestar">🔊 Testar o professor</button></div>
 		<div class="botoes"><button class="principal" id="ics">📅 Lembrete no calendário</button></div>
 		<p class="peq">Evento que repete nos dias marcados, com alarme. iPhone: abra e "Adicionar todos". Android: abra com o Google Agenda.</p>
 		<h2>Backup</h2>
@@ -1792,11 +1838,23 @@ function telaPerfil() {
 		c.afinacao = $('#ca').value;
 		c.somClick = $('#ck').value;
 		c.metaSemanal = Number($('#cmeta').value) || undefined;
+		c.professor = $('#pmodo').value;
+		c.vozProfessor = $('#pvoz').value;
+		c.velVoz = Number($('#pvel').value);
 		A.preferencias.click = c.somClick;
 		delete E.estado.planos[E.hoje()];
 		E.salvar();
 	};
 	$$('details select, details input[type=time], details input[type=checkbox]').forEach((i) => (i.onchange = salvarCfg));
+	$('#ptestar').onclick = () => {
+		salvarCfg();
+		P.testar();
+	};
+	// as vozes chegam depois no Chrome: completa a lista quando aparecerem
+	if (!P.listaVozes().length && 'speechSynthesis' in window) setTimeout(() => {
+		const sel = $('#pvoz');
+		if (sel && P.listaVozes().length) sel.insertAdjacentHTML('beforeend', P.listaVozes().map((v) => `<option ${c.vozProfessor === v.name ? 'selected' : ''}>${esc(v.name)}</option>`).join(''));
+	}, 800);
 	$('#ics').onclick = () => baixar('lembrete-baixo.ics', E.arquivoLembrete(), 'text/calendar');
 	$('#exp').onclick = () => baixar(`baixo-progresso-${E.hoje()}.json`, E.exportar(), 'application/json');
 	$('#imp').onchange = async (e) => {
@@ -1850,5 +1908,6 @@ window.addEventListener('beforeinstallprompt', (e) => {
 	if (J.protegerSequencia()) setTimeout(() => toast('🛡', 'Escudo usado', 'Ontem ficou sem treino; a sequência foi protegida.'), 800);
 	// o áudio só pode começar depois de um toque; os sons leves já vão sendo carregados
 	document.addEventListener('pointerdown', () => A.preparar([...A.GRUPOS.click, ...A.GRUPOS.ui]).catch(() => {}), {once: true});
+	G.instalar({tela, esc, anel, animar, comemorar, toast, modal, limpar, seguirTreino, medidorMic, mostrarContagem, aoSair: (f) => parar.push(f)});
 	ir();
 })();

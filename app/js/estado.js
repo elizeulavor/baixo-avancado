@@ -9,7 +9,7 @@ export const hoje = (d = new Date()) => {
 
 function padrao() {
 	return {
-		config: {afinacao: 'EADG', minutos: 45, lembrete: '19:30', latencia: null, latenciaData: null, volumeClick: 0.8, dias: [1, 2, 3, 4, 5, 6]},
+		config: {afinacao: 'EADG', minutos: 45, lembrete: '19:30', latencia: null, latenciaData: null, volumeClick: 0.8, dias: [1, 2, 3, 4, 5, 6], fone: false, professor: 'ambos', vozProfessor: '', velVoz: 1.05},
 		drills: {}, // id -> {bpm, aprovacoesMeta: [datas], tentativas, ultimo: {...}, historico: [{data, bpm, nota, aprovado}]}
 		planos: {}, // data -> {itens: [...], feitos: {}}
 		sessoes: {}, // data -> minutos
@@ -103,6 +103,26 @@ export function novoRatingHarmonia(r, d, acertou, jogadas) {
 	const esp = 1 / (1 + Math.pow(10, (d - r) / 400));
 	return Math.round(r + K * ((acertou ? 1 : 0) - esp));
 }
+// ---------- groove ----------
+// estrelas por nível de cada jogo; 1 estrela abre o nível seguinte
+export const grooveGeral = () => {
+	const g = (estado.groove ??= {});
+	g.jogos ??= {};
+	g.dias ??= {}; // data -> {feitos: [jogo...], ok}
+	g.recordes ??= {};
+	return g;
+};
+export const progressoGroove = (jogo) => (grooveGeral().jogos[jogo] ??= {estrelas: {}, jogadas: 0, hist: []});
+export const estrelasGroove = (jogo, n) => progressoGroove(jogo).estrelas[n] ?? 0;
+export const nivelAbertoGroove = (jogo, n) => n === 1 || estrelasGroove(jogo, n - 1) >= 1;
+// a fronteira é o nível aberto mais alto (o próximo desafio)
+export function nivelFronteira(jogo, total) {
+	let n = 1;
+	while (n < total && nivelAbertoGroove(jogo, n + 1)) n++;
+	return n;
+}
+export const totalEstrelasGroove = () => Object.values(grooveGeral().jogos).reduce((s, j) => s + Object.values(j.estrelas).reduce((a, b) => a + b, 0), 0);
+
 export const todosDrills = () => programa.modulos.flatMap((m) => m.drills.map((d) => ({...d, modulo: m})));
 export const drillPorId = (id) => todosDrills().find((d) => d.id === id);
 export const groovePorId = (id) => grooves.find((g) => g.id === id);
@@ -216,6 +236,8 @@ export function planoDoDia(data = hoje()) {
 			}
 		}
 	}
+	// groove do dia: todo dia a partir de 20 min (relógio interno é a base do baixista)
+	if (min >= 20) itens.push({tipo: 'groove', id: 'groove', papel: 'Groove do dia', minutos: 6});
 	const dominados = todos.filter(dominado).filter((d) => !usados.has(d.id)).sort((a, b) => ultimoTreino(a).localeCompare(ultimoTreino(b)));
 	if (dominados.length) {
 		itens.push({tipo: 'drill', id: dominados[0].id, papel: 'Revisão (no BPM meta)', minutos: 5, revisao: true});

@@ -20,7 +20,7 @@ que está bom: o take passa ou não passa. O BPM só sobe quando passa.
 
 | Minutos | Itens |
 |---|---|
-| 20 | aquecimento, principal A, principal B, revisão |
+| 20 | aquecimento, principal A, principal B, groove do dia (3 jogos curtos), revisão |
 | 30 | + leitura ou ditado do dia |
 | 45 | + um terceiro drill principal |
 | 60+ | + desafio do módulo |

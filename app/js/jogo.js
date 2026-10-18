@@ -68,6 +68,15 @@ export const CONQUISTAS = [
 	{id: 'inversoes', nome: 'Ouvido de baixista', desc: 'Rating 1500 em inversões', icone: '⤵', xp: 350, ok: () => (E.estado.harmonia?.inversao?.rating ?? 0) >= 1500},
 	{id: 'meta-semanal', nome: 'Semana cheia', desc: 'Bater a meta semanal de XP', icone: '📆', xp: 150, ok: () => !!estadoJogo().metasBatidas?.length},
 	{id: 'recordista', nome: 'Recordista', desc: '25 recordes pessoais de BPM', icone: '📈', xp: 300, ok: () => (estadoJogo().contaRecordes ?? 0) >= 25},
+	{id: 'groove-1', nome: 'Primeira estrela', desc: 'Primeira estrela num jogo de groove', icone: '✩', xp: 30, ok: () => E.totalEstrelasGroove() >= 1},
+	{id: 'groove-silencio', nome: 'Doze compassos mudos', desc: 'Relógio nível 12 com 1 estrela', icone: '⌛', xp: 400, ok: () => E.estrelasGroove('relogio', 12) >= 1},
+	{id: 'groove-bolso', nome: 'No bolso', desc: 'Bolso nível 10 com 2 estrelas', icone: '◐', xp: 400, ok: () => E.estrelasGroove('bolso', 10) >= 2},
+	{id: 'groove-eco', nome: 'Eco perfeito', desc: 'Todas as respostas perfeitas numa rodada de Eco', icone: '⇄', xp: 200, ok: () => !!E.grooveGeral().recordes.ecoPerfeito},
+	{id: 'groove-infinito', nome: 'Eco sem fim', desc: '20 acertos no Eco infinito', icone: '∞', xp: 300, ok: () => (E.grooveGeral().recordes.infinito ?? 0) >= 20},
+	{id: 'groove-7', nome: 'Semana de groove', desc: '7 grooves do dia seguidos', icone: '🥁', xp: 250, ok: () => sequenciaGroove() >= 7},
+	{id: 'groove-3x25', nome: 'Três estrelas', desc: '25 níveis de groove com 3 estrelas', icone: '✶', xp: 500, ok: () => Object.values(E.grooveGeral().jogos).reduce((s, j) => s + Object.values(j.estrelas).filter((v) => v >= 3).length, 0) >= 25},
+	{id: 'groove-faixa', nome: 'Faixa Groove', desc: '170 estrelas de groove', icone: '🥋', xp: 800, ok: () => E.totalEstrelasGroove() >= 170},
+	{id: 'groove-mestre', nome: 'Mestre do bolso', desc: '290 estrelas de groove', icone: '👑', xp: 2500, ok: () => E.totalEstrelasGroove() >= 290},
 ];
 
 function ganhar(xp, motivo, eventos) {
@@ -214,7 +223,8 @@ export function radar() {
 	const desvios = Object.values(j.recordes).map((r) => r.desvio).filter((v) => v != null);
 	const tempo = desvios.length ? Math.max(0, Math.min(100, 100 - (media(desvios) - 4) * 6)) : 0;
 	return [
-		{nome: 'Tempo', v: Math.round(0.5 * tempo + 0.5 * prog(['a1']))},
+		// groove: estrelas sobre o total possível (106 níveis × 3)
+		{nome: 'Tempo', v: Math.round(0.35 * tempo + 0.3 * prog(['a1']) + 0.35 * Math.min(100, (100 * E.totalEstrelasGroove()) / 318))},
 		{nome: 'Mão direita', v: Math.round(prog(['a2', 'a4']))},
 		{nome: 'Mão esquerda', v: Math.round(prog(['a3']))},
 		{nome: 'Slap', v: Math.round(prog(['a5', 'a6']))},
@@ -383,4 +393,58 @@ export function aposMusica(m, tirou) {
 	estadoJogo().eventos = [...eventos, ...estadoJogo().eventos].slice(0, 80);
 	E.salvar();
 	return eventos;
+}
+
+// ---------- groove ----------
+// Fim de um jogo de groove: estrelas novas valem XP, abrem o nível seguinte e podem mudar a faixa.
+// res: {estrelas, met} (met são as medições compactas para o treinador e o /revisar).
+export function fimGroove(jogo, nivel, {estrelas, met = {}, totalNiveis, faixaDe}, {dia = false, infinito = null} = {}) {
+	const eventos = [];
+	const p = E.progressoGroove(jogo);
+	const G = E.grooveGeral();
+	const antes = p.estrelas[nivel] ?? 0;
+	const totalAntes = E.totalEstrelasGroove();
+	p.jogadas++;
+	if (infinito == null) {
+		p.hist.push({data: E.hoje(), nivel, estrelas, met});
+		if (p.hist.length > 120) p.hist.splice(0, p.hist.length - 120);
+		if (estrelas > antes) p.estrelas[nivel] = estrelas;
+	}
+	const novas = Math.max(0, estrelas - antes);
+	ganhar(10 + 6 * estrelas + 25 * novas, novas ? `${'★'.repeat(estrelas)} no groove` : 'Groove', eventos);
+	if (novas) eventos.push({tipo: 'estrelas', jogo, nivel, estrelas, novas});
+	if (antes === 0 && estrelas >= 1 && nivel < totalNiveis) eventos.push({tipo: 'nivelGroove', jogo, nivel: nivel + 1});
+	const fa = faixaDe(totalAntes), fd = faixaDe(E.totalEstrelasGroove());
+	if (fd.n > fa.n) eventos.push({tipo: 'faixa', nome: fd.nome});
+	if (infinito != null && infinito > (G.recordes.infinito ?? 0)) {
+		if (G.recordes.infinito) eventos.push({tipo: 'recorde', texto: `Recorde no Eco infinito: ${infinito} (antes ${G.recordes.infinito})`});
+		G.recordes.infinito = infinito;
+	}
+	if (jogo === 'eco' && met.perfeitas != null && met.perfeitas === met.respostas && met.respostas >= 6) G.recordes.ecoPerfeito = E.hoje();
+	if (dia) {
+		const d = (G.dias[E.hoje()] ??= {feitos: []});
+		if (!d.feitos.includes(jogo)) d.feitos.push(jogo);
+		if (d.feitos.length >= 3 && !d.ok) {
+			d.ok = true;
+			ganhar(40, 'Groove do dia', eventos);
+			eventos.push({tipo: 'grooveDia', seq: sequenciaGroove()});
+			E.marcarFeito('groove');
+		}
+	}
+	checarConquistas(null, null, eventos);
+	planoCompleto(eventos);
+	estadoJogo().eventos = [...eventos, ...estadoJogo().eventos].slice(0, 80);
+	E.salvar();
+	return eventos;
+}
+export function sequenciaGroove() {
+	const ds = E.grooveGeral().dias;
+	let n = 0;
+	const d = new Date();
+	if (!ds[E.hoje(d)]?.ok) d.setDate(d.getDate() - 1);
+	while (ds[E.hoje(d)]?.ok) {
+		n++;
+		d.setDate(d.getDate() - 1);
+	}
+	return n;
 }

@@ -15,6 +15,8 @@ Você é o tutor do aluno: especialista em baixo, exigente, objetivo. Leia `meto
    - `harmonia[jogo]`: `rating`, `jogadas`, `acertos`, `total`; `harmoniaGeral.erros[rótulo] = {e, a}`,
      `desafios[data]`, `rushRecorde`, `surviveRecorde`.
    - `repertorio[id]`: tarefas, `tom`, `bpm` e `linha` (a transcrição dele), `feito`.
+   - `groove.jogos[jogo]`: `estrelas` por nível e `hist[]` com `met` (ver `metodo/treinador.md`);
+     `groove.dias` (groove do dia), `groove.recordes`.
    - `sessoes[data]` minutos, `planos`, `jogo` (XP, conquistas, metas batidas), `config`.
 2. **Diagnóstico com números** (últimos 14 dias contra os 14 anteriores):
    - constância: dias treinados, minutos/dia, sequência, meta semanal;
@@ -22,6 +24,8 @@ Você é o tutor do aluno: especialista em baixo, exigente, objetivo. Leia `meto
    - mão: `dn`, `fa`, `si` por drill; o que mais aparece em `rep`;
    - progresso: BPM ganho por drill, drills travados (8+ takes sem subir ou <30% aprovados), dominados;
    - ouvido: rating por jogo e tendência, os 5 rótulos com mais erro;
+   - groove: estrelas e nível de fronteira por jogo, volta do clique no Relógio (corre ou arrasta?),
+     bolso contra o alvo, razão do swing, Eco (frases perfeitas), constância do groove do dia;
    - repertório: músicas tiradas; se ele escreveu `tom`, `bpm` ou `linha`, confira com o que você sabe
      da música e diga onde a transcrição provavelmente erra (sem reproduzir a linha original).
 3. **Decisão.** No máximo 3 mudanças em `app/programa/` (critério, drill ponte para o travado com id

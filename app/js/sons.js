@@ -75,7 +75,7 @@ function disparar(buf, t, {ganho = 1, taxa = 1, dur, destino = saida, soltar = 0
 }
 
 // Uma amostra pelo id (bateria, percussão, clique, interface). "kick" acha kick-1/2/3 pela força.
-export function tocar(grupo, id, t, {vel = 1, ganho = 1, taxa = 1, dur} = {}) {
+export function tocar(grupo, id, t, {vel = 1, ganho = 1, taxa = 1, dur, destino} = {}) {
 	const lista = manifesto?.[grupo];
 	if (!lista) return null;
 	let cands = lista.filter((x) => x.id === id);
@@ -85,7 +85,7 @@ export function tocar(grupo, id, t, {vel = 1, ganho = 1, taxa = 1, dur} = {}) {
 	const buf = buffers.get(it.arq);
 	if (!buf) return null;
 	// a camada escolhida já traz a força; o resto do caminho até vel vira ganho
-	return disparar(buf, t, {ganho: ganho * Math.min(1.4, Math.max(0.15, vel / it.vel)), taxa, dur});
+	return disparar(buf, t, {ganho: ganho * Math.min(1.4, Math.max(0.15, vel / it.vel)), taxa, dur, destino: destino ?? saida});
 }
 
 // Uma nota afinada: amostra mais próxima em altura (e em camada), corrigida pela velocidade.
